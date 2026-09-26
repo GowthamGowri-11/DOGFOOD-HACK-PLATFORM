@@ -1,0 +1,17 @@
+[project]
+name = "Ultra Pro Max Hackathon Platform"
+version = "1.0.0"
+architecture = "Modular Monolith Next.js App Router with Neon PostgreSQL"
+
+[dogfood.suite]
+fixtures = "fixtures.json"
+acceptance_report = "acceptance-report.txt"
+
+[dogfood.tests]
+public_gallery_enabled = true
+closed_event_rejection = true
+judge_isolation = true
+participant_isolation = true
+ai_jury_evidence_extraction = true
+csv_export_enabled = true
+normalization_precision = true

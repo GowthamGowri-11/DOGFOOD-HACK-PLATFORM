@@ -1,0 +1,133 @@
+{
+  "users": [
+    {
+      "id": "usr_admin_001",
+      "email": "admin@hackathon.dev",
+      "fullName": "Platform Administrator",
+      "role": "ADMIN"
+    },
+    {
+      "id": "usr_organizer_001",
+      "email": "organizer@hackathon.dev",
+      "fullName": "Apex Event Lead",
+      "role": "ORGANIZER"
+    },
+    {
+      "id": "usr_judge_001",
+      "email": "judge.alpha@hackathon.dev",
+      "fullName": "Dr. Sarah Chen (Judge A)",
+      "role": "JUDGE"
+    },
+    {
+      "id": "usr_judge_002",
+      "email": "judge.beta@hackathon.dev",
+      "fullName": "Marcus Vance (Judge B)",
+      "role": "JUDGE"
+    },
+    {
+      "id": "usr_participant_001",
+      "email": "alice.hacker@hackathon.dev",
+      "fullName": "Alice Hacker (Team Lead)",
+      "role": "PARTICIPANT"
+    },
+    {
+      "id": "usr_participant_002",
+      "email": "bob.builder@hackathon.dev",
+      "fullName": "Bob Builder",
+      "role": "PARTICIPANT"
+    }
+  ],
+  "hackathons": [
+    {
+      "id": "hack_apex_2026",
+      "slug": "apex-ai-global-hackathon-2026",
+      "title": "Apex AI Global Hackathon 2026",
+      "tagline": "Building Enterprise Intelligent Agents at Planetary Scale",
+      "description": "The premier global competition for next-generation multi-agent autonomous systems, cybersecurity defenses, and high-throughput distributed architectures.",
+      "organizationName": "Apex Frontier Systems",
+      "status": "JUDGING",
+      "minTeamSize": 1,
+      "maxTeamSize": 4,
+      "tracks": [
+        {
+          "id": "trk_ai_agents",
+          "title": "Autonomous AI Agents",
+          "slug": "ai-agents",
+          "colorHex": "#6366F1",
+          "problemStatements": [
+            {
+              "id": "ps_multiagent_sec",
+              "code": "AI-01",
+              "title": "Multi-Agent Consensus for High-Frequency Cybersecurity Incident Triage",
+              "description": "Design an autonomous swarm of verification agents capable of analyzing 50k logs/sec with zero false-positive isolation."
+            },
+            {
+              "id": "ps_clinical_rag",
+              "code": "AI-02",
+              "title": "Sub-Second Clinical Diagnostic Retrieval with Strict Verifiability",
+              "description": "Build an ultra-reliable clinical knowledge synthesis engine with strict provenance citation."
+            }
+          ]
+        },
+        {
+          "id": "trk_fintech_infra",
+          "title": "Resilient FinTech Infrastructure",
+          "slug": "fintech-infra",
+          "colorHex": "#10B981",
+          "problemStatements": [
+            {
+              "id": "ps_settlement_ledger",
+              "code": "FT-01",
+              "title": "Zero-Knowledge Atomic Cross-Border Settlement Gateway",
+              "description": "Construct an instantaneous payment settlement rail with zero-knowledge cryptographic fraud proofs."
+            }
+          ]
+        }
+      ],
+      "prizes": [
+        {
+          "title": "Grand Champion",
+          "amount": 25000,
+          "currency": "USD",
+          "rankOrder": 1
+        },
+        {
+          "title": "AI Innovation Laureate",
+          "amount": 10000,
+          "currency": "USD",
+          "rankOrder": 2
+        }
+      ]
+    }
+  ],
+  "projects": [
+    {
+      "id": "proj_sentinel_ai",
+      "hackathonId": "hack_apex_2026",
+      "title": "SentinelShield: Autonomous Multi-Agent Threat Neutralization",
+      "slug": "sentinel-shield",
+      "tagline": "Real-time distributed threat containment powered by formal verification agents",
+      "description": "SentinelShield provides a decentralized multi-agent runtime for automated vulnerability detection and instant micro-patching in cloud-native workloads.",
+      "repoUrl": "https://github.com/dogfood/sentinel-shield",
+      "demoUrl": "https://sentinel-shield-demo.dev",
+      "techStack": ["Next.js", "TypeScript", "Rust", "Prisma", "PostgreSQL", "Neon"],
+      "isPublished": true,
+      "trackId": "trk_ai_agents",
+      "problemId": "ps_multiagent_sec"
+    },
+    {
+      "id": "proj_vericlinical",
+      "hackathonId": "hack_apex_2026",
+      "title": "VeriClinical: Deterministic Diagnostic Evidence Engine",
+      "slug": "vericlinical-rag",
+      "tagline": "Clinically safe citation-backed diagnostic assistant",
+      "description": "A high-precision biomedical literature synthesis platform that cross-checks diagnostic pathways against peer-reviewed clinical trials.",
+      "repoUrl": "https://github.com/dogfood/vericlinical",
+      "demoUrl": "https://vericlinical.health",
+      "techStack": ["Python", "FastAPI", "React", "VectorDB", "Neon"],
+      "isPublished": true,
+      "trackId": "trk_ai_agents",
+      "problemId": "ps_clinical_rag"
+    }
+  ]
+}

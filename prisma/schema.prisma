@@ -1,0 +1,832 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum RoleType {
+  ADMIN
+  ORGANIZER
+  JUDGE
+  PARTICIPANT
+}
+
+enum EventStatus {
+  DRAFT
+  PUBLISHED
+  REGISTRATION_OPEN
+  REGISTRATION_CLOSED
+  EVENT_ACTIVE
+  SUBMISSION_OPEN
+  SUBMISSION_CLOSED
+  JUDGING
+  RESULTS_PENDING
+  RESULTS_PUBLISHED
+  COMPLETED
+}
+
+enum RegistrationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WAITLISTED
+  CANCELLED
+}
+
+enum TeamInviteStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  EXPIRED
+}
+
+enum SubmissionStatus {
+  DRAFT
+  VALIDATED
+  SUBMITTED
+  LOCKED
+}
+
+enum AssignmentStatus {
+  ASSIGNED
+  IN_PROGRESS
+  COMPLETED
+  DECLINED
+  CONFLICT_FLAGGED
+}
+
+enum EvaluationStatus {
+  DRAFT
+  SUBMITTED
+  FLAGGED
+  ARCHIVED
+}
+
+enum NormalizationMethod {
+  Z_SCORE
+  MIN_MAX
+  PERCENTILE_RANK
+  TRIMMED_MEAN
+  BAYESIAN_MEAN
+}
+
+enum CertificateType {
+  PARTICIPANT
+  WINNER
+  RUNNER_UP
+  SPECIAL_MENTION
+  JUDGE
+  ORGANIZER
+}
+
+enum CertificateStatus {
+  DRAFT
+  ISSUED
+  REVOKED
+}
+
+// -------------------------------------------------------------
+// 1. CORE USER & AUTHENTICATION
+// -------------------------------------------------------------
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  passwordHash  String
+  fullName      String
+  avatarUrl     String?
+  bio           String?
+  githubUrl     String?
+  linkedinUrl   String?
+  role          RoleType @default(PARTICIPANT)
+  isActive      Boolean  @default(true)
+  emailVerified Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  registrations   Registration[]
+  teamMembers     TeamMember[]
+  teamInvitesSent TeamInvite[]       @relation("InvitedByUser")
+  teamInvitesRcvd TeamInvite[]       @relation("InvitedUser")
+  judges          Judge[]
+  evaluations     Evaluation[]
+  votes           Vote[]
+  comments        Comment[]
+  attendance      AttendanceRecord[]
+  certificates    Certificate[]
+  auditLogs       AuditLog[]
+  notifications   Notification[]
+  organizedEvents Hackathon[]        @relation("OrganizerHackathons")
+
+  @@index([email])
+  @@index([role])
+}
+
+// -------------------------------------------------------------
+// 2. HACKATHON, TRACKS & PROBLEM STATEMENTS
+// -------------------------------------------------------------
+
+model Hackathon {
+  id               String  @id @default(uuid())
+  slug             String  @unique
+  title            String
+  tagline          String?
+  description      String
+  bannerUrl        String?
+  logoUrl          String?
+  organizationName String
+  organizerId      String
+  organizer        User    @relation("OrganizerHackathons", fields: [organizerId], references: [id])
+
+  status      EventStatus @default(DRAFT)
+  minTeamSize Int         @default(1)
+  maxTeamSize Int         @default(4)
+
+  regStartTime       DateTime
+  regEndTime         DateTime
+  eventStartTime     DateTime
+  eventEndTime       DateTime
+  subStartTime       DateTime
+  subEndTime         DateTime
+  judgingStartTime   DateTime
+  judgingEndTime     DateTime
+  resultsPublishedAt DateTime?
+
+  isVotingEnabled Boolean   @default(false)
+  votingStartTime DateTime?
+  votingEndTime   DateTime?
+
+  eligibilityRules   String?
+  rulesAndGuidelines String?
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+
+  tracks              Track[]
+  problemStatements   ProblemStatement[]
+  prizes              Prize[]
+  registrations       Registration[]
+  teams               Team[]
+  projects            Project[]
+  judges              Judge[]
+  rubrics             Rubric[]
+  scoreNormalizations ScoreNormalization[]
+  results             Result[]
+  attendanceSessions  AttendanceSession[]
+  certificates        Certificate[]
+  aiJuryRuns          AIJuryRun[]
+  auditLogs           AuditLog[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([organizerId])
+}
+
+model Track {
+  id           String    @id @default(uuid())
+  hackathonId  String
+  hackathon    Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  title        String
+  slug         String
+  description  String?
+  colorHex     String?   @default("#3B82F6")
+  displayOrder Int       @default(0)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  problemStatements ProblemStatement[]
+  projects          Project[]
+
+  @@unique([hackathonId, slug])
+  @@index([hackathonId])
+}
+
+model ProblemStatement {
+  id              String    @id @default(uuid())
+  hackathonId     String
+  hackathon       Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  trackId         String
+  track           Track     @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  code            String
+  title           String
+  description     String
+  challengeDocUrl String?
+  isPublic        Boolean   @default(true)
+  displayOrder    Int       @default(0)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  projects Project[]
+
+  @@unique([hackathonId, code])
+  @@index([trackId])
+  @@index([hackathonId])
+}
+
+model Prize {
+  id          String    @id @default(uuid())
+  hackathonId String
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  title       String
+  category    String?
+  amount      Decimal   @db.Decimal(10, 2)
+  currency    String    @default("USD")
+  rankOrder   Int       @default(1)
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([hackathonId])
+}
+
+// -------------------------------------------------------------
+// 3. REGISTRATIONS & TEAMS
+// -------------------------------------------------------------
+
+model Registration {
+  id            String             @id @default(uuid())
+  hackathonId   String
+  hackathon     Hackathon          @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status        RegistrationStatus @default(APPROVED)
+  customAnswers Json?
+  checkedIn     Boolean            @default(false)
+  checkedInAt   DateTime?
+  registeredAt  DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+
+  @@unique([hackathonId, userId])
+  @@index([hackathonId, status])
+  @@index([userId])
+}
+
+model Team {
+  id          String    @id @default(uuid())
+  hackathonId String
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  name        String
+  inviteCode  String    @unique
+  leaderId    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  members TeamMember[]
+  invites TeamInvite[]
+  project Project?
+
+  @@unique([hackathonId, name])
+  @@index([hackathonId])
+  @@index([inviteCode])
+}
+
+model TeamMember {
+  id       String   @id @default(uuid())
+  teamId   String
+  team     Team     @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  userId   String
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isLeader Boolean  @default(false)
+  joinedAt DateTime @default(now())
+
+  @@unique([teamId, userId])
+  @@index([userId])
+  @@index([teamId])
+}
+
+model TeamInvite {
+  id            String           @id @default(uuid())
+  teamId        String
+  team          Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  invitedEmail  String
+  invitedUserId String?
+  invitedUser   User?            @relation("InvitedUser", fields: [invitedUserId], references: [id])
+  invitedById   String
+  invitedBy     User             @relation("InvitedByUser", fields: [invitedById], references: [id])
+  status        TeamInviteStatus @default(PENDING)
+  token         String           @unique
+  expiresAt     DateTime
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  @@index([teamId])
+  @@index([invitedEmail])
+  @@index([token])
+}
+
+// -------------------------------------------------------------
+// 4. PROJECTS & SUBMISSIONS
+// -------------------------------------------------------------
+
+model Project {
+  id               String           @id @default(uuid())
+  hackathonId      String
+  hackathon        Hackathon        @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  teamId           String           @unique
+  team             Team             @relation(fields: [teamId], references: [id], onDelete: Cascade)
+  trackId          String
+  track            Track            @relation(fields: [trackId], references: [id])
+  problemId        String
+  problemStatement ProblemStatement @relation(fields: [problemId], references: [id])
+
+  title            String
+  slug             String
+  tagline          String?
+  description      String
+  thumbnailUrl     String?
+  repoUrl          String
+  demoUrl          String?
+  videoUrl         String?
+  documentationUrl String?
+  techStack        String[]
+  isPublished      Boolean  @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  submissions      Submission[]
+  judgeAssignments JudgeAssignment[]
+  evaluations      Evaluation[]
+  aiJuryRuns       AIJuryRun[]
+  votes            Vote[]
+  comments         Comment[]
+  result           Result?
+
+  @@unique([hackathonId, slug])
+  @@index([hackathonId])
+  @@index([trackId])
+  @@index([problemId])
+}
+
+model Submission {
+  id            String           @id @default(uuid())
+  projectId     String
+  project       Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  versionNumber Int              @default(1)
+  status        SubmissionStatus @default(DRAFT)
+
+  payloadSnapshot Json
+  submittedAt     DateTime?
+  lockedAt        DateTime?
+  createdById     String
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@index([projectId, versionNumber])
+  @@index([status])
+}
+
+// -------------------------------------------------------------
+// 5. JUDGES & ASSIGNMENT ENGINE
+// -------------------------------------------------------------
+
+model Judge {
+  id              String    @id @default(uuid())
+  hackathonId     String
+  hackathon       Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expertiseTracks String[]
+  maxWorkload     Int       @default(10)
+  isActive        Boolean   @default(true)
+  conflictTeamIds String[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  assignments JudgeAssignment[]
+  evaluations Evaluation[]
+
+  @@unique([hackathonId, userId])
+  @@index([hackathonId])
+  @@index([userId])
+}
+
+model JudgeAssignment {
+  id          String           @id @default(uuid())
+  judgeId     String
+  judge       Judge            @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  status      AssignmentStatus @default(ASSIGNED)
+  assignedAt  DateTime         @default(now())
+  completedAt DateTime?
+
+  evaluation Evaluation?
+
+  @@unique([judgeId, projectId])
+  @@index([judgeId, status])
+  @@index([projectId])
+}
+
+// -------------------------------------------------------------
+// 6. RUBRIC & HUMAN EVALUATIONS
+// -------------------------------------------------------------
+
+model Rubric {
+  id          String    @id @default(uuid())
+  hackathonId String
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  version     Int       @default(1)
+  name        String    @default("Default Rubric")
+  isCurrent   Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  criteria    RubricCriterion[]
+  evaluations Evaluation[]
+  aiJuryRuns  AIJuryRun[]
+
+  @@index([hackathonId, isCurrent])
+}
+
+model RubricCriterion {
+  id               String  @id @default(uuid())
+  rubricId         String
+  rubric           Rubric  @relation(fields: [rubricId], references: [id], onDelete: Cascade)
+  title            String
+  description      String
+  weightPercentage Float
+  maxScore         Float   @default(100)
+  displayOrder     Int     @default(0)
+  requiredFeedback Boolean @default(true)
+
+  evaluationScores EvaluationScore[]
+  aiScores         AIScore[]
+
+  @@index([rubricId])
+}
+
+model Evaluation {
+  id           String           @id @default(uuid())
+  assignmentId String?          @unique
+  assignment   JudgeAssignment? @relation(fields: [assignmentId], references: [id], onDelete: SetNull)
+  judgeId      String
+  judge        Judge            @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  judgeUserId  String
+  judgeUser    User             @relation(fields: [judgeUserId], references: [id])
+  projectId    String
+  project      Project          @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rubricId     String
+  rubric       Rubric           @relation(fields: [rubricId], references: [id])
+
+  status        EvaluationStatus @default(DRAFT)
+  rawScoreSum   Float            @default(0)
+  weightedScore Float            @default(0)
+
+  prosComment  String?
+  consComment  String?
+  suggestions  String?
+  privateNotes String?
+
+  submittedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  scores        EvaluationScore[]
+  aiComparisons AIHumanComparison[]
+
+  @@unique([judgeId, projectId])
+  @@index([projectId])
+  @@index([judgeId])
+  @@index([status])
+}
+
+model EvaluationScore {
+  id           String          @id @default(uuid())
+  evaluationId String
+  evaluation   Evaluation      @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  criterionId  String
+  criterion    RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  rawScore     Float
+  feedback     String?
+
+  @@unique([evaluationId, criterionId])
+  @@index([criterionId])
+}
+
+// -------------------------------------------------------------
+// 7. SCORING, NORMALIZATION & RESULTS
+// -------------------------------------------------------------
+
+model ScoreNormalization {
+  id          String              @id @default(uuid())
+  hackathonId String
+  hackathon   Hackathon           @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  method      NormalizationMethod @default(Z_SCORE)
+  parameters  Json?
+  version     Int                 @default(1)
+  executedAt  DateTime            @default(now())
+
+  results Result[]
+
+  @@index([hackathonId, version])
+}
+
+model Result {
+  id              String              @id @default(uuid())
+  hackathonId     String
+  hackathon       Hackathon           @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  projectId       String              @unique
+  project         Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  normalizationId String?
+  normalization   ScoreNormalization? @relation(fields: [normalizationId], references: [id], onDelete: SetNull)
+
+  rawAverageScore Float
+  normalizedScore Float
+  finalScore      Float
+  rank            Int
+  awardCategory   String?
+  isWinner        Boolean   @default(false)
+  isPublished     Boolean   @default(false)
+  publishedAt     DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([hackathonId, rank])
+  @@index([hackathonId, isPublished])
+}
+
+// -------------------------------------------------------------
+// 8. COMMUNITY VOTING & COMMENTS
+// -------------------------------------------------------------
+
+model Vote {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ipHash    String?
+  createdAt DateTime @default(now())
+
+  @@unique([projectId, userId])
+  @@index([projectId])
+  @@index([userId])
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  projectId String
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  content   String
+  isFlagged Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([projectId])
+  @@index([userId])
+}
+
+// -------------------------------------------------------------
+// 9. ATTENDANCE & CERTIFICATES
+// -------------------------------------------------------------
+
+model AttendanceSession {
+  id          String    @id @default(uuid())
+  hackathonId String
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  title       String
+  sessionCode String    @unique
+  startsAt    DateTime
+  endsAt      DateTime
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+
+  records AttendanceRecord[]
+
+  @@index([hackathonId])
+}
+
+model AttendanceRecord {
+  id          String            @id @default(uuid())
+  sessionId   String
+  session     AttendanceSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  userId      String
+  user        User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  checkedInAt DateTime          @default(now())
+  method      String            @default("QR_CODE")
+
+  @@unique([sessionId, userId])
+  @@index([userId])
+}
+
+model Certificate {
+  id               String            @id @default(uuid())
+  hackathonId      String
+  hackathon        Hackathon         @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type             CertificateType   @default(PARTICIPANT)
+  verificationCode String            @unique
+  status           CertificateStatus @default(ISSUED)
+  title            String
+  recipientName    String
+  awardDetail      String?
+  issuedAt         DateTime          @default(now())
+  revokedAt        DateTime?
+  revocationReason String?
+
+  @@index([verificationCode])
+  @@index([hackathonId, userId])
+}
+
+// -------------------------------------------------------------
+// 10. AI JURY ENGINE & EVIDENCE
+// -------------------------------------------------------------
+
+model AIModelVersion {
+  id               String   @id @default(uuid())
+  versionTag       String   @unique
+  modelProvider    String   @default("anthropic")
+  modelName        String   @default("claude-3-7-sonnet")
+  temperature      Float    @default(0.2)
+  systemPromptHash String
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+
+  juryRuns AIJuryRun[]
+}
+
+model PromptVersion {
+  id             String   @id @default(uuid())
+  versionTag     String   @unique
+  promptTemplate String
+  evidenceRules  String
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  juryRuns AIJuryRun[]
+}
+
+model AIJuryRun {
+  id          String    @id @default(uuid())
+  hackathonId String
+  hackathon   Hackathon @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  projectId   String
+  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rubricId    String
+  rubric      Rubric    @relation(fields: [rubricId], references: [id])
+
+  modelVersionId  String
+  modelVersion    AIModelVersion @relation(fields: [modelVersionId], references: [id])
+  promptVersionId String
+  promptVersion   PromptVersion  @relation(fields: [promptVersionId], references: [id])
+
+  overallScore       Float
+  confidenceScore    Float
+  rawAnalysis        Json
+  summaryFeedback    String
+  executionLatencyMs Int
+
+  createdAt DateTime @default(now())
+
+  evidence    AIEvidence[]
+  scores      AIScore[]
+  comparisons AIHumanComparison[]
+
+  @@index([projectId])
+  @@index([hackathonId])
+}
+
+model AIEvidence {
+  id              String    @id @default(uuid())
+  runId           String
+  aiRun           AIJuryRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  category        String
+  finding         String
+  snippet         String?
+  sourceLocation  String?
+  confidenceLevel Float     @default(1.0)
+
+  @@index([runId])
+}
+
+model AIScore {
+  id          String          @id @default(uuid())
+  runId       String
+  aiRun       AIJuryRun       @relation(fields: [runId], references: [id], onDelete: Cascade)
+  criterionId String
+  criterion   RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  score       Float
+  confidence  Float
+  feedback    String?
+
+  @@unique([runId, criterionId])
+  @@index([criterionId])
+}
+
+// -------------------------------------------------------------
+// 11. AI-HUMAN COMPARISON, CALIBRATION & TRAINING
+// -------------------------------------------------------------
+
+model AIHumanComparison {
+  id              String     @id @default(uuid())
+  aiRunId         String
+  aiRun           AIJuryRun  @relation(fields: [aiRunId], references: [id], onDelete: Cascade)
+  evaluationId    String
+  humanEvaluation Evaluation @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+
+  criterionId     String
+  aiScore         Float
+  humanScore      Float
+  scoreDifference Float
+  absoluteError   Float
+  confidence      Float
+
+  agreementCategory String
+  createdAt         DateTime @default(now())
+
+  trainingExamples TrainingExample[]
+
+  @@index([aiRunId])
+  @@index([evaluationId])
+  @@index([criterionId])
+}
+
+model DatasetVersion {
+  id             String   @id @default(uuid())
+  versionTag     String   @unique
+  description    String
+  sampleCount    Int      @default(0)
+  trainTestSplit Float    @default(0.8)
+  createdAt      DateTime @default(now())
+
+  trainingExamples TrainingExample[]
+  calibrationRuns  CalibrationRun[]
+}
+
+model TrainingExample {
+  id               String            @id @default(uuid())
+  datasetId        String
+  dataset          DatasetVersion    @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  comparisonId     String
+  comparison       AIHumanComparison @relation(fields: [comparisonId], references: [id], onDelete: Cascade)
+  isValidationSet  Boolean           @default(false)
+  inputFeatures    Json
+  targetHumanScore Float
+  createdAt        DateTime          @default(now())
+
+  @@index([datasetId, isValidationSet])
+}
+
+model CalibrationRun {
+  id                 String         @id @default(uuid())
+  datasetId          String
+  dataset            DatasetVersion @relation(fields: [datasetId], references: [id])
+  calibrationVersion String
+  maeBefore          Float
+  maeAfter           Float
+  rmseBefore         Float
+  rmseAfter          Float
+  correlationBefore  Float
+  correlationAfter   Float
+  hyperparameters    Json?
+  status             String         @default("COMPLETED")
+  executedAt         DateTime       @default(now())
+
+  @@index([datasetId])
+}
+
+// -------------------------------------------------------------
+// 12. AUDIT LOGS & NOTIFICATIONS
+// -------------------------------------------------------------
+
+model AuditLog {
+  id          String     @id @default(uuid())
+  userId      String?
+  user        User?      @relation(fields: [userId], references: [id], onDelete: SetNull)
+  hackathonId String?
+  hackathon   Hackathon? @relation(fields: [hackathonId], references: [id], onDelete: SetNull)
+  action      String
+  entityType  String
+  entityId    String
+  beforeState Json?
+  afterState  Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime   @default(now())
+
+  @@index([action])
+  @@index([entityType, entityId])
+  @@index([hackathonId])
+  @@index([userId])
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  message   String
+  linkUrl   String?
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, isRead])
+}

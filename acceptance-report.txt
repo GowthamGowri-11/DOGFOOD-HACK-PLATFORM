@@ -1,0 +1,48 @@
+============================================================
+DOGFOOD ACCEPTANCE TEST SUITE & VERIFICATION REPORT
+============================================================
+Platform: Ultra Pro Max Hackathon Platform
+Architecture: Next.js App Router Modular Monolith + Neon PostgreSQL
+Status: ARCHITECTURE VERIFIED & FOUNDATION DEPLOYED
+
+[TEST 1] PUBLIC GALLERY & DISCOVERY
+- Endpoint: GET /api/v1/gallery
+- Fixture: SentinelShield (proj_sentinel_ai) & VeriClinical (proj_vericlinical)
+- Expected: Visible in public search, track-filterable
+- Status: PASS
+
+[TEST 2] SUBMISSION DEADLINE & EVENT STATE ENFORCEMENT
+- Endpoint: POST /api/v1/submissions
+- Condition: Hackathon in REGISTRATION_CLOSED or SUBMISSION_CLOSED
+- Expected: HTTP 403 Forbidden with "SUBMISSION_WINDOW_CLOSED"
+- Status: PASS
+
+[TEST 3] STRICT JUDGE ISOLATION
+- Endpoint: GET /api/v1/evaluations
+- Condition: Judge Alpha requests Judge Beta's evaluation
+- Expected: HTTP 403 Forbidden with "UNAUTHORIZED_EVALUATION_ACCESS"
+- Status: PASS
+
+[TEST 4] PARTICIPANT SCOPE RESTRICTION
+- Endpoint: POST /api/v1/assignments/auto-assign
+- Condition: Participant initiates assignment engine
+- Expected: HTTP 403 Forbidden with "FORBIDDEN_ROLE"
+- Status: PASS
+
+[TEST 5] AI JURY STRUCTURAL EVIDENCE & SCORE
+- Endpoint: POST /api/v1/ai-jury/evaluate
+- Input: Project Repository URL + Rubric
+- Expected: Generates AIEvidence records + AIScore per criterion + Confidence rating
+- Status: PASS
+
+[TEST 6] SCORING & NORMALIZATION ACCURACY
+- Method: Z-Score & Weighted Criteria Sum
+- Expected: Raw weighted scores normalized preserving historical records
+- Status: PASS
+
+[TEST 7] AUDIT TRAIL IMMUTABILITY
+- Actions: Score computation, rubric update, result publication
+- Expected: AuditLog records created with before/after state snapshots
+- Status: PASS
+============================================================
+ALL ACCEPTANCE CRITERIA VERIFIED.

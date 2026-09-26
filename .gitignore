@@ -1,0 +1,31 @@
+# dependencies
+node_modules/
+
+# next.js
+.next/
+out/
+
+# env / secrets
+.env
+.env.local
+.env.*.local
+
+# local database
+.pgdata/
+
+# build / cache
+*.tsbuildinfo
+.turbo/
+dist/
+build/
+coverage/
+
+# archives / local artifacts
+Dogfood.zip
+*.log
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/

@@ -1,0 +1,92 @@
+import { ProjectRepository } from '@/server/repositories/project.repository';
+import { SubmissionRepository } from '@/server/repositories/submission.repository';
+import { SubmissionValidator } from '@/server/services/submission-validator.service';
+import { SnapshotService } from '@/server/services/snapshot.service';
+import { AuditService } from '@/server/services/audit.service';
+import prisma from '@/lib/prisma';
+
+export class SubmissionLockService {
+  /**
+   * Validates project submission criteria, builds the canonical snapshot, and freezes the submission.
+   */
+  public static async submitAndLockProject(projectId: string, userId: string) {
+    const project = await ProjectRepository.findById(projectId);
+    if (!project) {
+      throw { message: 'Project not found.', code: 'NOT_FOUND', status: 404 };
+    }
+
+    const isMember = project.team.members.some((m) => m.userId === userId);
+    if (!isMember) {
+      throw { message: 'You are not authorized to submit for this team.', code: 'FORBIDDEN', status: 403 };
+    }
+
+    // 1. Race Condition / Double Submit Guard
+    const latest = await SubmissionRepository.findLatestByProjectId(projectId);
+    if (latest && latest.status === 'LOCKED') {
+      throw {
+        message: 'This project has already been submitted and locked.',
+        code: 'SUBMISSION_ALREADY_LOCKED',
+        status: 409,
+      };
+    }
+
+    // 2. Authoritative Server-Side Validation Pipeline
+    const validation = SubmissionValidator.validateProjectForSubmission(project, project.hackathon);
+    if (!validation.isValid) {
+      throw {
+        message: 'Project does not meet all required submission criteria.',
+        code: 'SUBMISSION_VALIDATION_FAILED',
+        status: 422,
+        details: { errors: validation.errors, warnings: validation.warnings },
+      };
+    }
+
+    // 3. Create Canonical Immutable Snapshot
+    const versionNumber = latest ? latest.versionNumber + 1 : 1;
+    const snapshotPayload = SnapshotService.createPayload(project, userId, versionNumber);
+    const contentHash = SnapshotService.calculateContentHash(snapshotPayload);
+
+    // 4. Transactional Locking
+    const submission = await prisma.$transaction(async (tx) => {
+      const sub = await tx.submission.create({
+        data: {
+          projectId: project.id,
+          versionNumber,
+          status: 'LOCKED',
+          payloadSnapshot: snapshotPayload as any,
+          submittedAt: new Date(),
+          lockedAt: new Date(),
+          createdById: userId,
+        },
+      });
+
+      await tx.project.update({
+        where: { id: project.id },
+        data: { isPublished: true },
+      });
+
+      return sub;
+    });
+
+    await AuditService.log({
+      userId,
+      hackathonId: project.hackathon.id,
+      action: 'SUBMISSION_LOCKED',
+      entityType: 'Submission',
+      entityId: submission.id,
+      afterState: {
+        submissionId: submission.id,
+        version: versionNumber,
+        contentHash,
+        lockedAt: submission.lockedAt,
+      },
+    });
+
+    return {
+      submission,
+      snapshot: snapshotPayload,
+      contentHash,
+      validation,
+    };
+  }
+}
