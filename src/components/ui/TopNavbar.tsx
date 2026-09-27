@@ -394,8 +394,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
       {/* RIGHT: Get Started (Guest) OR Dynamic Profile Dropdown (Logged In) */}
       <div className="flex items-center space-x-2 sm:space-x-3">
-        {/* Real-Time WebSocket Status Badge */}
-        <LiveStatusBadge />
+        {/* Real-Time WebSocket Status Badge — only for authenticated users */}
+        {!authLoading && currentUser && <LiveStatusBadge />}
 
         {/* Backdrop for profile dropdown */}
         {profileDropdownOpen && (

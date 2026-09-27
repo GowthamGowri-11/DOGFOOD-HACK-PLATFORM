@@ -1,6 +1,5 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { RealtimeProvider } from '@/lib/realtime/RealtimeContext';
 
 export const metadata: Metadata = {
   title: 'ATLYX — Competition Arena',
@@ -20,9 +19,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen text-[#111827] bg-[#FFFFFF] antialiased">
-        <RealtimeProvider>
-          {children}
-        </RealtimeProvider>
+        {children}
       </body>
     </html>
   );

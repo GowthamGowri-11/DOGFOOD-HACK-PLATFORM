@@ -1,15 +1,26 @@
-import { requireAuth } from '@/server/permissions/guards';
+import { getSession } from '@/server/auth/session';
 import { UserRepository } from '@/server/repositories/user.repository';
 import { successResponse, errorResponse } from '@/lib/api/response';
 
 export async function GET() {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
+
+    // No session — return 200 with authenticated: false (not a 401 error)
+    if (!session) {
+      return Response.json(
+        { success: false, data: null, authenticated: false },
+        { status: 200 }
+      );
+    }
 
     // Verify user still exists and remains active in database
     const user = await UserRepository.findById(session.id);
     if (!user || !user.isActive) {
-      return errorResponse('Session is invalid or account is inactive', 'UNAUTHORIZED', 401);
+      return Response.json(
+        { success: false, data: null, authenticated: false },
+        { status: 200 }
+      );
     }
 
     return successResponse({
@@ -23,9 +34,10 @@ export async function GET() {
         createdAt: user.createdAt,
       },
     });
-  } catch (error: any) {
-    const status = error.status || 401;
-    const code = error.code || 'UNAUTHORIZED';
-    return errorResponse(error.message || 'Unauthenticated', code, status);
+  } catch {
+    return Response.json(
+      { success: false, data: null, authenticated: false },
+      { status: 200 }
+    );
   }
 }
