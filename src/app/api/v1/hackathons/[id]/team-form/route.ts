@@ -43,3 +43,10 @@ export async function POST(
     return errorResponse(error.message || 'Failed to save team member form', code, status);
   }
 }
+
+export async function PUT(
+  req: NextRequest,
+  params: { params: { id: string } }
+) {
+  return POST(req, params);
+}
