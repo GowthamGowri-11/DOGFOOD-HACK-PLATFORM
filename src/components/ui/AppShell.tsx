@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { Sidebar, UserRole } from './Sidebar';
-import { TopNavbar } from './TopNavbar';
+import { TopNavbar, AuthUser } from './TopNavbar';
 import { FeaturedRail, FeaturedItem } from './FeaturedRail';
 
 export interface AppShellProps {
@@ -17,23 +18,82 @@ export interface AppShellProps {
 
 export const AppShell: React.FC<AppShellProps> = ({
   children,
-  userRole = 'PARTICIPANT',
+  userRole,
   showFeaturedRail = false,
   featuredItems,
   pageTitle,
   pageSubtitle,
   headerAction,
 }) => {
-  const [currentRole, setCurrentRole] = useState<UserRole>(userRole);
+  const pathname = usePathname();
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [currentRole, setCurrentRole] = useState<UserRole>(userRole || 'PARTICIPANT');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Sync role if prop changes
+  // Dynamically sync auth and role across all views
   useEffect(() => {
-    if (userRole) {
-      setCurrentRole(userRole);
-    }
-  }, [userRole]);
+    let isMounted = true;
+    const fetchAuth = async () => {
+      try {
+        const res = await fetch('/api/v1/auth/me');
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted && json.success && json.data?.user) {
+            const user: AuthUser = json.data.user;
+            setCurrentUser(user);
+
+            // Determine role:
+            // 1. If inside a role-specific workspace route, enforce that workspace
+            if (pathname.startsWith('/admin')) {
+              setCurrentRole('ADMIN');
+            } else if (pathname.startsWith('/organizer')) {
+              setCurrentRole('ORGANIZER');
+            } else if (pathname.startsWith('/judge')) {
+              setCurrentRole('JUDGE');
+            } else if (pathname.startsWith('/participant')) {
+              setCurrentRole('PARTICIPANT');
+            } else {
+              // 2. On public routes (/, /hackathons, /leaderboard, etc.), dynamically adapt to user's real role!
+              const mapped = (user.role?.toUpperCase() || 'PARTICIPANT') as UserRole;
+              setCurrentRole(mapped);
+            }
+            return;
+          }
+        }
+        if (isMounted) {
+          setCurrentUser(null);
+          if (pathname.startsWith('/admin')) {
+            setCurrentRole('ADMIN');
+          } else if (pathname.startsWith('/organizer')) {
+            setCurrentRole('ORGANIZER');
+          } else if (pathname.startsWith('/judge')) {
+            setCurrentRole('JUDGE');
+          } else {
+            setCurrentRole(userRole || 'PARTICIPANT');
+          }
+        }
+      } catch {
+        if (isMounted) {
+          setCurrentUser(null);
+          setCurrentRole(userRole || 'PARTICIPANT');
+        }
+      } finally {
+        if (isMounted) setAuthLoading(false);
+      }
+    };
+
+    fetchAuth();
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, userRole]);
+
+  const handleLogout = () => {
+    setCurrentUser(null);
+    setCurrentRole('PARTICIPANT');
+  };
 
   return (
     <div className="min-h-screen bg-[#FFFFFF] flex flex-col font-sans antialiased text-[#111827]">
@@ -45,6 +105,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         isMobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
+        userName={currentUser?.name}
+        userEmail={currentUser?.email}
+        userAvatarUrl={currentUser?.avatarUrl}
       />
 
       {/* Main Application Area (offset by 270px sidebar width on desktop) */}
@@ -57,6 +120,10 @@ export const AppShell: React.FC<AppShellProps> = ({
         <TopNavbar
           onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           userRole={currentRole}
+          userName={currentUser?.name}
+          currentUser={currentUser}
+          authLoading={authLoading}
+          onLogout={handleLogout}
         />
 
         {/* APPLICATION AREA: Center the primary content inside this application area */}

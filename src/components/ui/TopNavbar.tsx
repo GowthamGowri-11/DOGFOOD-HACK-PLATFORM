@@ -5,32 +5,139 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
   Search,
-  Bell,
+  ArrowRight,
   MessageSquare,
   ChevronRight,
+  ChevronDown,
+  ChevronUp,
   User,
+  Settings,
   Sliders,
   LogOut,
   Trophy,
   Menu,
 } from 'lucide-react';
+import { LiveStatusBadge } from './LiveStatusBadge';
+
+export interface AuthUser {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  avatarUrl?: string | null;
+}
 
 export interface TopNavbarProps {
   onToggleSidebar?: () => void;
   userRole?: string;
   userName?: string;
+  currentUser?: AuthUser | null;
+  authLoading?: boolean;
+  onLogout?: () => void;
 }
 
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleSidebar,
   userRole = 'PARTICIPANT',
-  userName = 'Alice Hacker',
+  userName,
+  currentUser: propUser,
+  authLoading: propLoading,
+  onLogout,
 }) => {
   const pathname = usePathname();
   const router = useRouter();
   const [searchQuery, setSearchQuery] = useState('');
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
-  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const [internalUser, setInternalUser] = useState<AuthUser | null>(null);
+  const [internalLoading, setInternalLoading] = useState(true);
+  const [hasLoggedOut, setHasLoggedOut] = useState(false);
+
+  // If user has explicitly logged out, force currentUser to null immediately
+  const currentUser = hasLoggedOut
+    ? null
+    : (propUser !== undefined ? propUser : internalUser);
+  const authLoading = hasLoggedOut
+    ? false
+    : (propLoading !== undefined ? propLoading : internalLoading);
+
+  // If propUser changes to an active authenticated user, reset logged out flag
+  useEffect(() => {
+    if (propUser) {
+      setHasLoggedOut(false);
+    }
+  }, [propUser]);
+
+  // Fetch current authenticated user dynamically if not passed from parent
+  useEffect(() => {
+    if (propUser !== undefined) {
+      return;
+    }
+    let isMounted = true;
+    const checkAuth = async () => {
+      try {
+        const res = await fetch('/api/v1/auth/me');
+        if (res.ok) {
+          const json = await res.json();
+          if (isMounted && json.success && json.data?.user) {
+            setInternalUser(json.data.user);
+            setHasLoggedOut(false);
+            return;
+          }
+        }
+        if (isMounted) setInternalUser(null);
+      } catch {
+        if (isMounted) setInternalUser(null);
+      } finally {
+        if (isMounted) setInternalLoading(false);
+      }
+    };
+    checkAuth();
+    return () => {
+      isMounted = false;
+    };
+  }, [pathname, propUser]);
+
+  const handleLogout = async () => {
+    // Immediately clear state in the UI so profile pill turns into Get Started button
+    setHasLoggedOut(true);
+    setInternalUser(null);
+    setProfileDropdownOpen(false);
+    if (onLogout) {
+      onLogout();
+    }
+
+    try {
+      await fetch('/api/v1/auth/logout', { method: 'POST' });
+    } catch (err) {
+      console.error('Logout error:', err);
+    } finally {
+      // Re-assert cleared state
+      setHasLoggedOut(true);
+      setInternalUser(null);
+      setProfileDropdownOpen(false);
+      if (onLogout) {
+        onLogout();
+      }
+
+      // If in a role-restricted workspace route, cleanly navigate to home
+      if (
+        pathname.startsWith('/admin') ||
+        pathname.startsWith('/organizer') ||
+        pathname.startsWith('/judge') ||
+        pathname.startsWith('/participant')
+      ) {
+        window.location.href = '/';
+      } else {
+        router.refresh();
+      }
+    }
+  };
+
+  const formatRole = (role?: string) => {
+    if (!role) return 'PARTICIPANT';
+    if (role.toUpperCase() === 'ADMIN') return 'SUPER ADMIN';
+    return role.toUpperCase();
+  };
 
   const [searchResults, setSearchResults] = useState<{
     hackathons: Array<{ id: string; title: string; subtitle?: string; href: string; status?: string }>;
@@ -285,108 +392,111 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </div>
 
 
-      {/* RIGHT: Notifications, Community & Profile Avatar */}
+      {/* RIGHT: Get Started (Guest) OR Dynamic Profile Dropdown (Logged In) */}
       <div className="flex items-center space-x-2 sm:space-x-3">
-        {/* Notifications Icon Button */}
-        <div className="relative">
-          <button
-            onClick={() => setNotificationsOpen(!notificationsOpen)}
-            className="p-2 rounded-full text-[#64748B] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors relative"
-            aria-label="Notifications"
-          >
-            <Bell className="w-5 h-5" />
-            <span className="w-2 h-2 rounded-full bg-[#2563EB] absolute top-2 right-2 ring-2 ring-white"></span>
-          </button>
+        {/* Real-Time WebSocket Status Badge */}
+        <LiveStatusBadge />
 
-          {/* Notifications Dropdown */}
-          {notificationsOpen && (
-            <div className="absolute right-0 mt-2 w-80 bg-white rounded-2xl border border-[#E2E8F0] shadow-elevated p-3 z-50 text-xs animate-in fade-in duration-100">
-              <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
-                <span className="font-bold text-[#111827]">Notifications</span>
-                <span className="text-[11px] text-[#2563EB] font-semibold cursor-pointer">Mark all as read</span>
+        {/* Backdrop for profile dropdown */}
+        {profileDropdownOpen && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setProfileDropdownOpen(false)}
+          />
+        )}
+
+        {!authLoading && !currentUser && (
+          /* Guest: Show Get Started Button */
+          <Link
+            href="/login"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-xl shadow-xs transition-all hover:shadow"
+          >
+            <span>Get Started</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </Link>
+        )}
+
+        {!authLoading && currentUser && (
+          /* Logged In: Show Dynamic Profile Role Pill & Dropdown matching reference */
+          <div className="relative z-50">
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl border border-[#1E293B] hover:bg-[#F8FAFC] transition-colors bg-white select-none text-left shadow-xs"
+            >
+              {currentUser.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-rose-200 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
+                </div>
+              )}
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-[13px] text-[#0F172A] leading-tight max-w-[130px] truncate">
+                  {currentUser.name}
+                </span>
+                <span className="font-extrabold text-[10px] text-[#800020] uppercase tracking-wider leading-tight mt-0.5">
+                  {formatRole(currentUser.role)}
+                </span>
               </div>
-              <div className="divide-y divide-[#F1F5F9] max-h-64 overflow-y-auto">
-                <div className="py-2.5 space-y-1">
-                  <p className="font-medium text-[#111827]">Judging Phase Commenced</p>
-                  <p className="text-[11px] text-[#64748B]">
-                    Apex AI Global Hackathon 2026 has initiated jury evaluations.
+              {profileDropdownOpen ? (
+                <ChevronUp className="w-4 h-4 text-[#475569] ml-1.5 flex-shrink-0" />
+              ) : (
+                <ChevronDown className="w-4 h-4 text-[#475569] ml-1.5 flex-shrink-0" />
+              )}
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-[#E2E8F0] shadow-xl p-4 z-50 animate-in fade-in duration-100 select-none text-xs">
+                {/* Header: Name and Email */}
+                <div className="pb-3 border-b border-[#F1F5F9]">
+                  <h4 className="font-bold text-sm text-[#0F172A] truncate">
+                    {currentUser.name}
+                  </h4>
+                  <p className="text-xs text-[#64748B] truncate mt-0.5">
+                    {currentUser.email}
                   </p>
-                  <span className="text-[10px] text-[#94A3B8]">10 mins ago</span>
                 </div>
-                <div className="py-2.5 space-y-1">
-                  <p className="font-medium text-[#111827]">Team Invite Accepted</p>
-                  <p className="text-[11px] text-[#64748B]">Bob Builder joined your project SentinelShield.</p>
-                  <span className="text-[10px] text-[#94A3B8]">1 hour ago</span>
+
+                {/* Nav links: Profile & Settings */}
+                <div className="py-2 space-y-1">
+                  <Link
+                    href={currentUser.role === 'JUDGE' ? '/judge/profile' : '/participant/settings'}
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
+                  >
+                    <User className="w-4 h-4 text-[#64748B]" />
+                    <span>Profile</span>
+                  </Link>
+
+                  <Link
+                    href="/participant/settings"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-[#64748B]" />
+                    <span>Settings</span>
+                  </Link>
+                </div>
+
+                {/* Logout Button */}
+                <div className="pt-2 border-t border-[#F1F5F9]">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-3 px-2 py-2 rounded-lg text-[#E11D48] hover:bg-[#FFF1F2] font-bold text-xs transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4 text-[#E11D48]" />
+                    <span>Log out</span>
+                  </button>
                 </div>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-[#F8FAFC] border border-transparent hover:border-[#E2E8F0] transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center">
-              {userName.charAt(0)}
-            </div>
-            <span className="hidden md:inline text-xs font-semibold text-[#111827] max-w-[100px] truncate">
-              {userName}
-            </span>
-          </button>
-
-          {/* Profile Dropdown Menu */}
-          {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-[#E2E8F0] shadow-elevated py-2 z-50 text-xs animate-in fade-in duration-100">
-              <div className="px-4 py-2 border-b border-[#F1F5F9]">
-                <p className="font-bold text-[#111827] truncate">{userName}</p>
-                <p className="text-[11px] text-[#64748B] uppercase tracking-wider font-semibold">
-                  Role: {userRole}
-                </p>
-              </div>
-
-              <div className="py-1">
-                <Link
-                  href="/participant/dashboard"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#334155] hover:bg-[#F8FAFC] hover:text-[#2563EB]"
-                >
-                  <User className="w-4 h-4 mr-2.5 text-[#64748B]" />
-                  <span>My Workspace</span>
-                </Link>
-                <Link
-                  href="/leaderboard"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#334155] hover:bg-[#F8FAFC] hover:text-[#2563EB]"
-                >
-                  <Trophy className="w-4 h-4 mr-2.5 text-[#64748B]" />
-                  <span>Leaderboard</span>
-                </Link>
-                <Link
-                  href="/participant/settings"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#334155] hover:bg-[#F8FAFC] hover:text-[#2563EB]"
-                >
-                  <Sliders className="w-4 h-4 mr-2.5 text-[#64748B]" />
-                  <span>Account Settings</span>
-                </Link>
-              </div>
-
-              <div className="border-t border-[#F1F5F9] pt-1">
-                <Link
-                  href="/login"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2]"
-                >
-                  <LogOut className="w-4 h-4 mr-2.5" />
-                  <span>Sign Out</span>
-                </Link>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

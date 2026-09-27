@@ -17,15 +17,6 @@ export class AuthError extends Error {
 export async function requireAuth(): Promise<UserSession> {
   const session = await getSession();
   if (!session) {
-    if (process.env.NODE_ENV !== 'production') {
-      return {
-        id: 'usr_admin_001',
-        email: 'admin@hackathon.dev',
-        role: 'ADMIN',
-        fullName: 'Platform Administrator',
-        status: 'ACTIVE',
-      };
-    }
     throw new AuthError('Authentication required to access this resource.', 'UNAUTHORIZED', 401);
   }
 

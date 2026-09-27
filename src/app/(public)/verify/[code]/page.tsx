@@ -76,7 +76,6 @@ export default function CertificateVerificationPage({
 
   return (
     <AppShell
-      userRole="PARTICIPANT"
       pageTitle="Credential Verification"
       pageSubtitle="Instant digital verification of hackathon honors, achievements, and completion certificates."
     >
