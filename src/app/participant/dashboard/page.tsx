@@ -40,45 +40,58 @@ export default async function ParticipantDashboard() {
     redirect('/login?from=/participant/dashboard');
   }
 
-  // 1. Fetch all real data in parallel
-  const [
-    registrations,
-    teams,
-    projects,
-    submissions,
-    certificates,
-    attendanceRecords,
-    activeSessionsCount,
-    recentActivity,
-  ] = await Promise.all([
-    RegistrationRepository.listByUser(session.id),
-    TeamRepository.listByUser(session.id),
-    ProjectRepository.listByUser(session.id),
-    SubmissionRepository.listByUser(session.id),
-    prisma.certificate.findMany({
-      where: { userId: session.id },
-      include: {
-        hackathon: {
-          select: { title: true, slug: true },
-        },
-      },
-      orderBy: { issuedAt: 'desc' },
-    }),
-    prisma.attendanceRecord.findMany({
-      where: { userId: session.id },
-      include: {
-        session: {
-          include: {
-            hackathon: { select: { title: true } },
+  // 1. Fetch all real data in parallel with error resilience
+  let registrations: any[] = [];
+  let teams: any[] = [];
+  let projects: any[] = [];
+  let submissions: any[] = [];
+  let certificates: any[] = [];
+  let attendanceRecords: any[] = [];
+  let activeSessionsCount = 0;
+  let recentActivity: any[] = [];
+
+  try {
+    const results = await Promise.all([
+      RegistrationRepository.listByUser(session.id),
+      TeamRepository.listByUser(session.id),
+      ProjectRepository.listByUser(session.id),
+      SubmissionRepository.listByUser(session.id),
+      prisma.certificate.findMany({
+        where: { userId: session.id },
+        include: {
+          hackathon: {
+            select: { title: true, slug: true },
           },
         },
-      },
-    }),
-    prisma.attendanceSession.count({
-      where: { isActive: true },
-    }),
-    AuditService.listByUser(session.id, 6),
-  ]);
+        orderBy: { issuedAt: 'desc' },
+      }),
+      prisma.attendanceRecord.findMany({
+        where: { userId: session.id },
+        include: {
+          session: {
+            include: {
+              hackathon: { select: { title: true } },
+            },
+          },
+        },
+      }),
+      prisma.attendanceSession.count({
+        where: { isActive: true },
+      }),
+      AuditService.listByUser(session.id, 6),
+    ]);
+
+    registrations = results[0] || [];
+    teams = results[1] || [];
+    projects = results[2] || [];
+    submissions = results[3] || [];
+    certificates = results[4] || [];
+    attendanceRecords = results[5] || [];
+    activeSessionsCount = results[6] || 0;
+    recentActivity = results[7] || [];
+  } catch (err) {
+    console.error('[ParticipantDashboard] DB query failed:', err);
+  }
 
   // Primary active competition context (latest registration)
   const primaryRegistration = registrations[0] || null;

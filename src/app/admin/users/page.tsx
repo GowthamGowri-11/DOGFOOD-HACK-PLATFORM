@@ -5,23 +5,32 @@ import UsersManagementClientView, { UserManagementItem } from './UsersManagement
 export const dynamic = 'force-dynamic';
 
 export default async function AdminUsersPage() {
-  const [totalCount, rawUsers] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.findMany({
-      orderBy: { createdAt: 'desc' },
-      take: 100,
-      select: {
-        id: true,
-        fullName: true,
-        email: true,
-        role: true,
-        isActive: true,
-        avatarUrl: true,
-        bio: true,
-        createdAt: true,
-      },
-    }),
-  ]);
+  let totalCount = 0;
+  let rawUsers: any[] = [];
+
+  try {
+    const results = await Promise.all([
+      prisma.user.count(),
+      prisma.user.findMany({
+        orderBy: { createdAt: 'desc' },
+        take: 100,
+        select: {
+          id: true,
+          fullName: true,
+          email: true,
+          role: true,
+          isActive: true,
+          avatarUrl: true,
+          bio: true,
+          createdAt: true,
+        },
+      }),
+    ]);
+    totalCount = results[0];
+    rawUsers = results[1];
+  } catch (err) {
+    console.error('[AdminUsersPage] DB query failed:', err);
+  }
 
   const initialUsers: UserManagementItem[] = rawUsers.map((u) => {
     let phone: string | null = null;

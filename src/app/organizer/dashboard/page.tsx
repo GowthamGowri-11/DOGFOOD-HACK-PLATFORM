@@ -28,33 +28,39 @@ export const dynamic = 'force-dynamic';
 export default async function OrganizerDashboard() {
   const session = await getSession();
 
-  // Fetch hackathons for metrics
-  const hackathons = await prisma.hackathon.findMany({
-    include: {
-      tracks: true,
-      prizes: true,
-      _count: {
-        select: {
-          registrations: true,
-          projects: true,
-          judges: true,
-          certificates: true,
-          teams: true,
+  let hackathons: any[] = [];
+  let totalSubmissions = 0;
+
+  try {
+    hackathons = await prisma.hackathon.findMany({
+      include: {
+        tracks: true,
+        prizes: true,
+        _count: {
+          select: {
+            registrations: true,
+            projects: true,
+            judges: true,
+            certificates: true,
+            teams: true,
+          },
         },
       },
-    },
-  });
+    });
+
+    totalSubmissions = await prisma.submission.count({
+      where: { status: 'SUBMITTED' },
+    });
+  } catch (err) {
+    console.error('[OrganizerDashboard] DB query failed:', err);
+  }
 
   const activeHackathon = hackathons[0];
 
-  const totalSubmissions = await prisma.submission.count({
-    where: { status: 'SUBMITTED' },
-  });
-
-  const totalRegistrations = activeHackathon?._count.registrations || 128;
-  const totalProjects = activeHackathon?._count.projects || 24;
-  const totalJudges = activeHackathon?._count.judges || 6;
-  const totalCertificates = activeHackathon?._count.certificates || 95;
+  const totalRegistrations = activeHackathon?._count?.registrations || 128;
+  const totalProjects = activeHackathon?._count?.projects || 24;
+  const totalJudges = activeHackathon?._count?.judges || 6;
+  const totalCertificates = activeHackathon?._count?.certificates || 95;
 
   return (
     <div className="space-y-8 select-none">
