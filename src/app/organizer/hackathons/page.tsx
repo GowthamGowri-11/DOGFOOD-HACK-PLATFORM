@@ -188,14 +188,15 @@ export default function OrganizerHackathonsPage() {
           </p>
         </div>
 
-        <Button
-          variant="primary"
-          size="md"
-          onClick={() => setShowCreateModal(true)}
-          icon={<Plus className="w-4 h-4" />}
-        >
-          Create New Hackathon
-        </Button>
+        <Link href="/organizer/hackathons/create">
+          <Button
+            variant="primary"
+            size="md"
+            icon={<Plus className="w-4 h-4" />}
+          >
+            Create New Hackathon
+          </Button>
+        </Link>
       </div>
 
       {/* Notifications */}
@@ -294,6 +295,11 @@ export default function OrganizerHackathonsPage() {
                   <Link href={`/organizer/hackathons/${h.id}`}>
                     <Button variant="primary" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />}>
                       Event Control Center
+                    </Button>
+                  </Link>
+                  <Link href={`/organizer/hackathons/${h.id}/edit`}>
+                    <Button variant="outline" size="sm" icon={<Edit className="w-3.5 h-3.5" />}>
+                      Edit
                     </Button>
                   </Link>
                   <Link href={`/hackathons/${h.slug}`} target="_blank">

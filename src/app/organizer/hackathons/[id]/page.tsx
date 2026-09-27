@@ -225,6 +225,11 @@ export default function OrganizerHackathonDetailPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-2">
+          <Link href={`/organizer/hackathons/${hackathon.id}/edit`}>
+            <Button variant="primary" size="sm" icon={<Sliders className="w-3.5 h-3.5" />}>
+              Edit Configuration
+            </Button>
+          </Link>
           <Link href={`/hackathons/${hackathon.slug}`} target="_blank">
             <Button variant="outline" size="sm" icon={<ExternalLink className="w-3.5 h-3.5" />}>
               Public Preview

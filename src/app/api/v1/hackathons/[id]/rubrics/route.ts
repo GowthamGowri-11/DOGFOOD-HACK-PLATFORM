@@ -136,18 +136,23 @@ export async function POST(
             },
           });
 
-          currentRubric = await RubricRepository.findById(currentRubric.id);
+          currentRubric = (await RubricRepository.findById(currentRubric.id))!;
         }
       }
 
-      await AuditService.log({
-        userId: session.id,
-        hackathonId,
-        action: 'RUBRIC_UPDATED',
-        entityType: 'Rubric',
-        entityId: currentRubric?.id || '',
-        afterState: { criterionAdded: singleCriterion.title, totalCriteria: currentRubric?.criteria?.length || 0 },
-      });
+      if (currentRubric) {
+        await AuditService.log({
+          userId: session.id,
+          hackathonId,
+          action: 'RUBRIC_UPDATED',
+          entityType: 'Rubric',
+          entityId: currentRubric.id,
+          afterState: {
+            criterionAdded: singleCriterion.title,
+            totalCriteria: currentRubric.criteria?.length || 0,
+          },
+        });
+      }
 
       return successResponse({ rubric: currentRubric }, 'Criterion added successfully', 201);
     }
