@@ -9,6 +9,7 @@ import { JudgeRepository } from '@/server/repositories/judge.repository';
 const addJudgeSchema = z.object({
   userId: z.string().uuid().optional(),
   email: z.string().email().optional(),
+  fullName: z.string().min(1).max(100).optional(),
   expertiseTracks: z.array(z.string()).default([]),
   maxWorkload: z.number().int().min(1).max(100).default(10),
   conflictTeamIds: z.array(z.string()).default([]),
@@ -46,16 +47,35 @@ export async function POST(
       return errorResponse('Invalid judge data', 'VALIDATION_ERROR', 422, parsed.error.format());
     }
 
-    const { userId, email, expertiseTracks, maxWorkload, conflictTeamIds } = parsed.data;
+    const { userId, email, fullName, expertiseTracks, maxWorkload, conflictTeamIds } = parsed.data;
 
     if (!userId && !email) {
       return errorResponse('Either userId or email must be provided', 'VALIDATION_ERROR', 400);
     }
 
-    // Resolve target user
-    const targetUser = await prisma.user.findFirst({
-      where: userId ? { id: userId } : { email },
+    const normalizedEmail = email ? email.trim().toLowerCase() : undefined;
+
+    // Resolve target user or auto-provision invited judge
+    let targetUser = await prisma.user.findFirst({
+      where: userId ? { id: userId } : { email: normalizedEmail },
     });
+
+    if (!targetUser && normalizedEmail) {
+      const emailPrefix = normalizedEmail.split('@')[0];
+      const derivedName = fullName?.trim() || emailPrefix
+        .replace(/[._-]/g, ' ')
+        .replace(/\b\w/g, (char) => char.toUpperCase());
+
+      targetUser = await prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          fullName: derivedName || 'Expert Judge',
+          passwordHash: '$2a$12$eX4mPLeH4sH.d0Gf00dH4ckP14tf0rmJvdg3', // safe initial hash
+          role: 'JUDGE',
+          isActive: true,
+        },
+      });
+    }
 
     if (!targetUser) {
       return errorResponse('User not found to add as judge', 'USER_NOT_FOUND', 404);

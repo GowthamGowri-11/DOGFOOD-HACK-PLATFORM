@@ -126,12 +126,12 @@ export default function OrganizerAssignmentsPage() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-2.5 flex-wrap xl:flex-nowrap sm:justify-end">
           {hackathons.length > 0 && (
             <select
               value={selectedHackathonId}
               onChange={(e) => setSelectedHackathonId(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              className="h-10 px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[10px] text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-2xs cursor-pointer"
             >
               {hackathons.map((h) => (
                 <option key={h.id} value={h.id}>
@@ -141,26 +141,41 @@ export default function OrganizerAssignmentsPage() {
             </select>
           )}
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center h-10 px-3 bg-white border border-[#E2E8F0] rounded-[10px] text-xs font-medium text-[#475569] shadow-2xs gap-2">
+            <span className="text-[#64748B] font-semibold whitespace-nowrap">Judges / Project:</span>
             <input
               type="number"
               min={1}
               max={5}
               value={judgesPerProject}
               onChange={(e) => setJudgesPerProject(parseInt(e.target.value) || 2)}
-              className="w-16 h-[38px] px-2 text-center bg-white border border-[#E2E8F0] rounded-[10px] text-xs font-bold"
+              className="w-8 text-center font-bold text-[#111827] bg-[#F8FAFC] border border-[#CBD5E1] rounded px-1 py-0.5 focus:outline-none focus:border-[#2563EB]"
               title="Judges per project"
             />
-            <Button
-              variant="primary"
-              size="md"
-              onClick={handleRunAutoAssign}
-              disabled={running}
-              icon={<RefreshCw className={`w-4 h-4 ${running ? 'animate-spin' : ''}`} />}
-            >
-              {running ? 'Allocating...' : 'Run Assignment Engine'}
-            </Button>
           </div>
+
+          <Button
+            variant="outline"
+            size="md"
+            onClick={() => fetchAssignments(selectedHackathonId)}
+            disabled={loading}
+            icon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
+            className="whitespace-nowrap font-semibold text-xs h-10"
+          >
+            Refresh
+          </Button>
+
+          <Button
+            variant="primary"
+            size="md"
+            onClick={handleRunAutoAssign}
+            disabled={running}
+            isLoading={running}
+            icon={<Zap className="w-4 h-4" />}
+            className="whitespace-nowrap font-semibold text-xs h-10 shadow-sm"
+          >
+            <span>{running ? 'Allocating Judges...' : 'Run Assignment Engine'}</span>
+          </Button>
         </div>
       </div>
 

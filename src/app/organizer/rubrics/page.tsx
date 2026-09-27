@@ -9,6 +9,7 @@ import {
   AlertCircle,
   ShieldCheck,
   Trash2,
+  RefreshCw,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -41,6 +42,7 @@ export default function OrganizerRubricsPage() {
   const [weight, setWeight] = useState(25);
   const [maxScore, setMaxScore] = useState(100);
   const [saving, setSaving] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   useEffect(() => {
@@ -63,15 +65,17 @@ export default function OrganizerRubricsPage() {
     if (!hId) return;
     try {
       setLoading(true);
-      const res = await fetch(`/api/v1/hackathons/${hId}/rubrics`);
+      const res = await fetch(`/api/v1/hackathons/${hId}/rubrics?current=true`);
       const json = await res.json();
-      if (res.ok && json.data?.rubric) {
-        setRubric(json.data.rubric);
+      if (res.ok && json.data) {
+        const found = json.data.rubric || (json.data.rubrics && json.data.rubrics[0]) || null;
+        setRubric(found);
       } else {
         setRubric(null);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      setMessage({ type: 'error', text: err.message || 'Failed to fetch rubric data' });
     } finally {
       setLoading(false);
     }
@@ -94,10 +98,10 @@ export default function OrganizerRubricsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           criterion: {
-            title,
-            description,
-            weightPercentage: weight,
-            maxScore,
+            title: title.trim(),
+            description: description.trim() || `Assessment for ${title.trim()}`,
+            weightPercentage: Number(weight) || 25,
+            maxScore: Number(maxScore) || 100,
             requiredFeedback: true,
           },
         }),
@@ -110,9 +114,28 @@ export default function OrganizerRubricsPage() {
       setShowAddModal(false);
       fetchRubric(selectedHackathonId);
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      setMessage({ type: 'error', text: err.message || 'Failed to add criterion' });
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleDeleteCriterion = async (criterionId: string) => {
+    if (!selectedHackathonId || !criterionId) return;
+    try {
+      setDeletingId(criterionId);
+      setMessage(null);
+      const res = await fetch(`/api/v1/hackathons/${selectedHackathonId}/rubrics?criterionId=${criterionId}`, {
+        method: 'DELETE',
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.message || 'Failed to delete criterion');
+      setMessage({ type: 'success', text: 'Criterion removed successfully.' });
+      fetchRubric(selectedHackathonId);
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Failed to delete criterion' });
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -135,7 +158,7 @@ export default function OrganizerRubricsPage() {
                   : 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]'
               }`}
             >
-              Weight Sum: {totalWeight}% / 100%
+              Weight Sum: {totalWeight}% / 100% {isBalanced ? '✓' : '(Needs Calibration)'}
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mt-1 tracking-tight">
@@ -146,12 +169,12 @@ export default function OrganizerRubricsPage() {
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center gap-2.5 flex-wrap xl:flex-nowrap sm:justify-end">
           {hackathons.length > 0 && (
             <select
               value={selectedHackathonId}
               onChange={(e) => setSelectedHackathonId(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              className="h-10 px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[10px] text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB] shadow-2xs cursor-pointer"
             >
               {hackathons.map((h) => (
                 <option key={h.id} value={h.id}>
@@ -162,10 +185,22 @@ export default function OrganizerRubricsPage() {
           )}
 
           <Button
+            variant="outline"
+            size="md"
+            onClick={() => fetchRubric(selectedHackathonId)}
+            disabled={loading}
+            icon={<RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />}
+            className="whitespace-nowrap font-semibold text-xs h-10"
+          >
+            Refresh
+          </Button>
+
+          <Button
             variant="primary"
             size="md"
             onClick={() => setShowAddModal(true)}
             icon={<Plus className="w-4 h-4" />}
+            className="whitespace-nowrap font-semibold text-xs h-10 shadow-sm"
           >
             Add Criterion
           </Button>
@@ -207,28 +242,53 @@ export default function OrganizerRubricsPage() {
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {rubric.criteria.map((c) => (
-            <div
-              key={c.id}
-              className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 shadow-card space-y-3 text-xs"
-            >
-              <div className="flex items-start justify-between">
-                <div>
-                  <h3 className="text-base font-bold text-[#111827]">{c.title}</h3>
-                  <p className="text-xs text-[#64748B] mt-0.5">{c.description}</p>
-                </div>
-                <Badge variant="purple" size="sm">
-                  {c.weightPercentage}% Weight
-                </Badge>
-              </div>
+        <div className="space-y-4">
+          <div className="flex items-center justify-between text-xs text-[#64748B] font-medium px-1">
+            <span>
+              Rubric: <strong className="text-[#111827]">{rubric.name}</strong> (v{rubric.version})
+            </span>
+            <span>{rubric.criteria.length} Evaluation Criteria Active</span>
+          </div>
 
-              <div className="pt-2 border-t border-[#F1F5F9] flex items-center justify-between text-[#64748B]">
-                <span>Max Score: <strong>{c.maxScore} pts</strong></span>
-                <span className="text-[#059669] font-medium">Feedback Required: Yes</span>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {rubric.criteria.map((c) => (
+              <div
+                key={c.id}
+                className="bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[18px] p-5 shadow-card space-y-3 text-xs transition-all relative group"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex-1 pr-2">
+                    <h3 className="text-base font-bold text-[#111827]">{c.title}</h3>
+                    <p className="text-xs text-[#64748B] mt-0.5 leading-relaxed">{c.description}</p>
+                  </div>
+                  <div className="flex items-center space-x-2 flex-shrink-0">
+                    <Badge variant="purple" size="sm">
+                      {c.weightPercentage}% Weight
+                    </Badge>
+                    <button
+                      onClick={() => handleDeleteCriterion(c.id)}
+                      disabled={deletingId === c.id}
+                      className="p-1.5 rounded-lg text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#FEF2F2] transition-colors"
+                      title="Delete criterion"
+                    >
+                      {deletingId === c.id ? (
+                        <div className="w-3.5 h-3.5 border-2 border-[#DC2626] border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-3.5 h-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-[#F1F5F9] flex items-center justify-between text-[#64748B]">
+                  <span>Max Score: <strong className="text-[#111827]">{c.maxScore} pts</strong></span>
+                  <span className="text-[#059669] font-medium flex items-center">
+                    <CheckCircle2 className="w-3 h-3 mr-1" /> Feedback Required
+                  </span>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
 
@@ -238,7 +298,7 @@ export default function OrganizerRubricsPage() {
           <div className="bg-white border border-[#E2E8F0] rounded-[20px] max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <h3 className="text-base font-bold text-[#111827]">Add Rubric Criterion</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-xs text-[#64748B]">✕</button>
+              <button onClick={() => setShowAddModal(false)} className="text-xs text-[#64748B] hover:text-[#111827]">✕</button>
             </div>
 
             <form onSubmit={handleAddCriterion} className="space-y-3 text-xs">
@@ -261,7 +321,7 @@ export default function OrganizerRubricsPage() {
                   placeholder="Specific guidelines for judges when scoring this dimension..."
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
+                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 />
               </div>
 
@@ -274,7 +334,7 @@ export default function OrganizerRubricsPage() {
                     max={100}
                     value={weight}
                     onChange={(e) => setWeight(parseInt(e.target.value) || 25)}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
+                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                   />
                 </div>
 
@@ -283,10 +343,10 @@ export default function OrganizerRubricsPage() {
                   <input
                     type="number"
                     min={10}
-                    max={100}
+                    max={1000}
                     value={maxScore}
                     onChange={(e) => setMaxScore(parseInt(e.target.value) || 100)}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
+                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                   />
                 </div>
               </div>
@@ -295,8 +355,8 @@ export default function OrganizerRubricsPage() {
                 <Button variant="outline" size="sm" type="button" onClick={() => setShowAddModal(false)}>
                   Cancel
                 </Button>
-                <Button variant="primary" size="sm" type="submit" disabled={saving}>
-                  {saving ? 'Saving...' : 'Save Criterion'}
+                <Button variant="primary" size="sm" type="submit" disabled={saving} isLoading={saving}>
+                  Save Criterion
                 </Button>
               </div>
             </form>

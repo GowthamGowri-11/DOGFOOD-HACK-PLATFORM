@@ -44,6 +44,9 @@ export default function OrganizerJudgesPage() {
   const [adding, setAdding] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  const [modalError, setModalError] = useState<string | null>(null);
+  const [newJudgeName, setNewJudgeName] = useState('');
+
   useEffect(() => {
     async function loadHackathons() {
       try {
@@ -84,26 +87,43 @@ export default function OrganizerJudgesPage() {
 
   const handleAddJudge = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newJudgeEmail.trim() || !selectedHackathonId) return;
+    if (!newJudgeEmail.trim()) {
+      setModalError('Please enter a valid email address.');
+      return;
+    }
+    if (!selectedHackathonId) {
+      setModalError('Please select a hackathon first.');
+      return;
+    }
+
     try {
       setAdding(true);
+      setModalError(null);
       setMessage(null);
+
       const res = await fetch(`/api/v1/hackathons/${selectedHackathonId}/judges`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: newJudgeEmail.trim().toLowerCase(),
+          fullName: newJudgeName.trim() || undefined,
           maxWorkload: newWorkload,
         }),
       });
+
       const json = await res.json();
-      if (!res.ok) throw new Error(json.message || 'Failed to add judge');
-      setMessage({ type: 'success', text: `Judge ${newJudgeEmail} added to competition jury.` });
+      if (!res.ok) {
+        throw new Error(json.message || 'Failed to add judge to panel');
+      }
+
+      setMessage({ type: 'success', text: `Judge ${newJudgeEmail.trim()} successfully added to competition jury.` });
       setNewJudgeEmail('');
+      setNewJudgeName('');
+      setNewWorkload(10);
       setShowAddModal(false);
-      fetchJudges(selectedHackathonId);
+      await fetchJudges(selectedHackathonId);
     } catch (err: any) {
-      setMessage({ type: 'error', text: err.message });
+      setModalError(err.message || 'Failed to add judge');
     } finally {
       setAdding(false);
     }
@@ -164,7 +184,10 @@ export default function OrganizerJudgesPage() {
           <Button
             variant="primary"
             size="md"
-            onClick={() => setShowAddModal(true)}
+            onClick={() => {
+              setModalError(null);
+              setShowAddModal(true);
+            }}
             icon={<Plus className="w-4 h-4" />}
           >
             Add Judge
@@ -205,6 +228,19 @@ export default function OrganizerJudgesPage() {
           <p className="text-xs text-[#64748B] max-w-sm mx-auto">
             Add verified judges to this hackathon to begin assigning submissions for rubric evaluation.
           </p>
+          <div className="pt-2">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setModalError(null);
+                setShowAddModal(true);
+              }}
+              icon={<Plus className="w-4 h-4" />}
+            >
+              Add Judge
+            </Button>
+          </div>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -216,10 +252,10 @@ export default function OrganizerJudgesPage() {
               <div className="flex items-start justify-between">
                 <div className="flex items-center space-x-2.5">
                   <div className="w-9 h-9 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
-                    {j.user.fullName.charAt(0)}
+                    {j.user.fullName ? j.user.fullName.charAt(0).toUpperCase() : 'J'}
                   </div>
                   <div>
-                    <h4 className="font-bold text-[#111827] text-sm">{j.user.fullName}</h4>
+                    <h4 className="font-bold text-[#111827] text-sm">{j.user.fullName || 'Judge'}</h4>
                     <span className="text-[11px] text-[#64748B]">{j.user.email}</span>
                   </div>
                 </div>
@@ -263,19 +299,42 @@ export default function OrganizerJudgesPage() {
           <div className="bg-white border border-[#E2E8F0] rounded-[20px] max-w-md w-full p-6 shadow-xl space-y-4">
             <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
               <h3 className="text-base font-bold text-[#111827]">Add Judge to Hackathon</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-xs text-[#64748B]">✕</button>
+              <button
+                onClick={() => setShowAddModal(false)}
+                className="w-7 h-7 rounded-full hover:bg-[#F1F5F9] flex items-center justify-center text-[#64748B] hover:text-[#111827] transition"
+              >
+                ✕
+              </button>
             </div>
 
-            <form onSubmit={handleAddJudge} className="space-y-3 text-xs">
+            {modalError && (
+              <div className="p-3 bg-[#FEF2F2] border border-[#FECACA] rounded-[10px] text-xs text-[#991B1B] flex items-center">
+                <AlertCircle className="w-4 h-4 mr-2 flex-shrink-0 text-[#DC2626]" />
+                {modalError}
+              </div>
+            )}
+
+            <form onSubmit={handleAddJudge} className="space-y-3.5 text-xs">
               <div>
                 <label className="font-semibold text-[#334155] block mb-1">Judge User Email *</label>
                 <input
                   type="email"
                   required
-                  placeholder="e.g. judge@domain.com"
+                  placeholder="e.g. kit28.24bad026@gmail.com"
                   value={newJudgeEmail}
                   onChange={(e) => setNewJudgeEmail(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                  className="w-full px-3 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+                />
+              </div>
+
+              <div>
+                <label className="font-semibold text-[#334155] block mb-1">Judge Full Name (Optional)</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Dr. Alex Morgan"
+                  value={newJudgeName}
+                  onChange={(e) => setNewJudgeName(e.target.value)}
+                  className="w-full px-3 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] placeholder:text-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 />
               </div>
 
@@ -287,15 +346,27 @@ export default function OrganizerJudgesPage() {
                   max={50}
                   value={newWorkload}
                   onChange={(e) => setNewWorkload(parseInt(e.target.value) || 10)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
+                  className="w-full px-3 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
                 />
+                <p className="text-[11px] text-[#64748B] mt-1">Maximum number of project submissions assigned to this judge.</p>
               </div>
 
-              <div className="pt-2 flex justify-end space-x-2">
-                <Button variant="outline" size="sm" type="button" onClick={() => setShowAddModal(false)}>
+              <div className="pt-3 flex justify-end space-x-2 border-t border-[#F1F5F9]">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  type="button"
+                  onClick={() => setShowAddModal(false)}
+                  disabled={adding}
+                >
                   Cancel
                 </Button>
-                <Button variant="primary" size="sm" type="submit" disabled={adding}>
+                <Button
+                  variant="primary"
+                  size="sm"
+                  type="submit"
+                  disabled={adding || !newJudgeEmail.trim()}
+                >
                   {adding ? 'Adding...' : 'Add Judge'}
                 </Button>
               </div>
