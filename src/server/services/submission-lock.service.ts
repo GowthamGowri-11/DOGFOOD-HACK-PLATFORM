@@ -4,6 +4,8 @@ import { SubmissionValidator } from '@/server/services/submission-validator.serv
 import { SnapshotService } from '@/server/services/snapshot.service';
 import { AuditService } from '@/server/services/audit.service';
 import prisma from '@/lib/prisma';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export class SubmissionLockService {
   /**
@@ -78,6 +80,29 @@ export class SubmissionLockService {
         submissionId: submission.id,
         version: versionNumber,
         contentHash,
+        lockedAt: submission.lockedAt,
+      },
+    });
+
+    await eventBus.publish({
+      type: 'SUBMISSION_LOCKED',
+      hackathonId: project.hackathon.id,
+      teamId: project.teamId,
+      projectId: project.id,
+      userId,
+      actorId: userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(project.hackathon.id),
+        RealtimeRoomBuilder.team(project.teamId),
+        RealtimeRoomBuilder.project(project.id),
+        RealtimeRoomBuilder.organizer(project.hackathon.id),
+      ],
+      payload: {
+        submissionId: submission.id,
+        projectId: project.id,
+        teamId: project.teamId,
+        versionNumber,
+        status: submission.status,
         lockedAt: submission.lockedAt,
       },
     });

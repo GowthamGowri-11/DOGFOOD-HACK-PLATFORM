@@ -56,8 +56,8 @@ export async function GET(
         hackathon: cert.hackathon,
         integrityHash,
         issuer: {
-          name: cert.hackathon.organizationName || 'Apex Frontier Systems',
-          verifiedDomain: 'apexhack.io',
+          name: cert.hackathon.organizationName || 'ATLYX Platform',
+          verifiedDomain: 'atlyx.io',
         },
       },
     });

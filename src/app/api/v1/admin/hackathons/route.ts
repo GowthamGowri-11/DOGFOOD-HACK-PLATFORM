@@ -43,7 +43,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireRole('ADMIN');
+    const session = await requireRole(['ADMIN', 'ORGANIZER']);
     const body = await req.json();
 
     const {

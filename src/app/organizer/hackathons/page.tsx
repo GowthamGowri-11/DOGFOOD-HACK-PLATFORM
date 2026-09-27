@@ -1,546 +1,654 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Trophy,
-  Plus,
+  Search,
+  Eye,
+  Trash2,
+  RefreshCw,
+  Download,
   Calendar,
   Users,
-  FolderKanban,
-  FileCheck,
   CheckCircle2,
   AlertCircle,
-  ExternalLink,
-  Edit,
-  ArrowRight,
-  Sparkles,
-  Search,
+  X,
+  Layers,
+  Award,
+  Plus,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
+
+interface PrizeItem {
+  id: string;
+  title: string;
+  amount: number | string;
+  currency: string;
+  rankOrder: number;
+}
 
 interface HackathonItem {
   id: string;
-  slug: string;
   title: string;
-  tagline?: string | null;
-  description: string;
-  organizationName: string;
+  slug: string;
+  tagline: string | null;
   status: string;
+  organizationName: string;
   minTeamSize: number;
   maxTeamSize: number;
+  bannerUrl: string | null;
   eventStartTime: string;
   eventEndTime: string;
-  regStartTime: string;
-  regEndTime: string;
-  subEndTime: string;
+  rulesAndGuidelines?: string | null;
+  organizer: {
+    id: string;
+    fullName: string;
+    email: string;
+  };
+  prizes?: PrizeItem[];
+  tracks?: Array<{ id: string; title: string }>;
   _count: {
     registrations: number;
     projects: number;
     judges: number;
   };
+  createdAt: string;
+}
+
+interface CoordinatorContact {
+  name: string;
+  contact: string;
 }
 
 export default function OrganizerHackathonsPage() {
   const [hackathons, setHackathons] = useState<HackathonItem[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<string>('ALL');
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [creating, setCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-  // New Hackathon Form State
-  const [formData, setFormData] = useState({
-    title: '',
-    slug: '',
-    tagline: '',
-    description: '',
-    organizationName: '',
-    minTeamSize: 1,
-    maxTeamSize: 4,
-    regStartTime: new Date().toISOString().slice(0, 16),
-    regEndTime: new Date(Date.now() + 7 * 86400000).toISOString().slice(0, 16),
-    eventStartTime: new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 16),
-    eventEndTime: new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 16),
-    subStartTime: new Date(Date.now() + 8 * 86400000).toISOString().slice(0, 16),
-    subEndTime: new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 16),
-    judgingStartTime: new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 16),
-    judgingEndTime: new Date(Date.now() + 12 * 86400000).toISOString().slice(0, 16),
-  });
+  // Delete modal state
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [hackathonToDelete, setHackathonToDelete] = useState<HackathonItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const fetchHackathons = async () => {
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3500);
+  };
+
+  const fetchHackathons = useCallback(async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
+
     try {
-      setLoading(true);
-      const res = await fetch('/api/v1/hackathons');
+      const params = new URLSearchParams({
+        mine: 'true',
+        page: '1',
+        pageSize: '50',
+      });
+      if (search.trim()) params.append('search', search.trim());
+      if (statusFilter) params.append('status', statusFilter);
+
+      const res = await fetch(`/api/v1/hackathons?${params.toString()}`);
       const json = await res.json();
-      if (res.ok && json.data?.hackathons) {
-        setHackathons(json.data.hackathons);
+      if (json.success && json.data) {
+        setHackathons(json.data.hackathons || []);
       }
-    } catch (err: any) {
-      setError(err.message || 'Failed to load hackathons');
+    } catch (err) {
+      console.error('Failed to fetch hackathons:', err);
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
-  };
+  }, [search, statusFilter]);
 
   useEffect(() => {
     fetchHackathons();
-  }, []);
+  }, [fetchHackathons]);
 
-  const handleCreateHackathon = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleRefresh = async () => {
+    await fetchHackathons(true);
+    showToast('Hackathon directory refreshed successfully');
+  };
+
+  // Export CSV handler
+  const handleExportCSV = () => {
+    if (hackathons.length === 0) {
+      showToast('No hackathons available to export');
+      return;
+    }
+    setExporting(true);
+
     try {
-      setCreating(true);
-      setError(null);
-      setSuccessMsg(null);
+      const headers = [
+        'ID',
+        'Title',
+        'Slug',
+        'Tagline',
+        'Status',
+        'Organization',
+        'Organizer Name',
+        'Organizer Email',
+        'Min Team Size',
+        'Max Team Size',
+        'Total Prize Pool',
+        'Currency',
+        'Event Start Date',
+        'Event End Date',
+        'Registrations',
+        'Projects',
+        'Judges',
+        'Created At',
+      ];
 
-      const payload = {
-        ...formData,
-        slug: formData.slug.trim() || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
-        regStartTime: new Date(formData.regStartTime).toISOString(),
-        regEndTime: new Date(formData.regEndTime).toISOString(),
-        eventStartTime: new Date(formData.eventStartTime).toISOString(),
-        eventEndTime: new Date(formData.eventEndTime).toISOString(),
-        subStartTime: new Date(formData.subStartTime).toISOString(),
-        subEndTime: new Date(formData.subEndTime).toISOString(),
-        judgingStartTime: new Date(formData.judgingStartTime).toISOString(),
-        judgingEndTime: new Date(formData.judgingEndTime).toISOString(),
-      };
+      const rows = hackathons.map((h) => {
+        const totalPrize = h.prizes && h.prizes.length > 0
+          ? h.prizes.reduce((sum, p) => sum + Number(p.amount || 0), 0)
+          : 0;
+        const currency = h.prizes?.[0]?.currency || 'USD';
 
-      const res = await fetch('/api/v1/hackathons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
+        return [
+          `"${h.id}"`,
+          `"${(h.title || '').replace(/"/g, '""')}"`,
+          `"${h.slug}"`,
+          `"${(h.tagline || '').replace(/"/g, '""')}"`,
+          `"${h.status}"`,
+          `"${(h.organizationName || '').replace(/"/g, '""')}"`,
+          `"${(h.organizer?.fullName || '').replace(/"/g, '""')}"`,
+          `"${h.organizer?.email || ''}"`,
+          h.minTeamSize,
+          h.maxTeamSize,
+          totalPrize,
+          currency,
+          `"${h.eventStartTime || ''}"`,
+          `"${h.eventEndTime || ''}"`,
+          h._count?.registrations || 0,
+          h._count?.projects || 0,
+          h._count?.judges || 0,
+          `"${h.createdAt || ''}"`,
+        ].join(',');
       });
 
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.message || 'Failed to create hackathon');
-      }
+      const csvContent = [headers.join(','), ...rows].join('\r\n');
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `atlyx_hackathons_${new Date().toISOString().slice(0, 10)}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
 
-      setSuccessMsg(`Hackathon "${formData.title}" created successfully!`);
-      setShowCreateModal(false);
-      fetchHackathons();
-    } catch (err: any) {
-      setError(err.message);
+      showToast(`Exported ${hackathons.length} hackathons to CSV`);
+    } catch {
+      showToast('Failed to export CSV');
     } finally {
-      setCreating(false);
+      setExporting(false);
     }
   };
 
-  const handleStatusTransition = async (hackathonId: string, newStatus: string) => {
+  // Delete Hackathon handler
+  const confirmDelete = async () => {
+    if (!hackathonToDelete) return;
+    setDeleting(true);
+    setDeleteError(null);
     try {
-      setError(null);
-      setSuccessMsg(null);
-
-      const res = await fetch(`/api/v1/hackathons/${hackathonId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: newStatus }),
+      const res = await fetch(`/api/v1/hackathons/${hackathonToDelete.id}`, {
+        method: 'DELETE',
       });
-
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.message || 'Failed to transition lifecycle state');
+      const data = await res.json();
+      if (data.success) {
+        setDeleteModalOpen(false);
+        setHackathonToDelete(null);
+        showToast(`"${hackathonToDelete.title}" removed from platform`);
+        fetchHackathons();
+      } else {
+        setDeleteError(data.error?.message || data.message || 'Failed to delete hackathon');
       }
-
-      setSuccessMsg(`Lifecycle updated to ${newStatus.replace(/_/g, ' ')}`);
-      fetchHackathons();
-    } catch (err: any) {
-      setError(err.message);
+    } catch {
+      setDeleteError('An unexpected network error occurred while deleting');
+    } finally {
+      setDeleting(false);
     }
   };
 
-  const filtered = hackathons.filter((h) => {
-    if (statusFilter !== 'ALL' && h.status !== statusFilter) return false;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
+  // Helper to parse coordinators
+  const getCoordinators = (h: HackathonItem): CoordinatorContact[] => {
+    if (h.rulesAndGuidelines) {
+      try {
+        const parsed = JSON.parse(h.rulesAndGuidelines);
+        if (parsed.organizers && Array.isArray(parsed.organizers) && parsed.organizers.length > 0) {
+          const valid = parsed.organizers.filter((o: any) => o && o.name && o.name.trim() !== '');
+          if (valid.length > 0) return valid;
+        }
+      } catch {
+        // Not JSON
+      }
+    }
+    if (h.organizer?.fullName) {
+      return [{ name: h.organizer.fullName, contact: h.organizer.email || h.organizationName || 'Organizer' }];
+    }
+    return [];
+  };
+
+  // Helper to calculate total prize pool
+  const formatPrizePool = (h: HackathonItem): string => {
+    if (h.prizes && h.prizes.length > 0) {
+      const total = h.prizes.reduce((sum, p) => sum + Number(p.amount || 0), 0);
+      const currency = h.prizes[0].currency || 'USD';
+      if (currency === 'INR' || currency === '₹') {
+        return `₹${total.toLocaleString('en-IN')}`;
+      }
+      return `$${total.toLocaleString('en-US')}`;
+    }
+
+    if (h.rulesAndGuidelines) {
+      try {
+        const parsed = JSON.parse(h.rulesAndGuidelines);
+        if (parsed.prizePool !== undefined && parsed.prizePool !== null && Number(parsed.prizePool) > 0) {
+          const curr = parsed.currency === 'INR' ? '₹' : '$';
+          return `${curr}${Number(parsed.prizePool).toLocaleString()}`;
+        }
+      } catch {
+        // fallback
+      }
+    }
+
+    return '$0';
+  };
+
+  // Helper to calculate rounds count
+  const getRoundsCount = (h: HackathonItem): number => {
+    if (h.rulesAndGuidelines) {
+      try {
+        const parsed = JSON.parse(h.rulesAndGuidelines);
+        if (parsed.rounds && Array.isArray(parsed.rounds)) {
+          return parsed.rounds.length;
+        }
+      } catch {
+        // fallback
+      }
+    }
+    return h.tracks && h.tracks.length > 0 ? h.tracks.length : 1;
+  };
+
+  // Status Badge matching site colors
+  const renderStatusBadge = (h: HackathonItem) => {
+    const isPast = new Date(h.eventEndTime) < new Date();
+    if (h.status === 'COMPLETED' || isPast) {
       return (
-        h.title.toLowerCase().includes(q) ||
-        h.organizationName.toLowerCase().includes(q) ||
-        h.slug.toLowerCase().includes(q)
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#f1f5f9] text-[#64748b] border border-[#e2e8f0]">
+          EXPIRED
+        </span>
       );
     }
-    return true;
-  });
+
+    if (h.status === 'PUBLISHED' || h.status === 'EVENT_ACTIVE' || h.status === 'REGISTRATION_OPEN') {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#ecfdf5] text-[#059669] border border-[#a7f3d0]">
+          ACTIVE
+        </span>
+      );
+    }
+
+    if (h.status === 'JUDGING') {
+      return (
+        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#eff6ff] text-[#2563eb] border border-[#bfdbfe]">
+          JUDGING
+        </span>
+      );
+    }
+
+    return (
+      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#f8fafc] text-[#94a3b8] border border-[#e2e8f0]">
+        {h.status}
+      </span>
+    );
+  };
+
+  const filteredHackathons = useMemo(() => {
+    return hackathons.filter((h) => {
+      const matchesSearch =
+        search.trim() === '' ||
+        h.title.toLowerCase().includes(search.toLowerCase()) ||
+        h.slug.toLowerCase().includes(search.toLowerCase()) ||
+        (h.tagline && h.tagline.toLowerCase().includes(search.toLowerCase()));
+
+      const isPast = new Date(h.eventEndTime) < new Date();
+      if (statusFilter === 'EXPIRED') return matchesSearch && (h.status === 'COMPLETED' || isPast);
+      if (statusFilter === 'ACTIVE') return matchesSearch && (h.status === 'PUBLISHED' || h.status === 'EVENT_ACTIVE' || h.status === 'REGISTRATION_OPEN');
+      if (statusFilter === 'DRAFT') return matchesSearch && h.status === 'DRAFT';
+
+      return matchesSearch;
+    });
+  }, [hackathons, search, statusFilter]);
 
   return (
-    <div className="space-y-6 select-none">
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E2E8F0] gap-4">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full border border-[#BFDBFE]">
-              Organizer Workspace
-            </span>
-            <span className="text-[11px] font-semibold text-[#64748B]">
-              {hackathons.length} Total Hackathon{hackathons.length === 1 ? '' : 's'}
-            </span>
+    <div className="space-y-6 max-w-7xl mx-auto pb-12 select-none">
+      {/* Toast Alert */}
+      {toastMessage && (
+        <div className="fixed top-5 right-5 z-50 bg-[#0f172a] text-white px-4 py-2.5 rounded-xl shadow-xl text-xs font-medium flex items-center gap-2 border border-[#334155] animate-in fade-in slide-in-from-top-4 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-[#10b981]" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
+
+      {/* Breadcrumb Bar */}
+      <nav className="flex items-center space-x-2 text-xs text-[#64748b] font-medium">
+        <Link href="/" className="hover:text-[#2563eb] transition-colors">
+          Home
+        </Link>
+        <span>&rsaquo;</span>
+        <Link href="/organizer/dashboard" className="hover:text-[#2563eb] transition-colors">
+          Organizer
+        </Link>
+        <span>&rsaquo;</span>
+        <span className="text-[#0f172a] font-semibold">Hackathons</span>
+      </nav>
+
+      {/* Top Header Matching Site UI/UX */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] flex-shrink-0 mt-0.5 border border-[#dbeafe]">
+            <Trophy className="w-6 h-6 stroke-[2.2]" />
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mt-1 tracking-tight">
-            My Hackathons & Control Center
-          </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-normal">
-            Configure event tracks, problem statements, prizes, and govern the full competition lifecycle.
-          </p>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight">
+              Hackathon Management
+            </h1>
+            <p className="text-xs text-[#64748b] mt-1 font-normal">
+              Browse and oversee all assigned college hackathons. View event details, configure AI Jury, and publish results.
+            </p>
+          </div>
         </div>
 
-        <Link href="/organizer/hackathons/create">
-          <Button
-            variant="primary"
-            size="md"
-            icon={<Plus className="w-4 h-4" />}
+        {/* Action Buttons Matching Site Style */}
+        <div className="flex items-center gap-2.5 self-start sm:self-center flex-wrap">
+          <button
+            type="button"
+            onClick={handleExportCSV}
+            disabled={exporting}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#e2e8f0] rounded-xl text-xs font-semibold text-[#334155] hover:bg-[#f8fafc] hover:border-[#cbd5e1] hover:text-[#2563eb] shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            title="Download CSV report"
           >
-            Create New Hackathon
-          </Button>
-        </Link>
+            <Download className="w-3.5 h-3.5 text-[#64748b]" />
+            <span>{exporting ? 'Exporting...' : 'Export CSV'}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#e2e8f0] rounded-xl text-xs font-semibold text-[#334155] hover:bg-[#f8fafc] hover:border-[#cbd5e1] hover:text-[#2563eb] shadow-xs transition-all cursor-pointer disabled:opacity-50"
+            title="Refresh hackathons list"
+          >
+            <RefreshCw
+              className={`w-3.5 h-3.5 text-[#2563eb] ${refreshing ? 'animate-spin' : ''}`}
+            />
+            <span>{refreshing ? 'Refreshing...' : 'Refresh'}</span>
+          </button>
+
+          <Link
+            href="/organizer/hackathons/create"
+            className="inline-flex items-center gap-1.5 px-4 py-2 bg-[#2563eb] hover:bg-[#1d4ed8] text-white rounded-xl text-xs font-bold shadow-xs transition-all cursor-pointer"
+          >
+            <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+            <span>Create Hackathon</span>
+          </Link>
+        </div>
       </div>
 
-      {/* Notifications */}
-      {successMsg && (
-        <div className="bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] px-4 py-3 rounded-[12px] text-xs font-medium flex items-center shadow-xs">
-          <CheckCircle2 className="w-4 h-4 mr-2 text-[#059669] flex-shrink-0" />
-          {successMsg}
-        </div>
-      )}
-      {error && (
-        <div className="bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B] px-4 py-3 rounded-[12px] text-xs font-medium flex items-center shadow-xs">
-          <AlertCircle className="w-4 h-4 mr-2 text-[#DC2626] flex-shrink-0" />
-          {error}
-        </div>
-      )}
-
-      {/* Search & Status Filters */}
-      <div className="flex flex-col sm:flex-row gap-3 items-center justify-between">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+      {/* Search & Counters Bar */}
+      <div className="bg-white border border-[#e2e8f0] rounded-2xl p-3.5 shadow-xs flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="relative w-full sm:w-96">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94a3b8]" />
           <input
             type="text"
-            placeholder="Search by title or organization..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-[38px] pl-10 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[19px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
+            placeholder="Search hackathons by title or slug..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 text-xs bg-[#f8fafc] border border-[#e2e8f0] rounded-xl text-[#0f172a] placeholder:text-[#94a3b8] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 transition-all"
           />
         </div>
 
-        <div className="flex items-center space-x-2 overflow-x-auto w-full sm:w-auto">
-          {['ALL', 'DRAFT', 'PUBLISHED', 'REGISTRATION_OPEN', 'SUBMISSION_OPEN', 'JUDGING', 'RESULTS_PUBLISHED', 'COMPLETED'].map((s) => (
-            <button
-              key={s}
-              onClick={() => setStatusFilter(s)}
-              className={`h-[34px] px-3 rounded-[17px] text-[12px] font-medium border transition-colors whitespace-nowrap ${
-                statusFilter === s
-                  ? 'bg-[#EFF6FF] text-[#2563EB] border-[#3B82F6] font-semibold'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
-              }`}
-            >
-              {s.replace(/_/g, ' ')}
-            </button>
-          ))}
+        <div className="flex items-center space-x-3 w-full sm:w-auto justify-between sm:justify-end">
+          <div className="flex items-center space-x-1 text-xs">
+            {['', 'ACTIVE', 'EXPIRED', 'DRAFT'].map((st) => (
+              <button
+                key={st || 'ALL'}
+                onClick={() => setStatusFilter(st)}
+                className={`px-3 py-1 rounded-xl text-xs font-semibold transition-all ${
+                  statusFilter === st
+                    ? 'bg-[#2563eb] text-white shadow-xs'
+                    : 'bg-white border border-[#e2e8f0] text-[#64748b] hover:bg-[#f8fafc] hover:text-[#0f172a]'
+                }`}
+              >
+                {st || 'All'}
+              </button>
+            ))}
+          </div>
+
+          <span className="text-xs font-medium text-[#64748b] whitespace-nowrap">
+            Showing <strong className="text-[#0f172a] font-bold">{filteredHackathons.length}</strong> hackathons
+          </span>
         </div>
       </div>
 
-      {/* Hackathons List */}
+      {/* Cards Grid */}
       {loading ? (
-        <div className="py-16 text-center text-xs text-[#64748B]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto mb-2" />
-          Loading hackathons...
+        <div className="p-16 text-center text-xs text-[#64748b] bg-white border border-[#e2e8f0] rounded-2xl shadow-xs">
+          <RefreshCw className="w-6 h-6 text-[#2563eb] animate-spin mx-auto mb-2" />
+          Loading hackathons from canonical database...
         </div>
-      ) : filtered.length === 0 ? (
-        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-12 text-center space-y-3 shadow-card">
-          <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
-            <Trophy className="w-6 h-6" />
-          </div>
-          <h3 className="text-base font-bold text-[#111827]">No Hackathons Found</h3>
-          <p className="text-xs text-[#64748B] max-w-sm mx-auto">
-            No events match your selected filters. Click &quot;Create New Hackathon&quot; to configure a new competition.
+      ) : filteredHackathons.length === 0 ? (
+        <div className="p-16 text-center bg-white border border-[#e2e8f0] rounded-2xl shadow-xs space-y-3">
+          <Trophy className="w-10 h-10 text-[#cbd5e1] mx-auto" />
+          <p className="text-base font-bold text-[#0f172a]">No hackathons found</p>
+          <p className="text-xs text-[#64748b]">
+            {search ? 'Try clearing your search term or filters.' : 'Get started by creating your first hackathon arena.'}
           </p>
+          <Link
+            href="/organizer/hackathons/create"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-xl shadow-xs transition-colors mt-2"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span>Create New Hackathon</span>
+          </Link>
         </div>
       ) : (
-        <div className="space-y-4">
-          {filtered.map((h) => (
-            <div
-              key={h.id}
-              className="bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[18px] p-6 shadow-card space-y-5 transition-all"
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredHackathons.map((h) => {
+            const coordinators = getCoordinators(h);
+            const prizePoolFormatted = formatPrizePool(h);
+            const roundsCount = getRoundsCount(h);
+
+            return (
+              <div
+                key={h.id}
+                className="bg-white rounded-2xl border border-[#e2e8f0] p-5 shadow-xs hover:shadow-md hover:border-[#cbd5e1] transition-all flex flex-col justify-between"
+              >
                 <div>
-                  <div className="flex items-center space-x-2 text-xs text-[#64748B] mb-1">
-                    <span className="font-semibold text-[#334155]">{h.organizationName}</span>
-                    <span>•</span>
-                    <Badge
-                      variant={
-                        h.status === 'RESULTS_PUBLISHED'
-                          ? 'emerald'
-                          : h.status === 'JUDGING'
-                          ? 'purple'
-                          : h.status === 'SUBMISSION_OPEN'
-                          ? 'blue'
-                          : h.status === 'DRAFT'
-                          ? 'neutral'
-                          : 'slate'
-                      }
-                    >
-                      {h.status.replace(/_/g, ' ')}
-                    </Badge>
+                  {/* Status Badge */}
+                  <div className="mb-2">
+                    {renderStatusBadge(h)}
                   </div>
-                  <h3 className="text-xl font-bold text-[#111827]">{h.title}</h3>
-                  {h.tagline && <p className="text-xs text-[#64748B] mt-0.5">{h.tagline}</p>}
+
+                  {/* Banner Box / Preview */}
+                  <div className="w-full bg-gradient-to-br from-[#eff6ff] to-[#f8fafc] border border-[#dbeafe] rounded-xl p-5 my-2 text-center flex flex-col items-center justify-center min-h-[130px] relative overflow-hidden group/banner">
+                    {h.bannerUrl ? (
+                      <div className="absolute inset-0 w-full h-full">
+                        <img
+                          src={h.bannerUrl}
+                          alt={h.title}
+                          className="w-full h-full object-cover group-hover/banner:scale-105 transition-transform duration-300"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-3 text-left">
+                          <h2 className="text-white font-bold text-sm tracking-wide">{h.title}</h2>
+                          {h.tagline && <p className="text-white/80 text-[11px] truncate">{h.tagline}</p>}
+                        </div>
+                      </div>
+                    ) : (
+                      <>
+                        <h2 className="text-xl sm:text-2xl font-black text-[#1e40af] tracking-tight uppercase leading-tight font-sans">
+                          {h.title}
+                        </h2>
+                        <p className="text-xs text-[#2563eb] font-mono mt-1 font-semibold tracking-wide">
+                          {h.tagline || h.organizationName || 'Empowering Builders'}
+                        </p>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Title & Tagline */}
+                  <div className="mt-3">
+                    <h3 className="font-bold text-base text-[#0f172a] tracking-tight hover:text-[#2563eb] transition-colors">
+                      <Link href={`/organizer/hackathons/${h.id}`}>
+                        {h.title}
+                      </Link>
+                    </h3>
+                    <p className="text-xs text-[#64748b] font-medium mt-0.5">
+                      {h.tagline || h.organizationName || ''}
+                    </p>
+                  </div>
+
+                  {/* Stats Box (Team Size, Rounds, Prize Pool) */}
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3 my-3 grid grid-cols-3 divide-x divide-[#e2e8f0] text-center">
+                    <div className="px-1">
+                      <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-wider block">
+                        TEAM SIZE
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-[#6366f1] mt-0.5 block">
+                        {h.minTeamSize}-{h.maxTeamSize}
+                      </span>
+                    </div>
+
+                    <div className="px-1">
+                      <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-wider block">
+                        ROUNDS
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-[#059669] mt-0.5 block">
+                        {roundsCount} Rounds
+                      </span>
+                    </div>
+
+                    <div className="px-1">
+                      <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-wider block">
+                        PRIZE POOL
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-[#2563eb] mt-0.5 block">
+                        {prizePoolFormatted}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Coordinators List */}
+                  {coordinators.length > 0 && (
+                    <div className="space-y-1 my-3 text-xs text-[#475569] font-medium">
+                      {coordinators.map((c, idx) => (
+                        <div key={idx} className="flex items-center text-[11px]">
+                          <span className="text-[#64748b]">{c.name}:</span>
+                          <span className="font-semibold text-[#0f172a] ml-1">{c.contact}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
 
-                <div className="flex flex-wrap items-center gap-2">
-                  <Link href={`/organizer/hackathons/${h.id}`}>
-                    <Button variant="primary" size="sm" icon={<ArrowRight className="w-3.5 h-3.5" />}>
-                      Event Control Center
-                    </Button>
+                {/* Card Bottom Actions: Manage Hackathon + Delete */}
+                <div className="pt-3 border-t border-[#f1f5f9] flex items-center space-x-2 mt-2">
+                  <Link
+                    href={`/organizer/hackathons/${h.id}`}
+                    className="flex-1 inline-flex items-center justify-center gap-1.5 py-2 px-3 bg-white border border-[#e2e8f0] hover:bg-[#f8fafc] hover:border-[#cbd5e1] hover:text-[#2563eb] text-[#334155] text-xs font-semibold rounded-xl transition-all shadow-xs"
+                  >
+                    <Eye className="w-3.5 h-3.5 text-[#64748b]" />
+                    <span>Manage Hackathon</span>
                   </Link>
-                  <Link href={`/organizer/hackathons/${h.id}/edit`}>
-                    <Button variant="outline" size="sm" icon={<Edit className="w-3.5 h-3.5" />}>
-                      Edit
-                    </Button>
-                  </Link>
-                  <Link href={`/hackathons/${h.slug}`} target="_blank">
-                    <Button variant="outline" size="sm" icon={<ExternalLink className="w-3.5 h-3.5" />}>
-                      Public Page
-                    </Button>
-                  </Link>
+
+                  <button
+                    onClick={() => {
+                      setHackathonToDelete(h);
+                      setDeleteError(null);
+                      setDeleteModalOpen(true);
+                    }}
+                    className="inline-flex items-center justify-center gap-1 py-2 px-3 bg-[#fef2f2] border border-[#fecaca] hover:bg-[#fee2e2] text-[#dc2626] text-xs font-semibold rounded-xl transition-all"
+                    title="Delete Hackathon"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Delete</span>
+                  </button>
                 </div>
               </div>
-
-              {/* Metrics Ribbon */}
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
-                    Registrations
-                  </span>
-                  <span className="text-lg font-bold text-[#111827]">{h._count?.registrations || 0}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
-                    Projects Submitted
-                  </span>
-                  <span className="text-lg font-bold text-[#2563EB]">{h._count?.projects || 0}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
-                    Assigned Judges
-                  </span>
-                  <span className="text-lg font-bold text-[#7E22CE]">{h._count?.judges || 0}</span>
-                </div>
-
-                <div className="p-3 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-[#64748B] block">
-                    Team Bounds
-                  </span>
-                  <span className="text-lg font-bold text-[#334155]">{h.minTeamSize}–{h.maxTeamSize} Members</span>
-                </div>
-              </div>
-
-              {/* Quick Lifecycle State Actions */}
-              <div className="pt-3 border-t border-[#F1F5F9] flex flex-wrap items-center justify-between gap-3 text-xs">
-                <div className="flex items-center space-x-2 text-[#64748B]">
-                  <Calendar className="w-3.5 h-3.5 text-[#2563EB]" />
-                  <span>
-                    Event Window: {new Date(h.eventStartTime).toLocaleDateString()} – {new Date(h.eventEndTime).toLocaleDateString()}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-1.5">
-                  {h.status === 'DRAFT' && (
-                    <button
-                      onClick={() => handleStatusTransition(h.id, 'PUBLISHED')}
-                      className="px-2.5 py-1 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-lg text-xs font-semibold transition-colors"
-                    >
-                      Publish Event
-                    </button>
-                  )}
-                  {h.status === 'PUBLISHED' && (
-                    <button
-                      onClick={() => handleStatusTransition(h.id, 'REGISTRATION_OPEN')}
-                      className="px-2.5 py-1 bg-[#ECFDF5] text-[#059669] hover:bg-[#059669] hover:text-white rounded-lg text-xs font-semibold transition-colors"
-                    >
-                      Open Registration
-                    </button>
-                  )}
-                  {h.status === 'REGISTRATION_OPEN' && (
-                    <button
-                      onClick={() => handleStatusTransition(h.id, 'SUBMISSION_OPEN')}
-                      className="px-2.5 py-1 bg-[#EFF6FF] text-[#2563EB] hover:bg-[#2563EB] hover:text-white rounded-lg text-xs font-semibold transition-colors"
-                    >
-                      Open Submissions
-                    </button>
-                  )}
-                  {h.status === 'SUBMISSION_OPEN' && (
-                    <button
-                      onClick={() => handleStatusTransition(h.id, 'JUDGING')}
-                      className="px-2.5 py-1 bg-[#FAF5FF] text-[#7E22CE] hover:bg-[#7E22CE] hover:text-white rounded-lg text-xs font-semibold transition-colors"
-                    >
-                      Start Judging
-                    </button>
-                  )}
-                </div>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* Create Hackathon Modal */}
-      {showCreateModal && (
-        <div className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-xs flex items-center justify-center z-50 p-4">
-          <div className="bg-white border border-[#E2E8F0] rounded-[22px] max-w-2xl w-full p-6 shadow-2xl space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
-              <div className="flex items-center space-x-2">
-                <Trophy className="w-5 h-5 text-[#2563EB]" />
-                <h3 className="text-lg font-bold text-[#111827]">Create New Hackathon</h3>
+      {/* Delete Confirmation Modal */}
+      {deleteModalOpen && hackathonToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-[#e2e8f0] space-y-4">
+            <div className="flex items-center space-x-2.5">
+              <div className="p-2 rounded-xl bg-[#fef2f2] text-[#dc2626] border border-[#fecaca]">
+                <Trash2 className="w-5 h-5" />
               </div>
-              <button
-                onClick={() => setShowCreateModal(false)}
-                className="text-xs text-[#64748B] hover:text-[#111827]"
-              >
-                ✕
-              </button>
+              <div>
+                <h3 className="text-base font-extrabold text-[#0f172a]">
+                  Delete Hackathon Arena
+                </h3>
+                <p className="text-xs text-[#64748b]">This action permanently removes this event.</p>
+              </div>
             </div>
 
-            <form onSubmit={handleCreateHackathon} className="space-y-4 text-xs">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Title *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Apex Global AI Arena 2026"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                  />
-                </div>
+            <div className="p-3.5 bg-[#f8fafc] rounded-xl border border-[#e2e8f0] text-xs space-y-1">
+              <span className="font-bold text-[#0f172a] text-sm">{hackathonToDelete.title}</span>
+              <p className="text-[#64748b]">
+                Slug: <span className="font-mono text-[#0f172a]">/{hackathonToDelete.slug}</span>
+              </p>
+              <p className="text-[#64748b]">
+                Status: <span className="font-semibold text-[#2563eb]">{hackathonToDelete.status}</span>
+              </p>
+            </div>
 
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Organization Name *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Apex Frontier Systems"
-                    value={formData.organizationName}
-                    onChange={(e) => setFormData({ ...formData, organizationName: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                  />
-                </div>
+            {deleteError && (
+              <div className="p-3 bg-[#fef2f2] border border-[#fecaca] rounded-xl text-xs text-[#dc2626] flex items-start space-x-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 mt-0.5" />
+                <span>{deleteError}</span>
               </div>
+            )}
 
-              <div>
-                <label className="font-semibold text-[#334155] block mb-1">Tagline</label>
-                <input
-                  type="text"
-                  placeholder="e.g. Build Autonomous AI Agents and Zero-Knowledge FinTech Protocols"
-                  value={formData.tagline}
-                  onChange={(e) => setFormData({ ...formData, tagline: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                />
-              </div>
-
-              <div>
-                <label className="font-semibold text-[#334155] block mb-1">Description *</label>
-                <textarea
-                  required
-                  rows={3}
-                  placeholder="Comprehensive event details, challenges, guidelines and builder incentives..."
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Min Team Size</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={formData.minTeamSize}
-                    onChange={(e) => setFormData({ ...formData, minTeamSize: parseInt(e.target.value) || 1 })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Max Team Size</label>
-                  <input
-                    type="number"
-                    min={1}
-                    max={10}
-                    value={formData.maxTeamSize}
-                    onChange={(e) => setFormData({ ...formData, maxTeamSize: parseInt(e.target.value) || 4 })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Registration Start</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.regStartTime}
-                    onChange={(e) => setFormData({ ...formData, regStartTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Registration End</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.regEndTime}
-                    onChange={(e) => setFormData({ ...formData, regEndTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Submission Deadline</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.subEndTime}
-                    onChange={(e) => setFormData({ ...formData, subEndTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
-                  />
-                </div>
-
-                <div>
-                  <label className="font-semibold text-[#334155] block mb-1">Judging Deadline</label>
-                  <input
-                    type="datetime-local"
-                    value={formData.judgingEndTime}
-                    onChange={(e) => setFormData({ ...formData, judgingEndTime: e.target.value })}
-                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[10px] text-xs text-[#111827]"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-3 flex justify-end space-x-2 border-t border-[#F1F5F9]">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  type="button"
-                  onClick={() => setShowCreateModal(false)}
-                >
-                  Cancel
-                </Button>
-                <Button variant="primary" size="sm" type="submit" disabled={creating}>
-                  {creating ? 'Creating...' : 'Create Hackathon'}
-                </Button>
-              </div>
-            </form>
+            <div className="flex justify-end space-x-2 pt-2">
+              <button
+                type="button"
+                onClick={() => setDeleteModalOpen(false)}
+                disabled={deleting}
+                className="px-4 py-2 text-xs font-semibold text-[#334155] bg-white border border-[#e2e8f0] hover:bg-[#f8fafc] rounded-xl transition-all"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmDelete}
+                disabled={deleting}
+                className="px-4 py-2 text-xs font-bold text-white bg-[#dc2626] hover:bg-[#b91c1c] rounded-xl shadow-xs transition-all disabled:opacity-60 flex items-center space-x-1.5"
+              >
+                {deleting ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Deleting...</span>
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Confirm Delete</span>
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

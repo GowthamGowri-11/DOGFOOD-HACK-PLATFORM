@@ -45,11 +45,11 @@ export default function RegisterPage() {
     <div className="min-h-[80vh] flex items-center justify-center px-4 py-12">
       <div className="max-w-md w-full bg-white border border-slate-200 rounded-2xl p-8 shadow-sm space-y-6">
         <div className="text-center space-y-2">
-          <div className="w-12 h-12 bg-blue-600 rounded-xl flex items-center justify-center text-white mx-auto shadow-md shadow-blue-500/20">
-            <Trophy className="w-6 h-6" />
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto overflow-hidden">
+            <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900">Create Your Account</h1>
-          <p className="text-sm text-slate-500">Join ApexHack competitions and evaluation juries</p>
+          <p className="text-sm text-slate-500">Join ATLYX competitions and evaluation juries</p>
         </div>
 
         {error && (

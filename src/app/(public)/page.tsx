@@ -47,7 +47,7 @@ export default function HomePage() {
           slug: h.slug,
           title: h.title,
           tagline: h.tagline,
-          organizationName: h.organizationName || 'Apex Hackathon Network',
+          organizationName: h.organizationName || 'ATLYX Hackathon Network',
           logoUrl: h.logoUrl,
           bannerUrl: h.bannerUrl,
           status: h.status,

@@ -3,6 +3,8 @@ import { requireAuth } from '@/server/permissions/guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export async function POST(
   req: NextRequest,
@@ -88,6 +90,22 @@ export async function POST(
       afterState: { projectId, totalVotes },
     });
 
+    await eventBus.publish({
+      type: 'VOTE_CREATED',
+      hackathonId: project.hackathonId,
+      projectId,
+      userId: session.id,
+      actorId: session.id,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(project.hackathonId),
+        RealtimeRoomBuilder.project(projectId),
+      ],
+      payload: {
+        projectId,
+        totalVotes,
+      },
+    });
+
     return successResponse(
       { voteId: vote.id, totalVotes, hasVoted: true },
       'Community vote recorded successfully',
@@ -115,11 +133,16 @@ export async function DELETE(
           userId: session.id,
         },
       },
+      include: {
+        project: { select: { hackathonId: true } },
+      },
     });
 
     if (!existingVote) {
       return errorResponse('You have not voted for this project.', 'VOTE_NOT_FOUND', 404);
     }
+
+    const hackathonId = existingVote.project.hackathonId;
 
     await prisma.vote.delete({
       where: {
@@ -138,6 +161,22 @@ export async function DELETE(
       entityType: 'Vote',
       entityId: existingVote.id,
       afterState: { projectId, totalVotes },
+    });
+
+    await eventBus.publish({
+      type: 'VOTE_REMOVED',
+      hackathonId,
+      projectId,
+      userId: session.id,
+      actorId: session.id,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(hackathonId),
+        RealtimeRoomBuilder.project(projectId),
+      ],
+      payload: {
+        projectId,
+        totalVotes,
+      },
     });
 
     return successResponse(

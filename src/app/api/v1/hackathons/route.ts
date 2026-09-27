@@ -62,17 +62,14 @@ export async function GET(req: NextRequest) {
 
     if (mine) {
       const session = await requireAuth();
-      const hackathons = await HackathonRepository.listByOrganizer(session.id);
-      return successResponse({
-        hackathons,
-        pagination: {
-          total: hackathons.length,
-          page: 1,
-          pageSize: hackathons.length || 1,
-          totalPages: 1,
-          hasMore: false,
-        },
+      const result = await HackathonRepository.listAdminPaginated({
+        search,
+        status,
+        organizerId: session.id,
+        page,
+        pageSize,
       });
+      return successResponse(result);
     }
 
     const result = await HackathonRepository.listPublic({
@@ -91,7 +88,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireRole(['ORGANIZER', 'ADMIN']);
+    const session = await requireRole(['ADMIN', 'ORGANIZER']);
     const body = await req.json();
     const parsed = createHackathonSchema.safeParse(body);
 

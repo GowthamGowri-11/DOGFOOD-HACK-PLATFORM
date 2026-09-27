@@ -165,7 +165,7 @@ export default function ParticipantCertificatesPage() {
                 {/* Footer Metadata */}
                 <div className="pt-4 flex flex-col sm:flex-row items-center justify-between text-xs text-[#64748B] border-t border-[#E2E8F0] gap-2">
                   <span>
-                    Issuer: <strong>{cert.hackathon.organizationName || 'Apex Frontier Systems'}</strong>
+                    Issuer: <strong>{cert.hackathon.organizationName || 'ATLYX Frontier Systems'}</strong>
                   </span>
                   <span className="font-mono text-[#2563EB] font-bold">
                     ID: {cert.verificationCode}

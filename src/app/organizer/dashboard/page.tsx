@@ -87,13 +87,13 @@ export default async function OrganizerDashboard() {
           <div className="flex items-center space-x-2 px-3.5 py-2 bg-white border border-[#E2E8F0] rounded-xl text-[13px] font-medium text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <span className="text-[#64748B]">Active:</span>
             <span className="text-[#2563EB] truncate max-w-[200px] font-medium">
-              {activeHackathon?.title || 'Apex AI Global Hackathon 2026'}
+              {activeHackathon?.title || 'ATLYX AI Global Hackathon 2026'}
             </span>
           </div>
 
           <Link href="/organizer/hackathons">
-            <Button variant="primary" size="md" icon={<Plus className="w-4 h-4" />}>
-              Create Hackathon
+            <Button variant="primary" size="md" icon={<Trophy className="w-4 h-4" />}>
+              Manage Hackathons
             </Button>
           </Link>
         </div>

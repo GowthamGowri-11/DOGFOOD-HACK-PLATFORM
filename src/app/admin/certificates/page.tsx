@@ -190,7 +190,7 @@ export default function AdminCertificatesPage() {
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
             <input
               type="text"
-              placeholder="Search by recipient, verification code (APEX-...), email, or hackathon..."
+              placeholder="Search by recipient, verification code (ATLYX-...), email, or hackathon..."
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
