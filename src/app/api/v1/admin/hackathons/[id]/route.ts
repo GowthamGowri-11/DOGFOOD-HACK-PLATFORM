@@ -205,6 +205,114 @@ export async function PATCH(
       }
     }
 
+    // Handle Tracks & Problem Statements updates
+    if (body.tracks && Array.isArray(body.tracks)) {
+      const existingTracks = await prisma.track.findMany({
+        where: { hackathonId: id },
+        include: { problemStatements: true },
+      });
+
+      const incomingTrackIds = body.tracks.map((t: any) => t.id).filter(Boolean);
+
+      // Delete tracks that were removed (unless they have associated projects)
+      for (const exTrack of existingTracks) {
+        if (!incomingTrackIds.includes(exTrack.id)) {
+          const projectCount = await prisma.project.count({ where: { trackId: exTrack.id } });
+          if (projectCount === 0) {
+            await prisma.track.delete({ where: { id: exTrack.id } });
+          }
+        }
+      }
+
+      // Upsert tracks & problem statements
+      for (let tIdx = 0; tIdx < body.tracks.length; tIdx++) {
+        const t = body.tracks[tIdx];
+        const resolvedSlug = (t.slug || t.title)
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || `track-${tIdx + 1}`;
+
+        let currentTrackId = t.id;
+
+        if (currentTrackId && existingTracks.some((et) => et.id === currentTrackId)) {
+          // Update existing track
+          await prisma.track.update({
+            where: { id: currentTrackId },
+            data: {
+              title: t.title.trim(),
+              description: t.description?.trim() || null,
+              colorHex: t.colorHex || '#2563EB',
+              displayOrder: t.displayOrder ?? tIdx,
+            },
+          });
+        } else {
+          // Create new track
+          const newTrack = await prisma.track.create({
+            data: {
+              hackathonId: id,
+              title: t.title.trim(),
+              slug: `${resolvedSlug}-${Math.random().toString(36).substring(2, 6)}`,
+              description: t.description?.trim() || null,
+              colorHex: t.colorHex || '#2563EB',
+              displayOrder: t.displayOrder ?? tIdx,
+            },
+          });
+          currentTrackId = newTrack.id;
+        }
+
+        // Handle Problem Statements for this track
+        if (t.problemStatements && Array.isArray(t.problemStatements)) {
+          const existingProblems = await prisma.problemStatement.findMany({
+            where: { trackId: currentTrackId },
+          });
+
+          const incomingProblemIds = t.problemStatements.map((p: any) => p.id).filter(Boolean);
+
+          // Delete removed problems (if not linked to projects)
+          for (const exProb of existingProblems) {
+            if (!incomingProblemIds.includes(exProb.id)) {
+              const projCount = await prisma.project.count({ where: { problemId: exProb.id } });
+              if (projCount === 0) {
+                await prisma.problemStatement.delete({ where: { id: exProb.id } });
+              }
+            }
+          }
+
+          // Upsert problem statements
+          for (let pIdx = 0; pIdx < t.problemStatements.length; pIdx++) {
+            const p = t.problemStatements[pIdx];
+            if (p.id && existingProblems.some((ep) => ep.id === p.id)) {
+              await prisma.problemStatement.update({
+                where: { id: p.id },
+                data: {
+                  code: p.code.trim().toUpperCase(),
+                  title: p.title.trim(),
+                  description: p.description.trim(),
+                  challengeDocUrl: p.challengeDocUrl?.trim() || null,
+                  isPublic: p.isPublic !== false,
+                  displayOrder: p.displayOrder ?? pIdx,
+                },
+              });
+            } else if (p.title?.trim()) {
+              await prisma.problemStatement.create({
+                data: {
+                  hackathonId: id,
+                  trackId: currentTrackId,
+                  code: p.code?.trim().toUpperCase() || `PS-${tIdx + 1}${pIdx + 1}`,
+                  title: p.title.trim(),
+                  description: p.description?.trim() || p.title.trim(),
+                  challengeDocUrl: p.challengeDocUrl?.trim() || null,
+                  isPublic: p.isPublic !== false,
+                  displayOrder: p.displayOrder ?? pIdx,
+                },
+              });
+            }
+          }
+        }
+      }
+    }
+
     await AuditService.log({
       userId: session.id,
       hackathonId: id,

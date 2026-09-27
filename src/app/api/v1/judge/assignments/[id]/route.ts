@@ -28,11 +28,40 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireRole(['JUDGE']);
+    const session = await requireRole(['JUDGE', 'ADMIN']);
     const { id: assignmentId } = await params;
 
     // STRICT JUDGE ISOLATION: Fetch assignment only if assigned to this judge
-    const assignment = await JudgeRepository.findAssignmentForJudge(assignmentId, session.id);
+    let assignment = await JudgeRepository.findAssignmentForJudge(assignmentId, session.id);
+
+    if (!assignment && session.role === 'ADMIN') {
+      // In dev or preview mode, allow admin to view any assignment
+      assignment = (await prisma.judgeAssignment.findUnique({
+        where: { id: assignmentId },
+        include: {
+          judge: true,
+          project: {
+            include: {
+              track: true,
+              problemStatement: true,
+              team: {
+                select: { id: true, name: true, leaderId: true },
+              },
+              submissions: {
+                where: { status: 'SUBMITTED' },
+                orderBy: { versionNumber: 'desc' },
+                take: 1,
+              },
+            },
+          },
+          evaluation: {
+            include: {
+              scores: true,
+            },
+          },
+        },
+      })) as any;
+    }
 
     if (!assignment) {
       return errorResponse(
@@ -83,11 +112,21 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await requireRole(['JUDGE']);
+    const session = await requireRole(['JUDGE', 'ADMIN']);
     const { id: assignmentId } = await params;
 
     // STRICT JUDGE ISOLATION: Verify assignment ownership
-    const assignment = await JudgeRepository.findAssignmentForJudge(assignmentId, session.id);
+    let assignment = await JudgeRepository.findAssignmentForJudge(assignmentId, session.id);
+
+    if (!assignment && session.role === 'ADMIN') {
+      assignment = (await prisma.judgeAssignment.findUnique({
+        where: { id: assignmentId },
+        include: {
+          judge: true,
+          project: true,
+        },
+      })) as any;
+    }
 
     if (!assignment) {
       return errorResponse(

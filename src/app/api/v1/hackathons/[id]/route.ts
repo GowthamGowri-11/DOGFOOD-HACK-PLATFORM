@@ -40,7 +40,7 @@ const updateHackathonSchema = z.object({
   judgingEndTime: z.string().datetime().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  bannerUrl: z.string().url().optional().or(z.literal('')),
+  bannerUrl: z.string().optional().or(z.literal('')),
   logoUrl: z.string().url().optional().or(z.literal('')),
 });
 

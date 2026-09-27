@@ -7,6 +7,27 @@ import { requireRole } from '@/server/permissions/guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
+import prisma from '@/lib/prisma';
+
+const problemStatementInputSchema = z.object({
+  id: z.string().optional(),
+  code: z.string().min(1),
+  title: z.string().min(2),
+  description: z.string().min(5),
+  challengeDocUrl: z.string().optional().or(z.literal('')),
+  isPublic: z.boolean().default(true),
+  displayOrder: z.number().int().default(0),
+});
+
+const trackInputSchema = z.object({
+  id: z.string().optional(),
+  title: z.string().min(2),
+  slug: z.string().optional(),
+  description: z.string().optional(),
+  colorHex: z.string().optional(),
+  displayOrder: z.number().int().default(0),
+  problemStatements: z.array(problemStatementInputSchema).optional().default([]),
+});
 
 const createHackathonSchema = z.object({
   title: z.string().min(3, 'Title must be at least 3 characters'),
@@ -26,8 +47,9 @@ const createHackathonSchema = z.object({
   judgingEndTime: z.string().datetime(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  bannerUrl: z.string().url().optional().or(z.literal('')),
+  bannerUrl: z.string().optional().or(z.literal('')),
   logoUrl: z.string().url().optional().or(z.literal('')),
+  tracks: z.array(trackInputSchema).optional().default([]),
 });
 
 export async function GET(req: NextRequest) {
@@ -111,6 +133,47 @@ export async function POST(req: NextRequest) {
       eligibilityRules: data.eligibilityRules,
       rulesAndGuidelines: data.rulesAndGuidelines,
     });
+
+    // Create Tracks and Problem Statements if provided
+    if (data.tracks && data.tracks.length > 0) {
+      for (let tIdx = 0; tIdx < data.tracks.length; tIdx++) {
+        const trackData = data.tracks[tIdx];
+        const resolvedTrackSlug = (trackData.slug || trackData.title)
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || `track-${tIdx + 1}`;
+
+        const createdTrack = await prisma.track.create({
+          data: {
+            hackathonId: created.id,
+            title: trackData.title.trim(),
+            slug: `${resolvedTrackSlug}-${Math.random().toString(36).substring(2, 6)}`,
+            description: trackData.description?.trim(),
+            colorHex: trackData.colorHex || '#2563EB',
+            displayOrder: trackData.displayOrder ?? tIdx,
+          },
+        });
+
+        if (trackData.problemStatements && trackData.problemStatements.length > 0) {
+          for (let pIdx = 0; pIdx < trackData.problemStatements.length; pIdx++) {
+            const psData = trackData.problemStatements[pIdx];
+            await prisma.problemStatement.create({
+              data: {
+                hackathonId: created.id,
+                trackId: createdTrack.id,
+                code: psData.code.trim().toUpperCase() || `PS-${tIdx + 1}${pIdx + 1}`,
+                title: psData.title.trim(),
+                description: psData.description.trim(),
+                challengeDocUrl: psData.challengeDocUrl?.trim() || null,
+                isPublic: psData.isPublic !== false,
+                displayOrder: psData.displayOrder ?? pIdx,
+              },
+            });
+          }
+        }
+      }
+    }
 
     await AuditService.log({
       userId: session.id,

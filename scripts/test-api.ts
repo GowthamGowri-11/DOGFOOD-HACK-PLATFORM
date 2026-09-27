@@ -1,3 +1,4 @@
+export {};
 async function test() {
   try {
     const res = await fetch('http://localhost:3000/api/v1/admin/teams');
@@ -15,3 +16,4 @@ async function test() {
   }
 }
 test();
+

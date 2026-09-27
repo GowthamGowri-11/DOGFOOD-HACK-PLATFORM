@@ -1,3 +1,5 @@
+'use client';
+
 import Link from 'next/link';
 import { Trophy, ShieldCheck, Cpu, Code2 } from 'lucide-react';
 

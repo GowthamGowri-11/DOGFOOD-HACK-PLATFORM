@@ -84,7 +84,6 @@ const ORGANIZER_NAV: NavItem[] = [
 
 const JUDGE_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/judge/dashboard', icon: LayoutDashboard },
-  { label: 'Assigned Projects', href: '/judge/assigned-projects', icon: FolderKanban },
   { label: 'Pending Evaluations', href: '/judge/evaluations', icon: Scale },
   { label: 'Completed Reviews', href: '/judge/completed', icon: CheckCircle2Icon },
   { label: 'Profile & Expertise', href: '/judge/profile', icon: UserCheck2 },
