@@ -94,10 +94,13 @@ export class HackathonRepository {
   }
 
 
-  public static async findBySlug(slug: string, allowDraft = false) {
+  public static async findBySlug(slugOrId: string, allowDraft = false) {
     return prisma.hackathon.findFirst({
       where: {
-        slug,
+        OR: [
+          { slug: slugOrId },
+          { id: slugOrId },
+        ],
         ...(!allowDraft ? { status: { not: 'DRAFT' } } : {}),
       },
       include: {

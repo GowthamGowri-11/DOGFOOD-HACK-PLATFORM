@@ -70,6 +70,7 @@ export async function POST(
         description: parsed.data.description,
         weightPercentage: parsed.data.weightPercentage ?? 25,
         maxScore: parsed.data.maxScore ?? 100,
+        requiredFeedback: true,
       } : undefined
     );
 
@@ -135,18 +136,20 @@ export async function POST(
             },
           });
 
-          currentRubric = await RubricRepository.findById(currentRubric.id) as any;
+          currentRubric = (await RubricRepository.findById(currentRubric.id))!;
         }
       }
 
-      await AuditService.log({
-        userId: session.id,
-        hackathonId,
-        action: 'RUBRIC_UPDATED',
-        entityType: 'Rubric',
-        entityId: currentRubric.id,
-        afterState: { criterionAdded: singleCriterion.title, totalCriteria: currentRubric.criteria.length },
-      });
+      if (currentRubric) {
+        await AuditService.log({
+          userId: session.id,
+          hackathonId,
+          action: 'RUBRIC_UPDATED',
+          entityType: 'Rubric',
+          entityId: currentRubric.id,
+          afterState: { criterionAdded: singleCriterion.title, totalCriteria: currentRubric.criteria.length },
+        });
+      }
 
       return successResponse({ rubric: currentRubric }, 'Criterion added successfully', 201);
     }
