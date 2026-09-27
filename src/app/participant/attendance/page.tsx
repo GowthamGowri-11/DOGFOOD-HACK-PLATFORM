@@ -143,7 +143,7 @@ export default function ParticipantAttendancePage() {
           <form onSubmit={handleCheckIn} className="flex flex-col sm:flex-row gap-3 pt-2">
             <input
               type="text"
-              placeholder="e.g. APEX-MIDWAY"
+              placeholder="e.g. ATLYX-MIDWAY"
               value={checkInCode}
               onChange={(e) => setCheckInCode(e.target.value.toUpperCase())}
               className="flex-1 px-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs sm:text-sm font-mono uppercase tracking-wider text-[#111827] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:bg-white"

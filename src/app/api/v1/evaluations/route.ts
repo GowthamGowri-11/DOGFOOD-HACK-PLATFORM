@@ -6,6 +6,8 @@ import { ScoringEngine } from '@/server/services/scoring.engine';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 const submitEvaluationSchema = z.object({
   projectId: z.string().uuid(),
@@ -169,6 +171,34 @@ export async function POST(req: NextRequest) {
       entityId: evaluation.id,
       afterState: { weightedScore: computed.weightedScore, status },
     });
+
+    // Fetch hackathonId for scoped room delivery
+    const project = await prisma.project.findUnique({
+      where: { id: projectId },
+      select: { hackathonId: true },
+    });
+
+    if (project) {
+      await eventBus.publish({
+        type: status === 'SUBMITTED' ? 'EVALUATION_COMPLETED' : 'EVALUATION_UPDATED',
+        hackathonId: project.hackathonId,
+        projectId,
+        userId: session.id,
+        actorId: session.id,
+        rooms: [
+          RealtimeRoomBuilder.organizer(project.hackathonId),
+          RealtimeRoomBuilder.judge(session.id),
+          RealtimeRoomBuilder.evaluation(evaluation.id),
+        ],
+        payload: {
+          evaluationId: evaluation.id,
+          projectId,
+          judgeId: assignment.judgeId,
+          status,
+          isCompleted: status === 'SUBMITTED',
+        },
+      });
+    }
 
     return successResponse(
       { evaluationId: evaluation.id, weightedScore: computed.weightedScore, status },

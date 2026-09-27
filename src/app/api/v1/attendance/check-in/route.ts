@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/server/auth/session';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { z } from 'zod';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 const checkInSchema = z.object({
   sessionCode: z.string().min(4).max(12),
@@ -55,11 +57,33 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    const totalAttendees = await prisma.attendanceRecord.count({
+      where: { sessionId: attendanceSession.id },
+    });
+
+    await eventBus.publish({
+      type: 'ATTENDANCE_UPDATED',
+      hackathonId: attendanceSession.hackathon.id,
+      userId: session.id,
+      actorId: session.id,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(attendanceSession.hackathon.id),
+        RealtimeRoomBuilder.organizer(attendanceSession.hackathon.id),
+      ],
+      payload: {
+        sessionId: attendanceSession.id,
+        sessionTitle: attendanceSession.title,
+        userId: session.id,
+        totalAttendees,
+      },
+    });
+
     return successResponse(
       {
         sessionTitle: attendanceSession.title,
         hackathonTitle: attendanceSession.hackathon.title,
         checkedInAt: record.checkedInAt,
+        totalAttendees,
       },
       'Check-in confirmed successfully!'
     );

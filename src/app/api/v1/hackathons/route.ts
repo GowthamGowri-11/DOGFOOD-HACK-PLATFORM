@@ -3,11 +3,14 @@ import { z } from 'zod';
 import { HackathonRepository } from '@/server/repositories/hackathon.repository';
 import { HackathonLifecycleService } from '@/server/services/hackathon-lifecycle.service';
 import { HackathonService } from '@/server/services/hackathon.service';
-import { requireRole } from '@/server/permissions/guards';
+import { requireAuth, requireRole } from '@/server/permissions/guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
+
+export const dynamic = 'force-dynamic';
 
 const problemStatementInputSchema = z.object({
   id: z.string().optional(),
@@ -35,20 +38,36 @@ const createHackathonSchema = z.object({
   tagline: z.string().optional(),
   description: z.string().min(10, 'Description must be at least 10 characters'),
   organizationName: z.string().min(2, 'Organization name is required'),
+  status: z.enum([
+    'DRAFT',
+    'PUBLISHED',
+    'REGISTRATION_OPEN',
+    'REGISTRATION_CLOSED',
+    'EVENT_ACTIVE',
+    'SUBMISSION_OPEN',
+    'SUBMISSION_CLOSED',
+    'JUDGING',
+    'RESULTS_PENDING',
+    'RESULTS_PUBLISHED',
+    'COMPLETED',
+  ]).default('DRAFT'),
   minTeamSize: z.number().int().min(1).default(1),
   maxTeamSize: z.number().int().max(10).default(4),
-  regStartTime: z.string().datetime(),
-  regEndTime: z.string().datetime(),
-  eventStartTime: z.string().datetime(),
-  eventEndTime: z.string().datetime(),
-  subStartTime: z.string().datetime(),
-  subEndTime: z.string().datetime(),
-  judgingStartTime: z.string().datetime(),
-  judgingEndTime: z.string().datetime(),
+  regStartTime: z.string().datetime().or(z.string()),
+  regEndTime: z.string().datetime().or(z.string()),
+  eventStartTime: z.string().datetime().or(z.string()),
+  eventEndTime: z.string().datetime().or(z.string()),
+  subStartTime: z.string().datetime().or(z.string()),
+  subEndTime: z.string().datetime().or(z.string()),
+  judgingStartTime: z.string().datetime().or(z.string()),
+  judgingEndTime: z.string().datetime().or(z.string()),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  bannerUrl: z.string().optional().or(z.literal('')),
-  logoUrl: z.string().url().optional().or(z.literal('')),
+  bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  prizePool: z.number().optional().or(z.string()),
+  currency: z.string().default('USD'),
+  prizes: z.array(z.any()).optional(),
   tracks: z.array(trackInputSchema).optional().default([]),
 });
 
@@ -58,8 +77,21 @@ export async function GET(req: NextRequest) {
     const search = searchParams.get('search') || undefined;
     const status = (searchParams.get('status') as EventStatus) || undefined;
     const trackSlug = searchParams.get('track') || undefined;
+    const mine = searchParams.get('mine') === 'true';
     const page = parseInt(searchParams.get('page') || '1', 10);
-    const pageSize = parseInt(searchParams.get('pageSize') || '10', 10);
+    const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
+
+    if (mine) {
+      const session = await requireAuth();
+      const result = await HackathonRepository.listAdminPaginated({
+        search,
+        status,
+        organizerId: session.id,
+        page,
+        pageSize,
+      });
+      return successResponse(result);
+    }
 
     const result = await HackathonRepository.listPublic({
       search,
@@ -77,7 +109,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireRole(['ORGANIZER', 'ADMIN']);
+    const session = await requireRole(['ADMIN', 'ORGANIZER']);
     const body = await req.json();
     const parsed = createHackathonSchema.safeParse(body);
 
@@ -87,16 +119,36 @@ export async function POST(req: NextRequest) {
 
     const data = parsed.data;
 
-    // Validate event dates
+    // Auto-calibrate and validate event dates
+    const nowTime = Date.now();
+    const finalRegStart = data.regStartTime ? new Date(data.regStartTime) : new Date(nowTime - 60000);
+    let finalRegEnd = data.regEndTime ? new Date(data.regEndTime) : new Date(nowTime + 7 * 86400000);
+    if (finalRegEnd <= finalRegStart) finalRegEnd = new Date(finalRegStart.getTime() + 7 * 86400000);
+
+    let finalEventStart = data.eventStartTime ? new Date(data.eventStartTime) : finalRegEnd;
+    if (finalEventStart < finalRegStart) finalEventStart = finalRegStart;
+    let finalEventEnd = data.eventEndTime ? new Date(data.eventEndTime) : new Date(finalEventStart.getTime() + 3 * 86400000);
+    if (finalEventEnd <= finalEventStart) finalEventEnd = new Date(finalEventStart.getTime() + 3 * 86400000);
+
+    let finalSubStart = data.subStartTime ? new Date(data.subStartTime) : finalEventStart;
+    if (finalSubStart < finalRegStart) finalSubStart = finalRegStart;
+    let finalSubEnd = data.subEndTime ? new Date(data.subEndTime) : finalEventEnd;
+    if (finalSubEnd <= finalSubStart) finalSubEnd = new Date(finalSubStart.getTime() + 2 * 86400000);
+
+    let finalJudgingStart = data.judgingStartTime ? new Date(data.judgingStartTime) : finalSubEnd;
+    if (finalJudgingStart < finalSubStart) finalJudgingStart = finalSubEnd;
+    let finalJudgingEnd = data.judgingEndTime ? new Date(data.judgingEndTime) : new Date(finalJudgingStart.getTime() + 86400000);
+    if (finalJudgingEnd <= finalJudgingStart) finalJudgingEnd = new Date(finalJudgingStart.getTime() + 86400000);
+
     const dateCheck = HackathonLifecycleService.validateDates({
-      regStartTime: data.regStartTime,
-      regEndTime: data.regEndTime,
-      eventStartTime: data.eventStartTime,
-      eventEndTime: data.eventEndTime,
-      subStartTime: data.subStartTime,
-      subEndTime: data.subEndTime,
-      judgingStartTime: data.judgingStartTime,
-      judgingEndTime: data.judgingEndTime,
+      regStartTime: finalRegStart,
+      regEndTime: finalRegEnd,
+      eventStartTime: finalEventStart,
+      eventEndTime: finalEventEnd,
+      subStartTime: finalSubStart,
+      subEndTime: finalSubEnd,
+      judgingStartTime: finalJudgingStart,
+      judgingEndTime: finalJudgingEnd,
     });
 
     if (!dateCheck.isValid) {
@@ -110,29 +162,61 @@ export async function POST(req: NextRequest) {
       ? await HackathonService.generateUniqueSlug(data.slug)
       : await HackathonService.generateUniqueSlug(data.title);
 
+    // Enforce organizer ownership strictly on the server:
+    // Organizer creates for their own account; Admin can optionally specify target organizerId
+    const finalOrganizerId = (session.role === 'ADMIN' && body.organizerId) ? body.organizerId : session.id;
+
     const created = await HackathonRepository.create({
       title: data.title,
       slug: resolvedSlug,
       tagline: data.tagline,
       description: data.description,
       organizationName: data.organizationName,
-      organizerId: session.id,
-      status: 'DRAFT',
+      organizerId: finalOrganizerId,
+      status: (data.status as EventStatus) || 'DRAFT',
       minTeamSize: data.minTeamSize,
       maxTeamSize: data.maxTeamSize,
       bannerUrl: data.bannerUrl || undefined,
       logoUrl: data.logoUrl || undefined,
-      regStartTime: new Date(data.regStartTime),
-      regEndTime: new Date(data.regEndTime),
-      eventStartTime: new Date(data.eventStartTime),
-      eventEndTime: new Date(data.eventEndTime),
-      subStartTime: new Date(data.subStartTime),
-      subEndTime: new Date(data.subEndTime),
-      judgingStartTime: new Date(data.judgingStartTime),
-      judgingEndTime: new Date(data.judgingEndTime),
+      regStartTime: finalRegStart,
+      regEndTime: finalRegEnd,
+      eventStartTime: finalEventStart,
+      eventEndTime: finalEventEnd,
+      subStartTime: finalSubStart,
+      subEndTime: finalSubEnd,
+      judgingStartTime: finalJudgingStart,
+      judgingEndTime: finalJudgingEnd,
       eligibilityRules: data.eligibilityRules,
       rulesAndGuidelines: data.rulesAndGuidelines,
     });
+
+    // Handle Prizes / Prize Pool
+    const numericPrizePool = Number(data.prizePool) || 0;
+    if (data.prizes && Array.isArray(data.prizes) && data.prizes.length > 0) {
+      await prisma.prize.createMany({
+        data: data.prizes.map((p: any, idx: number) => ({
+          hackathonId: created.id,
+          title: p.title || `Prize ${idx + 1}`,
+          category: p.category || 'General',
+          amount: Number(p.amount) || 0,
+          currency: p.currency || data.currency || 'USD',
+          rankOrder: p.rankOrder || idx + 1,
+          description: p.description || '',
+        })),
+      });
+    } else if (numericPrizePool > 0) {
+      await prisma.prize.create({
+        data: {
+          hackathonId: created.id,
+          title: 'Total Prize Pool',
+          category: 'Grand Pool',
+          amount: numericPrizePool,
+          currency: data.currency || 'USD',
+          rankOrder: 1,
+          description: 'Platform competition reward pool',
+        },
+      });
+    }
 
     // Create Tracks and Problem Statements if provided
     if (data.tracks && data.tracks.length > 0) {
@@ -173,6 +257,54 @@ export async function POST(req: NextRequest) {
           }
         }
       }
+    } else if (data.rulesAndGuidelines) {
+      // Auto-create Tracks and Problem Statements if present in rulesAndGuidelines JSON
+      try {
+        const parsedRules = JSON.parse(data.rulesAndGuidelines);
+        if (parsedRules.problemStatements && Array.isArray(parsedRules.problemStatements) && parsedRules.problemStatements.length > 0) {
+          // Group problem statements by track
+          const trackMap = new Map<string, any[]>();
+          for (const ps of parsedRules.problemStatements) {
+            const trackName = ps.track || 'General Track';
+            if (!trackMap.has(trackName)) {
+              trackMap.set(trackName, []);
+            }
+            trackMap.get(trackName)!.push(ps);
+          }
+
+          let order = 1;
+          const entries = Array.from(trackMap.entries());
+          for (const [trackName, psList] of entries) {
+            const trackSlug = trackName.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+            const createdTrack = await prisma.track.create({
+              data: {
+                hackathonId: created.id,
+                title: trackName,
+                slug: `${trackSlug}-${Date.now().toString(36)}`,
+                description: `Challenge track for ${trackName}`,
+                displayOrder: order++,
+              },
+            });
+
+            let psOrder = 1;
+            for (const ps of psList) {
+              await prisma.problemStatement.create({
+                data: {
+                  hackathonId: created.id,
+                  trackId: createdTrack.id,
+                  code: ps.code || `PS-${psOrder}`,
+                  title: ps.title,
+                  description: ps.description || '',
+                  displayOrder: psOrder++,
+                  isPublic: true,
+                },
+              });
+            }
+          }
+        }
+      } catch {
+        // Fallback gracefully if rulesAndGuidelines is plain text
+      }
     }
 
     await AuditService.log({
@@ -181,13 +313,23 @@ export async function POST(req: NextRequest) {
       action: 'HACKATHON_CREATED',
       entityType: 'Hackathon',
       entityId: created.id,
-      afterState: { id: created.id, title: created.title, slug: created.slug },
+      afterState: { id: created.id, title: created.title, slug: created.slug, status: created.status },
     });
 
-    return successResponse({ hackathon: created }, 'Hackathon draft created successfully', 201);
+    try {
+      revalidatePath('/hackathons');
+      revalidatePath('/organizer/hackathons');
+      revalidatePath('/organizer/dashboard');
+      revalidatePath('/admin/hackathons');
+    } catch {
+      // Ignore during build/tests
+    }
+
+    return successResponse({ hackathon: created }, 'Hackathon created successfully', 201);
   } catch (error: any) {
     const status = error.status || 500;
     const code = error.code || 'INTERNAL_ERROR';
     return errorResponse(error.message, code, status);
   }
 }
+

@@ -5,6 +5,8 @@ import { AIJuryService } from '@/server/services/ai-jury.service';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 const aiEvalSchema = z.object({
   projectId: z.string().uuid(),
@@ -135,6 +137,24 @@ export async function POST(req: NextRequest) {
       entityType: 'AIJuryRun',
       entityId: juryRun.id,
       afterState: { overallScore: evalResult.overallScore, confidence: evalResult.confidenceScore },
+    });
+
+    await eventBus.publish({
+      type: 'AI_JURY_COMPLETED',
+      hackathonId: project.hackathonId,
+      projectId: project.id,
+      userId: session.id,
+      actorId: session.id,
+      rooms: [
+        RealtimeRoomBuilder.organizer(project.hackathonId),
+      ],
+      payload: {
+        runId: juryRun.id,
+        projectId: project.id,
+        overallScore: evalResult.overallScore,
+        confidenceScore: evalResult.confidenceScore,
+        evidenceCount: evalResult.evidence.length,
+      },
     });
 
     return successResponse(

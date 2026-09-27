@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Users,
   Search,
@@ -9,6 +10,10 @@ import {
   FileCheck,
   ShieldCheck,
   Sparkles,
+  ExternalLink,
+  Eye,
+  Crown,
+  FileText,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -28,6 +33,7 @@ interface TeamItem {
       fullName: string;
       email: string;
     };
+    formResponse?: Record<string, any> | null;
   }[];
   project?: {
     id: string;
@@ -44,10 +50,16 @@ export default function OrganizerTeamsPage() {
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Selected Member Details Modal
+  const [selectedMember, setSelectedMember] = useState<{
+    teamName: string;
+    member: any;
+  } | null>(null);
+
   useEffect(() => {
     async function loadHackathons() {
       try {
-        const res = await fetch('/api/v1/hackathons');
+        const res = await fetch('/api/v1/hackathons?mine=true');
         const json = await res.json();
         if (json.data?.hackathons && json.data.hackathons.length > 0) {
           setHackathons(json.data.hackathons);
@@ -67,7 +79,22 @@ export default function OrganizerTeamsPage() {
       const res = await fetch(`/api/v1/hackathons/${hId}/teams`);
       const json = await res.json();
       if (res.ok && json.data?.teams) {
-        setTeams(json.data.teams);
+        // Fetch detailed members with form responses for each team
+        const teamsWithResponses = await Promise.all(
+          json.data.teams.map(async (t: any) => {
+            try {
+              const memRes = await fetch(`/api/v1/teams/${t.id}/members`);
+              const memJson = await memRes.json();
+              if (memRes.ok && memJson.data?.members) {
+                return { ...t, members: memJson.data.members };
+              }
+            } catch {
+              // fallback
+            }
+            return t;
+          })
+        );
+        setTeams(teamsWithResponses);
       }
     } catch (err) {
       console.error(err);
@@ -88,14 +115,18 @@ export default function OrganizerTeamsPage() {
       return (
         t.name.toLowerCase().includes(q) ||
         t.inviteCode.toLowerCase().includes(q) ||
-        t.members.some((m) => m.user.fullName.toLowerCase().includes(q) || m.user.email.toLowerCase().includes(q))
+        t.members.some(
+          (m) =>
+            m.user?.fullName?.toLowerCase().includes(q) ||
+            m.user?.email?.toLowerCase().includes(q)
+        )
       );
     }
     return true;
   });
 
   return (
-    <div className="space-y-6 select-none">
+    <div className="space-y-6 select-none max-w-7xl mx-auto pb-16">
       {/* Header Toolbar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E2E8F0] gap-4">
         <div>
@@ -111,26 +142,38 @@ export default function OrganizerTeamsPage() {
             Team Rosters & Formation
           </h1>
           <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-normal">
-            Track squad compositions, team leaders, track alignment, and problem statement assignments.
+            Track formed squads, team leaders, and submitted Team Member Form details across your assigned hackathons.
           </p>
         </div>
 
-        {hackathons.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <label className="text-xs font-semibold text-[#334155]">Hackathon:</label>
-            <select
-              value={selectedHackathonId}
-              onChange={(e) => setSelectedHackathonId(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+        <div className="flex items-center space-x-2.5 flex-wrap gap-y-2">
+          {selectedHackathonId && (
+            <Link
+              href={`/organizer/hackathons/${selectedHackathonId}/team-form`}
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] hover:bg-[#DBEAFE]/50 rounded-xl shadow-xs transition-colors"
             >
-              {hackathons.map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.title}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
+              <FileText className="w-3.5 h-3.5" />
+              <span>Team Form Builder</span>
+            </Link>
+          )}
+
+          {hackathons.length > 0 && (
+            <div className="flex items-center space-x-2">
+              <label className="text-xs font-semibold text-[#334155]">Hackathon:</label>
+              <select
+                value={selectedHackathonId}
+                onChange={(e) => setSelectedHackathonId(e.target.value)}
+                className="px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-xl text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              >
+                {hackathons.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Search Bar */}
@@ -141,37 +184,37 @@ export default function OrganizerTeamsPage() {
           placeholder="Search team name, invite code, or member..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full h-[38px] pl-10 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[19px] text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
+          className="w-full h-[38px] pl-10 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-xl text-xs text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15"
         />
       </div>
 
       {/* Teams Grid */}
       {loading ? (
-        <div className="py-16 text-center text-xs text-[#64748B]">
+        <div className="py-16 text-center text-xs text-[#64748B] bg-white border border-[#E2E8F0] rounded-2xl shadow-xs">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto mb-2" />
           Loading team rosters...
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-12 text-center space-y-3 shadow-card">
+        <div className="bg-white border border-[#E2E8F0] rounded-2xl p-12 text-center space-y-3 shadow-xs">
           <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
             <Users className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-[#111827]">No Teams Found</h3>
           <p className="text-xs text-[#64748B] max-w-sm mx-auto">
-            No squads have formed yet for this hackathon. Participants will appear here as they form teams.
+            No squads have formed yet for this hackathon. Participants will appear here as they form teams and add members.
           </p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
           {filtered.map((t) => (
             <div
               key={t.id}
-              className="bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[18px] p-5 shadow-card space-y-4 transition-all text-xs"
+              className="bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-2xl p-5 shadow-xs space-y-4 transition-all text-xs"
             >
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="text-base font-bold text-[#111827]">{t.name}</h3>
-                  <span className="font-mono text-[11px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-md font-semibold mt-1 inline-block">
+                  <span className="font-mono text-[11px] text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-md font-semibold mt-1 inline-block border border-[#DBEAFE]">
                     Code: {t.inviteCode}
                   </span>
                 </div>
@@ -181,22 +224,47 @@ export default function OrganizerTeamsPage() {
               </div>
 
               {/* Members List */}
-              <div className="space-y-1.5 pt-1">
+              <div className="space-y-2 pt-1">
                 <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
-                  Roster
+                  Roster & Form Responses
                 </span>
-                <div className="flex flex-wrap gap-2">
+                <div className="space-y-2">
                   {t.members.map((m) => (
                     <div
                       key={m.id}
-                      className="inline-flex items-center space-x-1.5 px-2.5 py-1 bg-[#F8FAFC] border border-[#E2E8F0] rounded-lg"
+                      className="p-2.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between gap-2"
                     >
-                      <span className="font-semibold text-[#111827]">{m.user.fullName}</span>
-                      {m.isLeader && (
-                        <span className="text-[9px] font-bold text-[#D97706] bg-[#FFFBEB] px-1 rounded">
-                          LEADER
-                        </span>
-                      )}
+                      <div className="flex items-center space-x-2.5 truncate">
+                        <div className="w-7 h-7 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center text-xs font-bold border border-[#DBEAFE] flex-shrink-0">
+                          {m.user?.fullName ? m.user.fullName[0].toUpperCase() : 'U'}
+                        </div>
+                        <div className="truncate">
+                          <span className="font-bold text-[#111827] text-xs block truncate">
+                            {m.user?.fullName}
+                          </span>
+                          <span className="text-[10px] text-[#64748B] truncate block">
+                            {m.user?.email}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        {m.isLeader && (
+                          <span className="text-[9px] font-bold text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-full border border-[#FDE68A]">
+                            LEADER
+                          </span>
+                        )}
+
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMember({ teamName: t.name, member: m })}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[11px] font-semibold text-[#2563EB] rounded-lg shadow-xs transition-colors"
+                          title="View submitted form answers"
+                        >
+                          <Eye className="w-3 h-3" />
+                          <span>View Details</span>
+                        </button>
+                      </div>
                     </div>
                   ))}
                 </div>
@@ -210,7 +278,7 @@ export default function OrganizerTeamsPage() {
                       Project: <strong className="text-[#111827]">{t.project.title}</strong>
                     </span>
                   ) : (
-                    <span className="text-[#94A3B8]">No project created yet</span>
+                    <span className="text-[#94A3B8]">No project submitted yet</span>
                   )}
                 </div>
                 {t.project?.track && (
@@ -221,6 +289,80 @@ export default function OrganizerTeamsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Member Form Details Modal */}
+      {selectedMember && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-[#E2E8F0] space-y-4">
+            <div className="flex items-center justify-between pb-2 border-b border-[#F1F5F9]">
+              <div>
+                <span className="text-[10px] font-bold text-[#2563EB] uppercase tracking-wider block">
+                  {selectedMember.teamName} • TEAM MEMBER DETAILS
+                </span>
+                <h3 className="text-base font-extrabold text-[#0F172A]">
+                  {selectedMember.member.user?.fullName}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelectedMember(null)}
+                className="p-1 text-[#64748B] hover:text-[#0F172A] rounded-lg"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-3 text-xs">
+              <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] grid grid-cols-2 gap-2">
+                <div>
+                  <span className="text-[10px] font-bold text-[#64748B] uppercase block">Email</span>
+                  <span className="font-semibold text-[#0F172A] break-all">{selectedMember.member.user?.email}</span>
+                </div>
+                <div>
+                  <span className="text-[10px] font-bold text-[#64748B] uppercase block">Role</span>
+                  <span className="font-semibold text-[#2563EB]">
+                    {selectedMember.member.isLeader ? 'Team Leader' : 'Team Member'}
+                  </span>
+                </div>
+              </div>
+
+              {selectedMember.member.formResponse && Object.keys(selectedMember.member.formResponse).length > 0 ? (
+                <div className="space-y-2">
+                  <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
+                    Form Submissions
+                  </span>
+                  <div className="space-y-2 max-h-60 overflow-y-auto pr-1">
+                    {Object.entries(selectedMember.member.formResponse).map(([key, val]) => (
+                      <div key={key} className="p-2.5 bg-white border border-[#E2E8F0] rounded-xl">
+                        <span className="text-[10px] font-bold text-[#64748B] uppercase block">
+                          {key.replace(/^field_/, '').replace(/_/g, ' ')}
+                        </span>
+                        <span className="text-xs font-semibold text-[#0F172A] break-all">
+                          {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 text-center bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-[#64748B] text-xs">
+                  Standard account onboarding (No custom questionnaire answers attached)
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end pt-2 border-t border-[#F1F5F9]">
+              <button
+                type="button"
+                onClick={() => setSelectedMember(null)}
+                className="px-4 py-2 text-xs font-semibold text-[#334155] bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] rounded-xl"
+              >
+                Close
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>

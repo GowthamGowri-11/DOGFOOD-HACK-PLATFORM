@@ -216,7 +216,7 @@ export default function PublicLeaderboardPage() {
                 Select Hackathon Arena
               </span>
               <h2 className="text-sm sm:text-base font-bold text-[#111827]">
-                {hackathonInfo ? hackathonInfo.title : 'Apex Hackathons'}
+                {hackathonInfo ? hackathonInfo.title : 'ATLYX Hackathons'}
               </h2>
             </div>
           </div>

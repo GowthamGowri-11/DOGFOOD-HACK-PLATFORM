@@ -327,7 +327,7 @@ export default function OrganizerAttendancePage() {
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. APEX-KEYNOTE"
+                  placeholder="e.g. ATLYX-KEYNOTE"
                   value={newCode}
                   onChange={(e) => setNewCode(e.target.value.toUpperCase())}
                   required

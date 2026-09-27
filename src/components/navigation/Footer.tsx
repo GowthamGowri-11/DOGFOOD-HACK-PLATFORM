@@ -11,11 +11,11 @@ export function Footer() {
           {/* Brand Col */}
           <div className="space-y-4">
             <div className="flex items-center space-x-2.5">
-              <div className="w-8 h-8 rounded-lg bg-blue-600 flex items-center justify-center text-white">
-                <Trophy className="w-4 h-4" />
+              <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0">
+                <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-bold text-lg text-white">
-                Apex<span className="text-blue-400">Hack</span>
+                ATLYX
               </span>
             </div>
             <p className="text-sm text-slate-400 leading-relaxed">
@@ -104,7 +104,7 @@ export function Footer() {
         </div>
 
         <div className="mt-12 pt-8 border-t border-slate-800 flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
-          <p>© {new Date().getFullYear()} ApexHack Platform. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} ATLYX Platform. All rights reserved.</p>
           <div className="flex space-x-6 mt-4 md:mt-0">
             <Link href="/privacy" className="hover:text-slate-400">Privacy Policy</Link>
             <Link href="/terms" className="hover:text-slate-400">Terms of Service</Link>

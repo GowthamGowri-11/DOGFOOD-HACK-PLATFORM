@@ -8,6 +8,8 @@ import { ResourceGuards } from '@/server/permissions/resource-guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
+import prisma from '@/lib/prisma';
+import { revalidatePath } from 'next/cache';
 
 const updateHackathonSchema = z.object({
   title: z.string().min(3).optional(),
@@ -40,8 +42,11 @@ const updateHackathonSchema = z.object({
   judgingEndTime: z.string().datetime().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  bannerUrl: z.string().optional().or(z.literal('')),
-  logoUrl: z.string().url().optional().or(z.literal('')),
+  bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  prizePool: z.number().optional().or(z.string()),
+  currency: z.string().optional(),
+  prizes: z.array(z.any()).optional(),
 });
 
 export async function GET(
@@ -174,6 +179,35 @@ export async function PATCH(
       rulesAndGuidelines: data.rulesAndGuidelines,
     });
 
+    // Handle Prize Pool update if provided
+    if (data.prizePool !== undefined && Number(data.prizePool) >= 0) {
+      const existingPrizePool = await prisma.prize.findFirst({
+        where: { hackathonId, category: 'Grand Pool' },
+      });
+
+      if (existingPrizePool) {
+        await prisma.prize.update({
+          where: { id: existingPrizePool.id },
+          data: {
+            amount: Number(data.prizePool),
+            currency: data.currency || existingPrizePool.currency,
+          },
+        });
+      } else if (Number(data.prizePool) > 0) {
+        await prisma.prize.create({
+          data: {
+            hackathonId,
+            title: 'Total Prize Pool',
+            category: 'Grand Pool',
+            amount: Number(data.prizePool),
+            currency: data.currency || 'USD',
+            rankOrder: 1,
+            description: 'Platform competition reward pool',
+          },
+        });
+      }
+    }
+
     await AuditService.log({
       userId: session.id,
       hackathonId,
@@ -183,6 +217,16 @@ export async function PATCH(
       beforeState: { title: current.title, status: current.status },
       afterState: { title: updated.title, status: updated.status },
     });
+
+    try {
+      revalidatePath('/hackathons');
+      revalidatePath(`/hackathons/${updated.slug}`);
+      revalidatePath('/organizer/hackathons');
+      revalidatePath(`/organizer/hackathons/${hackathonId}`);
+      revalidatePath('/admin/hackathons');
+    } catch {
+      // Ignore during test/static builds
+    }
 
     return successResponse({ hackathon: updated }, 'Hackathon updated successfully');
   } catch (error: any) {
@@ -231,6 +275,14 @@ export async function DELETE(
       entityId: hackathonId,
       beforeState: { title: current.title },
     });
+
+    try {
+      revalidatePath('/hackathons');
+      revalidatePath('/organizer/hackathons');
+      revalidatePath('/admin/hackathons');
+    } catch {
+      // Ignore during test/static builds
+    }
 
     return successResponse(null, 'Hackathon deleted successfully');
   } catch (error: any) {
