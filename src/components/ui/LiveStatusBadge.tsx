@@ -5,7 +5,7 @@ import { useWebSocket } from '@/hooks/useWebSocket';
 import { Wifi, Radio, Bell, X, CheckCircle2, Zap } from 'lucide-react';
 
 export const LiveStatusBadge: React.FC = () => {
-  const { status, notifications, send, dismissNotification } = useWebSocket();
+  const { status, notifications, send, dismissNotification, reconnect } = useWebSocket();
   const [open, setOpen] = useState(false);
   const [testSent, setTestSent] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -137,13 +137,23 @@ export const LiveStatusBadge: React.FC = () => {
               </div>
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                <button
-                  onClick={handleTestBroadcast}
-                  className="w-full py-1.5 px-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5"
-                >
-                  <Zap className="w-3.5 h-3.5" />
-                  <span>{testSent ? 'Pulse Sent!' : 'Send Test WS Pulse'}</span>
-                </button>
+                {status !== 'connected' ? (
+                  <button
+                    onClick={() => reconnect?.()}
+                    className="w-full py-1.5 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5"
+                  >
+                    <Radio className="w-3.5 h-3.5" />
+                    <span>Reconnect Gateway</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleTestBroadcast}
+                    className="w-full py-1.5 px-3 bg-[#2563EB] hover:bg-[#1D4ED8] text-white font-semibold text-xs rounded-xl shadow-xs transition flex items-center justify-center space-x-1.5"
+                  >
+                    <Zap className="w-3.5 h-3.5" />
+                    <span>{testSent ? 'Pulse Sent!' : 'Send Test WS Pulse'}</span>
+                  </button>
+                )}
               </div>
             </div>
           </>

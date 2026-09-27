@@ -30,11 +30,12 @@ export function useWebSocket(channels: string[] = DEFAULT_CHANNELS, enabled: boo
   const channelsKey = useMemo(() => channels.slice().sort().join(','), [channels]);
   const channelsList = useMemo(() => channelsKey.split(',').filter(Boolean), [channelsKey]);
 
-  const connect = useCallback(() => {
+  const connect = useCallback(async () => {
     if (typeof window === 'undefined') return;
 
     // Stop retrying after MAX_RETRIES if we've never connected successfully
     if (!hasConnectedRef.current && retryCountRef.current >= MAX_RETRIES) {
+      if (isMountedRef.current) setStatus('disconnected');
       return;
     }
 
@@ -46,17 +47,34 @@ export function useWebSocket(channels: string[] = DEFAULT_CHANNELS, enabled: boo
       return;
     }
 
+    if (isMountedRef.current) setStatus('connecting');
+
+    // Ping server-side init endpoint to ensure WS gateway is active
+    try {
+      await fetch('/api/v1/ws/init', { cache: 'no-store' });
+    } catch {
+      // Ignore network errors on init ping
+    }
+
+    if (!isMountedRef.current) return;
+
     try {
       const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
       const host = window.location.hostname || 'localhost';
       const wsUrl = process.env.NEXT_PUBLIC_WS_URL || `${protocol}//${host}:3001`;
 
-      if (isMountedRef.current) setStatus('connecting');
       const ws = new WebSocket(wsUrl);
       socketRef.current = ws;
 
       ws.onopen = () => {
-        if (!isMountedRef.current) return;
+        if (!isMountedRef.current) {
+          try {
+            ws.close();
+          } catch {
+            // Ignore
+          }
+          return;
+        }
         setStatus('connected');
         retryCountRef.current = 0;
         hasConnectedRef.current = true;
@@ -100,9 +118,9 @@ export function useWebSocket(channels: string[] = DEFAULT_CHANNELS, enabled: boo
 
         retryCountRef.current += 1;
 
-        // Only retry if we haven't hit the limit, or if we previously connected successfully
+        // Reconnect with exponential backoff if retry limit allows
         if (hasConnectedRef.current || retryCountRef.current < MAX_RETRIES) {
-          const backoff = Math.min(2000 * Math.pow(2, retryCountRef.current), 30000);
+          const backoff = Math.min(2500 * Math.pow(2, retryCountRef.current), 30000);
           if (reconnectTimeoutRef.current) {
             clearTimeout(reconnectTimeoutRef.current);
           }
@@ -113,7 +131,7 @@ export function useWebSocket(channels: string[] = DEFAULT_CHANNELS, enabled: boo
       };
 
       ws.onerror = () => {
-        // onerror always fires before onclose — no need to set status here
+        // onclose will handle state change
       };
     } catch {
       if (isMountedRef.current) setStatus('disconnected');
@@ -126,15 +144,41 @@ export function useWebSocket(channels: string[] = DEFAULT_CHANNELS, enabled: boo
       reconnectTimeoutRef.current = null;
     }
     if (socketRef.current) {
-      socketRef.current.onclose = null;
-      socketRef.current.onerror = null;
-      socketRef.current.close();
+      const ws = socketRef.current;
+      ws.onclose = null;
+      ws.onerror = null;
+      ws.onmessage = null;
+
+      // Handle React 18 StrictMode: if still CONNECTING, wait for open before closing
+      // to prevent "WebSocket is closed before the connection is established" warning
+      if (ws.readyState === WebSocket.CONNECTING) {
+        ws.onopen = () => {
+          try {
+            ws.close();
+          } catch {
+            // Ignore
+          }
+        };
+      } else if (ws.readyState === WebSocket.OPEN) {
+        try {
+          ws.close();
+        } catch {
+          // Ignore
+        }
+      }
       socketRef.current = null;
     }
     retryCountRef.current = 0;
     hasConnectedRef.current = false;
     setStatus('disconnected');
   }, []);
+
+  const manualReconnect = useCallback(() => {
+    retryCountRef.current = 0;
+    hasConnectedRef.current = false;
+    disconnect();
+    connect();
+  }, [disconnect, connect]);
 
   useEffect(() => {
     isMountedRef.current = true;
@@ -187,5 +231,6 @@ export function useWebSocket(channels: string[] = DEFAULT_CHANNELS, enabled: boo
     subscribe,
     send,
     dismissNotification,
+    reconnect: manualReconnect,
   };
 }

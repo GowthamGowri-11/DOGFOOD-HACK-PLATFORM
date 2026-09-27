@@ -34,6 +34,14 @@ export function initWebSocketServer(): WebSocketServer | null {
     global.__wsServerInstance = wss;
     global.__wsClients = clients;
 
+    wss.on('error', (err: any) => {
+      if (err.code === 'EADDRINUSE') {
+        console.log(`[WebSocket] Port ${PORT} already bound.`);
+      } else {
+        console.error('[WebSocket] Server error:', err);
+      }
+    });
+
     wss.on('connection', (ws: WsClient) => {
       const meta: ClientMeta = {
         ws,

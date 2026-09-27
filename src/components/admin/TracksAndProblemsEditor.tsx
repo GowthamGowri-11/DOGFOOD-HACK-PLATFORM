@@ -14,6 +14,8 @@ import {
   Tag,
   HelpCircle,
   ExternalLink,
+  RotateCw,
+  Copy,
 } from 'lucide-react';
 
 export interface ProblemStatementItem {
@@ -24,6 +26,7 @@ export interface ProblemStatementItem {
   challengeDocUrl?: string;
   isPublic: boolean;
   displayOrder?: number;
+  roundIndex?: number; // Which evaluation round this question belongs to (-1 or undefined = all rounds)
 }
 
 export interface TrackItem {
@@ -36,9 +39,21 @@ export interface TrackItem {
   problemStatements: ProblemStatementItem[];
 }
 
-interface TracksAndProblemsEditorProps {
+export interface EvaluationRoundInfo {
+  name: string;
+  isFinal: boolean;
+  roundType: string;
+}
+
+export interface TracksAndProblemsEditorProps {
   tracks: TrackItem[];
   onChange: (tracks: TrackItem[]) => void;
+  rounds?: EvaluationRoundInfo[];
+  embeddedInRound?: boolean;
+  roundIndex?: number;
+  roundName?: string;
+  onCopyFromPrevious?: () => void;
+  previousRoundName?: string;
 }
 
 const PRESET_COLORS = [
@@ -53,8 +68,14 @@ const PRESET_COLORS = [
 ];
 
 export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = ({
-  tracks,
+  tracks = [],
   onChange,
+  rounds = [],
+  embeddedInRound = false,
+  roundIndex,
+  roundName,
+  onCopyFromPrevious,
+  previousRoundName,
 }) => {
   const [collapsedTracks, setCollapsedTracks] = useState<Record<number, boolean>>({});
 
@@ -244,32 +265,54 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
   );
 
   return (
-    <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-6">
+    <div
+      className={
+        embeddedInRound
+          ? 'bg-white border border-[#e2e8f0] rounded-2xl p-4 sm:p-5 shadow-2xs space-y-5'
+          : 'bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-xs space-y-6'
+      }
+    >
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F1F5F9] gap-3">
         <div className="flex items-center space-x-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] flex items-center justify-center shadow-xs">
-            <Layers className="w-5 h-5" />
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] flex items-center justify-center shadow-xs shrink-0">
+            <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
-            <div className="flex items-center space-x-2">
-              <h2 className="text-base font-extrabold text-[#0F172A]">
-                Tracks & Problem Statements
-              </h2>
-              <span className="px-2.5 py-0.5 text-[11px] font-bold bg-[#EFF6FF] text-[#2563EB] rounded-full border border-[#BFDBFE]">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm sm:text-base font-extrabold text-[#0F172A]">
+                {embeddedInRound
+                  ? `Tracks & Questions — ${roundName || (roundIndex !== undefined ? `Round ${roundIndex + 1}` : 'Round')}`
+                  : 'Tracks & Problem Statements'}
+              </h3>
+              <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-[#EFF6FF] text-[#2563EB] rounded-full border border-[#BFDBFE]">
                 {tracks.length} {tracks.length === 1 ? 'Track' : 'Tracks'}
               </span>
-              <span className="px-2.5 py-0.5 text-[11px] font-bold bg-[#F1F5F9] text-[#475569] rounded-full border border-[#E2E8F0]">
-                {totalProblemStatements} {totalProblemStatements === 1 ? 'Problem' : 'Problems'}
+              <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-[#F1F5F9] text-[#475569] rounded-full border border-[#E2E8F0]">
+                {totalProblemStatements} {totalProblemStatements === 1 ? 'Question' : 'Questions'}
               </span>
             </div>
-            <p className="text-xs text-[#64748B]">
-              Define the competition focus areas and assign specific real-world challenge statements for teams to build.
+            <p className="text-[11px] sm:text-xs text-[#64748B]">
+              {embeddedInRound
+                ? `Domain tracks and challenge questions specifically designated for this round.`
+                : 'Define the competition focus areas and assign specific real-world challenge statements for teams to build.'}
             </p>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-wrap items-center gap-2">
+          {tracks.length === 0 && onCopyFromPrevious && previousRoundName && (
+            <button
+              type="button"
+              onClick={onCopyFromPrevious}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#4338ca] bg-[#eef2ff] border border-[#c7d2fe] hover:bg-[#e0e7ff] rounded-xl transition-colors shadow-xs"
+              title={`Copy tracks from ${previousRoundName}`}
+            >
+              <Copy className="w-3.5 h-3.5" />
+              <span>Copy from {previousRoundName}</span>
+            </button>
+          )}
+
           {tracks.length === 0 && (
             <button
               type="button"
@@ -277,13 +320,14 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] hover:bg-[#D1FAE5] rounded-xl transition-colors shadow-xs"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Load Template Tracks</span>
+              <span>Template Tracks</span>
             </button>
           )}
+
           <button
             type="button"
             onClick={addTrack}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-xl shadow-xs transition-colors"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Track</span>
@@ -293,29 +337,41 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
 
       {/* Tracks Empty State */}
       {tracks.length === 0 && (
-        <div className="py-12 border-2 border-dashed border-[#CBD5E1] rounded-2xl text-center flex flex-col items-center justify-center space-y-3 bg-[#F8FAFC]">
-          <div className="w-12 h-12 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
-            <Layers className="w-6 h-6" />
+        <div className="py-8 sm:py-10 border-2 border-dashed border-[#CBD5E1] rounded-2xl text-center flex flex-col items-center justify-center space-y-3 bg-[#F8FAFC]">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
+            <Layers className="w-5 h-5 sm:w-6 sm:h-6" />
           </div>
           <div className="space-y-1">
-            <h4 className="text-sm font-bold text-[#0F172A]">No Tracks Configured Yet</h4>
-            <p className="text-xs text-[#64748B] max-w-sm">
-              Add domain tracks (e.g. AI, CyberSecurity, FinTech) and then define specific problem statements within each track.
+            <h4 className="text-xs sm:text-sm font-bold text-[#0F172A]">
+              No Tracks for {roundName || (roundIndex !== undefined ? `Round ${roundIndex + 1}` : 'this round')}
+            </h4>
+            <p className="text-[11px] sm:text-xs text-[#64748B] max-w-sm px-4">
+              Add domain tracks and questions for participants to tackle during this evaluation round.
             </p>
           </div>
-          <div className="flex items-center gap-2 pt-2">
+          <div className="flex flex-wrap items-center justify-center gap-2 pt-1">
+            {onCopyFromPrevious && previousRoundName && (
+              <button
+                type="button"
+                onClick={onCopyFromPrevious}
+                className="px-3.5 py-1.5 text-xs font-bold text-[#4338ca] bg-[#eef2ff] border border-[#c7d2fe] hover:bg-[#e0e7ff] rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+              >
+                <Copy className="w-3.5 h-3.5" />
+                <span>Copy All Tracks from {previousRoundName}</span>
+              </button>
+            )}
             <button
               type="button"
               onClick={loadEnterprisePreset}
-              className="px-3.5 py-2 text-xs font-bold text-[#2563EB] bg-white border border-[#BFDBFE] hover:bg-[#EFF6FF] rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-bold text-[#2563EB] bg-white border border-[#BFDBFE] hover:bg-[#EFF6FF] rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
             >
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Use 4 Enterprise Template Tracks</span>
+              <span>Use Enterprise Templates</span>
             </button>
             <button
               type="button"
               onClick={addTrack}
-              className="px-3.5 py-2 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
+              className="px-3.5 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-xl transition-colors shadow-xs flex items-center gap-1.5"
             >
               <Plus className="w-3.5 h-3.5" />
               <span>Create Empty Track</span>
@@ -620,6 +676,43 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                                 )}
                               </div>
                             </div>
+
+                            {/* Round Assignment (Standalone mode only) */}
+                            {!embeddedInRound && rounds.length > 0 && (
+                              <div className="space-y-1">
+                                <span className="text-[9px] font-bold text-[#64748B] uppercase flex items-center gap-1">
+                                  <RotateCw className="w-3 h-3" />
+                                  ASSIGNED TO ROUND
+                                </span>
+                                <div className="flex items-center gap-2">
+                                  <select
+                                    value={prob.roundIndex ?? -1}
+                                    onChange={(e) =>
+                                      updateProblemStatement(
+                                        trackIdx,
+                                        probIdx,
+                                        'roundIndex',
+                                        Number(e.target.value)
+                                      )
+                                    }
+                                    className="flex-1 max-w-xs px-2.5 py-1.5 text-xs bg-white border border-[#E2E8F0] rounded-lg font-semibold text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                                  >
+                                    <option value={-1}>All Rounds (Default)</option>
+                                    {rounds.map((r, rIdx) => (
+                                      <option key={rIdx} value={rIdx}>
+                                        Round {rIdx + 1}: {r.name}{r.isFinal ? ' (Finale)' : ''}
+                                      </option>
+                                    ))}
+                                  </select>
+                                  {prob.roundIndex != null && prob.roundIndex >= 0 && prob.roundIndex < rounds.length && (
+                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE] rounded-full">
+                                      <RotateCw className="w-3 h-3" />
+                                      R{prob.roundIndex + 1}: {rounds[prob.roundIndex].name}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         ))}
                       </div>
