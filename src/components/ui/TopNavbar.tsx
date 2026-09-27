@@ -109,7 +109,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         )}
 
-        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center space-x-1.5 text-xs text-[#64748B]">
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center space-x-1.5 text-[14px] text-[#64748B]">
           {breadcrumbItems.slice(0, 3).map((item, idx) => (
             <React.Fragment key={item.href}>
               {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />}
@@ -120,7 +120,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               ) : (
                 <Link
                   href={item.href}
-                  className="hover:text-[#2563EB] transition-colors max-w-[120px] truncate"
+                  className="hover:text-[#2563EB] transition-colors max-w-[120px] truncate font-normal"
                 >
                   {item.label}
                 </Link>
@@ -141,7 +141,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               placeholder="Search Hackathons, Tracks, Projects..."
-              className="w-full h-[44px] pl-11 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] rounded-[22px] text-xs text-[#111827] placeholder-[#94A3B8] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 shadow-card"
+              className="w-full h-[44px] pl-11 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] rounded-[22px] text-[14px] text-[#111827] placeholder-[#94A3B8] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
             />
             {searchQuery && (
               <button

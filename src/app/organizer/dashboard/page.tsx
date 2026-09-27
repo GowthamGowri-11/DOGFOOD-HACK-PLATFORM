@@ -63,28 +63,30 @@ export default async function OrganizerDashboard() {
   const totalCertificates = activeHackathon?._count?.certificates || 95;
 
   return (
-    <div className="space-y-8 select-none">
+    <div className="space-y-8 select-none font-sans">
       {/* 1. Top Section: Header & Hackathon Selector */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#E2E8F0]">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-baseline gap-4 pb-6 border-b border-[#E2E8F0]">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-[#64748B] mb-1">
+          <div className="flex items-center space-x-2 text-[13px] font-medium text-[#64748B] mb-1.5 tracking-[0.01em]">
             <span>Organizer Operations Command</span>
-            <span>•</span>
-            <Badge variant="purple">Enterprise Event Manager</Badge>
+            <span className="text-[#94A3B8]">•</span>
+            <span className="px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#FAF5FF] border border-[#E9D5FF] text-[#7C3AED]">
+              Enterprise Event Manager
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
+          <h1 className="text-[28px] sm:text-[32px] lg:text-[35px] font-bold text-[#111827] tracking-tight leading-[1.18]">
             Event Operations Center
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+          <p className="text-[15px] sm:text-[16px] text-[#64748B] mt-1.5 font-normal leading-[1.5] max-w-[680px]">
             Real-time telemetry, participant registration funnel, balanced judging workload, and AI jury calibration.
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2.5">
-          {/* Hackathon Selector Dropdown Simulation */}
-          <div className="flex items-center space-x-2 px-3.5 py-2 bg-white border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#111827] shadow-card">
+        <div className="flex flex-wrap items-center gap-3">
+          {/* Hackathon Selector Pill */}
+          <div className="flex items-center space-x-2 px-3.5 py-2 bg-white border border-[#E2E8F0] rounded-xl text-[13px] font-medium text-[#111827] shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
             <span className="text-[#64748B]">Active:</span>
-            <span className="text-[#2563EB] truncate max-w-[180px]">
+            <span className="text-[#2563EB] truncate max-w-[200px] font-medium">
               {activeHackathon?.title || 'Apex AI Global Hackathon 2026'}
             </span>
           </div>
@@ -136,18 +138,20 @@ export default async function OrganizerDashboard() {
         {/* Left 2 Cols: Submission Funnel & Judging Velocity */}
         <div className="lg:col-span-2 space-y-6">
           {/* Submission Funnel Card */}
-          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-6 shadow-card space-y-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <BarChart3 className="w-4 h-4 text-[#2563EB]" />
-                <h3 className="text-sm font-bold text-[#111827]">
+                <h3 className="text-[16px] sm:text-[17px] font-bold text-[#111827]">
                   Participant Conversion Funnel
                 </h3>
               </div>
-              <span className="text-xs font-semibold text-[#059669]">75% Completion Rate</span>
+              <span className="text-[13px] sm:text-[14px] font-semibold text-[#059669]">
+                75% Completion Rate
+              </span>
             </div>
 
-            <div className="space-y-3 pt-2">
+            <div className="space-y-3.5 pt-2">
               {[
                 { label: 'Registered Participants', count: 128, percentage: 100, color: 'bg-[#2563EB]' },
                 { label: 'Formed Teams (2-4 Members)', count: 96, percentage: 75, color: 'bg-[#3B82F6]' },
@@ -155,14 +159,14 @@ export default async function OrganizerDashboard() {
                 { label: 'Linked Repository & Working Demo', count: 72, percentage: 56, color: 'bg-[#93C5FD]' },
                 { label: 'Final Submissions Locked', count: 64, percentage: 50, color: 'bg-[#059669]' },
               ].map((stage) => (
-                <div key={stage.label} className="space-y-1">
-                  <div className="flex justify-between text-xs font-medium">
-                    <span className="text-[#334155]">{stage.label}</span>
-                    <span className="font-bold text-[#111827]">
-                      {stage.count} ({stage.percentage}%)
+                <div key={stage.label} className="space-y-1.5">
+                  <div className="flex justify-between text-[13px] sm:text-[14px]">
+                    <span className="font-medium text-[#334155]">{stage.label}</span>
+                    <span className="font-semibold text-[#111827]">
+                      {stage.count} <span className="text-[#64748B] font-normal">({stage.percentage}%)</span>
                     </span>
                   </div>
-                  <div className="w-full h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
+                  <div className="w-full h-[7px] rounded-full bg-[#F1F5F9] overflow-hidden">
                     <div
                       className={`h-full rounded-full ${stage.color}`}
                       style={{ width: `${stage.percentage}%` }}
@@ -174,32 +178,38 @@ export default async function OrganizerDashboard() {
           </div>
 
           {/* Track Performance Breakdown */}
-          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-6 shadow-card space-y-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <FolderKanban className="w-4 h-4 text-[#7E22CE]" />
-                <h3 className="text-sm font-bold text-[#111827]">Track Distribution</h3>
+                <h3 className="text-[16px] sm:text-[17px] font-bold text-[#111827]">
+                  Track Distribution
+                </h3>
               </div>
-              <span className="text-xs text-[#64748B]">2 Active Tracks</span>
+              <span className="text-[13px] text-[#64748B]">2 Active Tracks</span>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
               <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-[#111827]">Autonomous AI Agents</span>
+                <div className="flex justify-between items-center text-[13px]">
+                  <span className="font-semibold text-[#111827]">Autonomous AI Agents</span>
                   <Badge variant="purple">60% of Teams</Badge>
                 </div>
-                <div className="text-xl font-extrabold text-[#7E22CE]">15 Projects</div>
-                <p className="text-[11px] text-[#64748B]">Multi-agent incident triage and clinical evidence synthesis</p>
+                <div className="text-[20px] font-bold text-[#7E22CE]">15 Projects</div>
+                <p className="text-[12px] text-[#64748B] leading-[1.4]">
+                  Multi-agent incident triage and clinical evidence synthesis
+                </p>
               </div>
 
               <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-2">
-                <div className="flex justify-between items-center text-xs">
-                  <span className="font-bold text-[#111827]">Resilient FinTech Infra</span>
+                <div className="flex justify-between items-center text-[13px]">
+                  <span className="font-semibold text-[#111827]">Resilient FinTech Infra</span>
                   <Badge variant="emerald">40% of Teams</Badge>
                 </div>
-                <div className="text-xl font-extrabold text-[#059669]">9 Projects</div>
-                <p className="text-[11px] text-[#64748B]">Zero-knowledge cryptographic atomic payment settlement</p>
+                <div className="text-[20px] font-bold text-[#059669]">9 Projects</div>
+                <p className="text-[12px] text-[#64748B] leading-[1.4]">
+                  Zero-knowledge cryptographic atomic payment settlement
+                </p>
               </div>
             </div>
           </div>
@@ -208,12 +218,14 @@ export default async function OrganizerDashboard() {
         {/* Right 1 Col: Quick Operations Center & AI Jury Status */}
         <div className="space-y-6">
           {/* Quick Operations Actions */}
-          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-6 shadow-card space-y-4">
-            <h3 className="text-sm font-bold text-[#111827]">Quick Event Actions</h3>
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-6 shadow-[0_1px_2px_rgba(15,23,42,0.03)] space-y-4">
+            <h3 className="text-[16px] sm:text-[17px] font-bold text-[#111827]">
+              Quick Event Actions
+            </h3>
             <div className="space-y-2.5">
               <Link
                 href="/organizer/assignments"
-                className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] hover:bg-[#EFF6FF] border border-[#E2E8F0] transition-colors text-xs font-semibold text-[#111827]"
+                className="h-[46px] flex items-center justify-between px-3.5 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1] transition-all text-[14px] font-medium text-[#334155]"
               >
                 <div className="flex items-center space-x-2.5">
                   <Scale className="w-4 h-4 text-[#2563EB]" />
@@ -224,7 +236,7 @@ export default async function OrganizerDashboard() {
 
               <Link
                 href="/organizer/ai-jury"
-                className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] hover:bg-[#FAF5FF] border border-[#E2E8F0] transition-colors text-xs font-semibold text-[#111827]"
+                className="h-[46px] flex items-center justify-between px-3.5 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1] transition-all text-[14px] font-medium text-[#334155]"
               >
                 <div className="flex items-center space-x-2.5">
                   <Sparkles className="w-4 h-4 text-[#7E22CE]" />
@@ -235,7 +247,7 @@ export default async function OrganizerDashboard() {
 
               <Link
                 href="/organizer/rubrics"
-                className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] hover:bg-[#F8FAFC] border border-[#E2E8F0] transition-colors text-xs font-semibold text-[#111827]"
+                className="h-[46px] flex items-center justify-between px-3.5 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1] transition-all text-[14px] font-medium text-[#334155]"
               >
                 <div className="flex items-center space-x-2.5">
                   <Sliders className="w-4 h-4 text-[#D97706]" />
@@ -246,7 +258,7 @@ export default async function OrganizerDashboard() {
 
               <Link
                 href="/organizer/results"
-                className="flex items-center justify-between p-3 rounded-xl bg-[#F8FAFC] hover:bg-[#ECFDF5] border border-[#E2E8F0] transition-colors text-xs font-semibold text-[#111827]"
+                className="h-[46px] flex items-center justify-between px-3.5 rounded-xl bg-white hover:bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1] transition-all text-[14px] font-medium text-[#334155]"
               >
                 <div className="flex items-center space-x-2.5">
                   <Award className="w-4 h-4 text-[#059669]" />
@@ -257,23 +269,25 @@ export default async function OrganizerDashboard() {
             </div>
           </div>
 
-          {/* AI Jury Real-time Telemeter */}
-          <div className="bg-gradient-to-br from-[#111827] to-[#1E293B] text-white rounded-[16px] p-5 space-y-3 shadow-card">
-            <div className="flex items-center justify-between text-xs">
-              <span className="font-bold text-[#93C5FD] uppercase tracking-wider flex items-center">
-                <Sparkles className="w-3.5 h-3.5 mr-1 text-[#38BDF8]" /> AI Jury Calibrator
+          {/* AI Jury Real-time Calibrator */}
+          <div className="bg-white border border-[#E2E8F0] rounded-2xl p-5 space-y-3 shadow-[0_1px_2px_rgba(15,23,42,0.03)]">
+            <div className="flex items-center justify-between text-[12px]">
+              <span className="font-semibold text-[#64748B] uppercase tracking-[0.03em] flex items-center">
+                <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#2563EB]" /> AI Jury Calibrator
               </span>
-              <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/20 font-mono">
-                Model: claude-3-7
+              <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE] font-mono font-medium">
+                claude-3-7
               </span>
             </div>
-            <div className="text-xl font-black text-white">24 Runs Verified</div>
-            <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+            <div className="text-[22px] font-bold text-[#111827]">
+              24 Runs Verified
+            </div>
+            <p className="text-[12px] sm:text-[13px] text-[#64748B] leading-[1.5]">
               Autonomous static code inspection, architecture verification, and statistical correlation calibration against certified human evaluations.
             </p>
-            <div className="pt-1 flex items-center justify-between text-xs text-[#38BDF8] font-bold">
-              <span>MAE: 0.12 pts</span>
-              <span>Agreement: 94%</span>
+            <div className="pt-2 border-t border-[#E2E8F0] flex items-center justify-between text-[13px] font-semibold">
+              <span className="text-[#059669]">MAE: 0.12 pts</span>
+              <span className="text-[#2563EB]">Agreement: 94%</span>
             </div>
           </div>
         </div>
