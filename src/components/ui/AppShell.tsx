@@ -47,10 +47,10 @@ export const AppShell: React.FC<AppShellProps> = ({
         onCloseMobile={() => setMobileMenuOpen(false)}
       />
 
-      {/* Main Application Area (offset by sidebar width on desktop) */}
+      {/* Main Application Area (offset by 270px sidebar width on desktop) */}
       <div
         className={`flex-1 flex flex-col transition-all duration-200 ${
-          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[260px]'
+          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[270px]'
         }`}
       >
         {/* Top Global Navbar (height: 72px, centered search, breadcrumb) */}
@@ -60,17 +60,17 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* APPLICATION AREA: Center the primary content inside this application area */}
-        <main className="flex-1 w-full bg-[#FFFFFF] py-6 sm:py-8 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1080px] mx-auto">
+        <main className="flex-1 w-full bg-[#FFFFFF] pt-[32px] pb-10 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[1070px] mx-auto">
             {/* Optional Unified Header Bar */}
             {(pageTitle || headerAction) && (
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 mb-6 border-b border-[#E2E8F0] gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-5 mb-5 border-b border-[#E2E8F0] gap-4">
                 <div>
-                  <h1 className="text-[28px] sm:text-[36px] font-bold text-[#111827] tracking-tight leading-tight">
+                  <h1 className="text-[32px] sm:text-[38px] font-semibold text-[#111827] tracking-tight leading-[1.15]">
                     {pageTitle}
                   </h1>
                   {pageSubtitle && (
-                    <p className="text-[14px] sm:text-[15px] text-[#64748B] mt-1 font-normal leading-relaxed">
+                    <p className="text-[14px] sm:text-[15px] text-[#64748B] mt-1.5 font-normal leading-[1.5]">
                       {pageSubtitle}
                     </p>
                   )}
@@ -79,16 +79,16 @@ export const AppShell: React.FC<AppShellProps> = ({
               </div>
             )}
 
-            {/* Split layout: Main Content (~705px) + Right Featured Rail (~316px) with ~44px gap */}
+            {/* Split layout: Main Content (~705px) + Right Featured Rail (~320px) with ~44px gap */}
             {showFeaturedRail ? (
               <div className="flex flex-col xl:flex-row items-start gap-8 xl:gap-[44px]">
                 {/* Main Content Area (~705px) */}
-                <div className="w-full xl:w-[705px] flex-1 min-w-0 space-y-6">
+                <div className="w-full xl:w-[705px] flex-1 min-w-0 space-y-5">
                   {children}
                 </div>
 
-                {/* Right Featured Rail (~316px) */}
-                <div className="w-full xl:w-[316px] flex-shrink-0">
+                {/* Right Featured Rail (~320px) */}
+                <div className="w-full xl:w-[320px] flex-shrink-0">
                   <FeaturedRail items={featuredItems} />
                 </div>
               </div>

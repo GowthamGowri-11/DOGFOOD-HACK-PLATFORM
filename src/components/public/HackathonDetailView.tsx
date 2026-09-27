@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Calendar,
@@ -12,6 +12,7 @@ import {
   FileText,
   Building,
   CheckCircle2,
+  AlertCircle,
   ArrowLeft,
   Award,
   Globe,
@@ -60,6 +61,30 @@ export interface HackathonDetailProps {
 export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon }) => {
   const [activeTab, setActiveTab] = useState<'overview' | 'tracks' | 'prizes' | 'timeline' | 'rules' | 'projects'>('overview');
   const [registered, setRegistered] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [toastMessage, setToastMessage] = useState<{ text: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (text: string, type: 'success' | 'error' = 'success') => {
+    setToastMessage({ text, type });
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  useEffect(() => {
+    async function checkRegistration() {
+      try {
+        const res = await fetch(`/api/v1/hackathons/${hackathon.id}/register`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.data?.registered) {
+            setRegistered(true);
+          }
+        }
+      } catch (err) {
+        // Silently ignore if unauthenticated or network error
+      }
+    }
+    checkRegistration();
+  }, [hackathon.id]);
 
   const totalPrizeAmount = hackathon.prizes.reduce(
     (sum: number, p: any) => sum + Number(p.amount || 0),
@@ -67,9 +92,39 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
   );
   const currency = hackathon.prizes[0]?.currency || 'USD';
 
-  const handleRegister = () => {
-    setRegistered(true);
-    alert('Registration submitted successfully! You can now create or join a team.');
+  const handleRegister = async () => {
+    if (registered) {
+      window.location.href = '/participant/teams';
+      return;
+    }
+
+    try {
+      setRegistering(true);
+      const res = await fetch(`/api/v1/hackathons/${hackathon.id}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+
+      const data = await res.json();
+
+      if (res.status === 401) {
+        window.location.href = `/login?from=/hackathons/${hackathon.slug}`;
+        return;
+      }
+
+      if (!res.ok) {
+        showToast(data.message || data.error?.message || 'Registration failed', 'error');
+        return;
+      }
+
+      setRegistered(true);
+      showToast('Registration successful! You can now create or join a team.', 'success');
+    } catch (err: any) {
+      showToast(err.message || 'An error occurred during registration', 'error');
+    } finally {
+      setRegistering(false);
+    }
   };
 
   return (
@@ -79,6 +134,25 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
       pageTitle={hackathon.title}
       pageSubtitle={hackathon.tagline || hackathon.description.slice(0, 120)}
     >
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div
+          id="registration-toast"
+          className={`fixed bottom-6 right-6 z-50 px-5 py-3.5 rounded-xl shadow-lg border text-sm font-semibold flex items-center space-x-2.5 transition-all ${
+            toastMessage.type === 'success'
+              ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]'
+              : 'bg-[#FEF2F2] border-[#FECACA] text-[#991B1B]'
+          }`}
+        >
+          {toastMessage.type === 'success' ? (
+            <CheckCircle2 className="w-5 h-5 text-[#059669] flex-shrink-0" />
+          ) : (
+            <AlertCircle className="w-5 h-5 text-[#DC2626] flex-shrink-0" />
+          )}
+          <span>{toastMessage.text}</span>
+        </div>
+      )}
+
       {/* Back button */}
       <div className="mb-2">
         <Link
@@ -114,12 +188,17 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
           {/* Primary CTA & Registered Status */}
           <div className="flex flex-col sm:flex-row md:flex-col items-stretch sm:items-center md:items-end gap-3 w-full md:w-auto">
             <Button
-              variant="primary"
+              variant={registered ? 'outline' : 'primary'}
               size="lg"
               onClick={handleRegister}
+              disabled={registering}
               className="w-full sm:w-auto"
             >
-              {registered ? '✓ Registered' : 'Register Now'}
+              {registering
+                ? 'Registering...'
+                : registered
+                ? '✓ Registered — Go to Teams'
+                : 'Register Now'}
             </Button>
             <span className="text-[11px] text-[#64748B] text-center md:text-right">
               Free Entry • Verified Certificate Provided

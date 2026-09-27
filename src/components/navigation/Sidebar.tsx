@@ -54,11 +54,15 @@ const PARTICIPANT_NAV: NavItem[] = [
   { label: 'My Projects', href: '/participant/projects', icon: FolderKanban },
   { label: 'My Submissions', href: '/participant/submissions', icon: FileCheck },
   { label: 'My Results', href: '/participant/results', icon: Award },
+  { label: 'Attendance', href: '/participant/attendance', icon: QrCode },
+  { label: 'Certificates', href: '/participant/certificates', icon: ShieldCheck },
+  { label: 'My Activity', href: '/participant/activity', icon: History },
   { label: 'Project Gallery', href: '/gallery', icon: Layers },
   { label: 'Leaderboard', href: '/leaderboard', icon: BarChart3 },
   { label: 'Notifications', href: '/participant/notifications', icon: Bell },
   { label: 'Settings', href: '/participant/settings', icon: Settings },
 ];
+
 
 const ORGANIZER_NAV: NavItem[] = [
   { label: 'Overview', href: '/organizer/dashboard', icon: LayoutDashboard },

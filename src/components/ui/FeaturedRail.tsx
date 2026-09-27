@@ -54,16 +54,15 @@ export const FeaturedRail: React.FC<FeaturedRailProps> = ({
 }) => {
   return (
     <aside
-      className={`w-[300px] lg:w-[316px] bg-[#F4F4F4] rounded-[18px] p-4 flex-shrink-0 flex flex-col space-y-4 border border-[#E2E8F0] shadow-card ${className}`}
+      className={`w-full xl:w-[320px] bg-[#F4F4F4] rounded-[18px] p-4 flex-shrink-0 flex flex-col space-y-3.5 border border-[#E2E8F0] shadow-none ${className}`}
     >
       {/* Featured Header */}
       <div className="flex items-center justify-between pb-2 border-b border-[#E2E8F0]">
-        <div className="flex items-center space-x-1.5 text-xs font-bold text-[#111827] uppercase tracking-wider">
-          <Sparkles className="w-3.5 h-3.5 text-[#2563EB]" />
-          <span>Featured Opportunities</span>
-        </div>
-        <span className="text-[11px] font-semibold text-[#2563EB] bg-[#EFF6FF] px-2 py-0.5 rounded-full border border-[#BFDBFE]">
-          Curated
+        <h3 className="text-[16px] font-semibold text-[#334155]">
+          Featured
+        </h3>
+        <span className="text-[11px] font-medium text-[#2563EB] bg-white px-2.5 py-0.5 rounded-full border border-[#E2E8F0]">
+          Explore
         </span>
       </div>
 
@@ -73,15 +72,15 @@ export const FeaturedRail: React.FC<FeaturedRailProps> = ({
           <Link
             key={item.id}
             href={`/hackathons/${item.slug}`}
-            className="group block bg-white border border-[#E2E8F0] hover:border-[#93C5FD] rounded-[14px] p-3 transition-all duration-150 hover:shadow-subtle"
+            className="group block bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[13px] p-3 transition-colors shadow-none"
           >
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3.5">
               {/* 48x48 Image/Logo */}
-              <div className="w-12 h-12 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center p-1.5 flex-shrink-0 group-hover:scale-105 transition-transform overflow-hidden">
+              <div className="w-[48px] h-[48px] rounded-[10px] bg-white border border-[#E2E8F0] flex items-center justify-center p-1.5 flex-shrink-0 overflow-hidden shadow-xs">
                 {item.logoUrl ? (
                   <img src={item.logoUrl} alt={item.title} className="w-full h-full object-contain" />
                 ) : (
-                  <div className="w-full h-full rounded-lg bg-gradient-to-br from-[#EFF6FF] to-[#DBEAFE] flex items-center justify-center text-[#2563EB] font-bold text-sm">
+                  <div className="w-full h-full rounded-[8px] bg-[#EFF6FF] flex items-center justify-center text-[#2563EB] font-bold text-sm">
                     {item.title.charAt(0)}
                   </div>
                 )}
@@ -89,13 +88,13 @@ export const FeaturedRail: React.FC<FeaturedRailProps> = ({
 
               {/* Title & Category */}
               <div className="flex-1 min-w-0">
-                <h4 className="text-[13px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors leading-snug truncate">
+                <h4 className="text-[13.5px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors leading-[1.3] truncate">
                   {item.title}
                 </h4>
-                <p className="text-[11px] text-[#64748B] truncate mt-0.5">{item.category}</p>
-                <div className="flex items-center justify-between text-[11px] text-[#047857] font-semibold mt-1">
+                <p className="text-[11.5px] text-[#64748B] truncate mt-0.5">{item.category}</p>
+                <div className="flex items-center justify-between text-[11.5px] text-[#16A34A] font-semibold mt-1">
                   <span>{item.prize}</span>
-                  <span className="text-[#94A3B8] font-normal text-[10px]">{item.deadline}</span>
+                  <span className="text-[#94A3B8] font-normal text-[11px]">{item.deadline}</span>
                 </div>
               </div>
             </div>
@@ -103,33 +102,17 @@ export const FeaturedRail: React.FC<FeaturedRailProps> = ({
         ))}
       </div>
 
-      {/* Recommended Track Card */}
-      <div className="bg-gradient-to-br from-[#111827] to-[#1E293B] text-white rounded-[14px] p-3.5 space-y-2 mt-2 shadow-sm">
-        <div className="flex items-center space-x-1.5 text-[11px] text-[#93C5FD] font-semibold uppercase tracking-wider">
-          <TrendingUp className="w-3 h-3 text-[#38BDF8]" />
-          <span>Fast-Track Recognition</span>
-        </div>
-        <h4 className="text-xs font-bold leading-snug">
-          Verifiable Skill Badges & Certificates
-        </h4>
-        <p className="text-[11px] text-[#94A3B8] leading-relaxed">
-          Competitions feature tamper-proof digital certificates verifiable by top technology employers.
-        </p>
-        <div className="pt-1">
-          <Link
-            href="/leaderboard"
-            className="inline-flex items-center text-[11px] font-bold text-white hover:text-[#93C5FD] transition-colors"
-          >
-            <span>Explore Hall of Fame</span>
-            <ArrowRight className="w-3 h-3 ml-1" />
-          </Link>
-        </div>
-      </div>
 
-      {/* Safety & Compliance Badge */}
-      <div className="flex items-center justify-center space-x-1.5 text-[11px] text-[#64748B] pt-1">
-        <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
-        <span>Strict Jury Isolation & Fair Play Guaranteed</span>
+      {/* Subtle secondary fast-track link */}
+      <div className="pt-1 border-t border-[#E2E8F0]/60 flex items-center justify-between text-[12px] text-[#64748B] px-1">
+        <span className="truncate">Verified skill credentials</span>
+        <Link
+          href="/leaderboard"
+          className="text-[#2563EB] hover:underline font-medium text-[12px] flex items-center flex-shrink-0 ml-2"
+        >
+          <span>Hall of Fame</span>
+          <ArrowRight className="w-3 h-3 ml-0.5" />
+        </Link>
       </div>
     </aside>
   );

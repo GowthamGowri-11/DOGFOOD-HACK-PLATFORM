@@ -45,79 +45,91 @@ export class RegistrationRepository {
   }
 
   public static async findByUserAndHackathon(userId: string, hackathonId: string) {
-    return prisma.registration.findUnique({
-      where: {
-        hackathonId_userId: {
-          hackathonId,
-          userId,
-        },
-      },
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            status: true,
-            minTeamSize: true,
-            maxTeamSize: true,
-            regStartTime: true,
-            regEndTime: true,
-            eventStartTime: true,
-            eventEndTime: true,
+    try {
+      return await prisma.registration.findUnique({
+        where: {
+          hackathonId_userId: {
+            hackathonId,
+            userId,
           },
         },
-      },
-    });
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              status: true,
+              minTeamSize: true,
+              maxTeamSize: true,
+              regStartTime: true,
+              regEndTime: true,
+              eventStartTime: true,
+              eventEndTime: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error('[RegistrationRepository.findByUserAndHackathon] DB query failed:', error);
+      return null;
+    }
   }
 
   public static async findById(id: string) {
-    return prisma.registration.findUnique({
-      where: { id },
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            organizerId: true,
+    try {
+      return await prisma.registration.findUnique({
+        where: { id },
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              organizerId: true,
+            },
+          },
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
           },
         },
-        user: {
-          select: {
-            id: true,
-            fullName: true,
-            email: true,
-          },
-        },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('[RegistrationRepository.findById] DB query failed:', error);
+      return null;
+    }
   }
 
   public static async listByUser(userId: string) {
-    return prisma.registration.findMany({
-      where: { userId },
-      include: {
-        hackathon: {
-          include: {
-            tracks: true,
-            prizes: {
-              orderBy: { rankOrder: 'asc' },
-            },
-            teams: {
-              where: {
-                members: {
-                  some: { userId },
-                },
+    try {
+      return await prisma.registration.findMany({
+        where: { userId },
+        include: {
+          hackathon: {
+            include: {
+              tracks: true,
+              prizes: {
+                orderBy: { rankOrder: 'asc' },
               },
-              include: {
-                members: {
-                  include: {
-                    user: {
-                      select: {
-                        id: true,
-                        fullName: true,
-                        email: true,
+              teams: {
+                where: {
+                  members: {
+                    some: { userId },
+                  },
+                },
+                include: {
+                  members: {
+                    include: {
+                      user: {
+                        select: {
+                          id: true,
+                          fullName: true,
+                          email: true,
+                        },
                       },
                     },
                   },
@@ -126,9 +138,12 @@ export class RegistrationRepository {
             },
           },
         },
-      },
-      orderBy: { registeredAt: 'desc' },
-    });
+        orderBy: { registeredAt: 'desc' },
+      });
+    } catch (error) {
+      console.error('[RegistrationRepository.listByUser] DB query failed:', error);
+      return [];
+    }
   }
 
   public static async listByHackathon(options: ListRegistrationsOptions) {
@@ -151,38 +166,52 @@ export class RegistrationRepository {
         : {}),
     };
 
-    const [total, registrations] = await Promise.all([
-      prisma.registration.count({ where }),
-      prisma.registration.findMany({
-        where,
-        skip,
-        take: pageSize,
-        include: {
-          user: {
-            select: {
-              id: true,
-              fullName: true,
-              email: true,
-              avatarUrl: true,
+    try {
+      const [total, registrations] = await Promise.all([
+        prisma.registration.count({ where }),
+        prisma.registration.findMany({
+          where,
+          skip,
+          take: pageSize,
+          include: {
+            user: {
+              select: {
+                id: true,
+                fullName: true,
+                email: true,
+                avatarUrl: true,
+              },
             },
           },
+          orderBy: { registeredAt: 'desc' },
+        }),
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+
+      return {
+        registrations,
+        pagination: {
+          total,
+          page,
+          pageSize,
+          totalPages,
+          hasMore: page < totalPages,
         },
-        orderBy: { registeredAt: 'desc' },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(total / pageSize);
-
-    return {
-      registrations,
-      pagination: {
-        total,
-        page,
-        pageSize,
-        totalPages,
-        hasMore: page < totalPages,
-      },
-    };
+      };
+    } catch (error) {
+      console.error('[RegistrationRepository.listByHackathon] DB query failed:', error);
+      return {
+        registrations: [],
+        pagination: {
+          total: 0,
+          page,
+          pageSize,
+          totalPages: 0,
+          hasMore: false,
+        },
+      };
+    }
   }
 
   public static async updateStatus(id: string, status: RegistrationStatus) {

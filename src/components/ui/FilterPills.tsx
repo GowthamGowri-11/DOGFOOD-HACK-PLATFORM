@@ -96,23 +96,23 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
   const activeCount = Object.values(selectedFilters).filter(Boolean).length;
 
   return (
-    <div className="flex items-center space-x-2 py-3 overflow-x-auto no-scrollbar relative">
+    <div className="flex items-center space-x-2 py-2 overflow-x-auto no-scrollbar relative">
       {/* Primary Filters Button */}
       <button
         onClick={() => {
           if (openDropdown === 'all') setOpenDropdown(null);
           else setOpenDropdown('all');
         }}
-        className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold border transition-all duration-150 select-none ${
+        className={`flex items-center space-x-2 h-[38px] px-3.5 rounded-[19px] text-[13px] font-medium border transition-colors select-none whitespace-nowrap ${
           activeCount > 0
-            ? 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
-            : 'bg-white text-[#334155] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+            ? 'bg-[#EFF6FF] text-[#2563EB] border-[#3B82F6]'
+            : 'bg-white text-[#334155] border-[#CBD5E1] hover:border-[#94A3B8]'
         }`}
       >
         <SlidersHorizontal className="w-3.5 h-3.5" />
         <span>Filters</span>
         {activeCount > 0 && (
-          <span className="w-4 h-4 rounded-full bg-[#2563EB] text-white text-[10px] flex items-center justify-center font-bold">
+          <span className="w-4 h-4 rounded-full bg-[#2563EB] text-white text-[11px] flex items-center justify-center font-bold">
             {activeCount}
           </span>
         )}
@@ -128,15 +128,15 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
           <div key={group.id} className="relative">
             <button
               onClick={() => setOpenDropdown(openDropdown === group.id ? null : group.id)}
-              className={`flex items-center space-x-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium border transition-all duration-150 select-none whitespace-nowrap ${
+              className={`flex items-center space-x-1.5 h-[38px] px-3.5 rounded-[19px] text-[13px] font-medium border transition-colors select-none whitespace-nowrap ${
                 hasSelection
-                  ? 'bg-[#EFF6FF] text-[#1D4ED8] border-[#93C5FD] font-semibold'
-                  : 'bg-white text-[#475569] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                  ? 'bg-[#EFF6FF] text-[#2563EB] border-[#3B82F6] font-semibold'
+                  : 'bg-white text-[#334155] border-[#CBD5E1] hover:border-[#94A3B8]'
               }`}
             >
               <span>{hasSelection ? currentOption?.label : group.label}</span>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-[#94A3B8] transition-transform ${
+                className={`w-3.5 h-3.5 text-[#64748B] transition-transform ${
                   openDropdown === group.id ? 'rotate-180' : ''
                 }`}
               />
@@ -144,7 +144,7 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
 
             {/* Dropdown Menu */}
             {openDropdown === group.id && (
-              <div className="absolute top-full mt-1.5 left-0 z-50 w-52 bg-white rounded-xl border border-[#E2E8F0] shadow-lg py-1 text-xs animate-in fade-in zoom-in-95 duration-100">
+              <div className="absolute top-full mt-1.5 left-0 z-50 w-52 bg-white rounded-xl border border-[#E2E8F0] shadow-md py-1 text-xs animate-in fade-in duration-100">
                 <div className="px-3 py-1.5 font-bold text-[#64748B] text-[10px] uppercase tracking-wider border-b border-[#F1F5F9]">
                   {group.label}
                 </div>
@@ -159,7 +159,7 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
                           setOpenDropdown(null);
                         }}
                         className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-[#F8FAFC] transition-colors ${
-                          isSelected ? 'font-semibold text-[#2563EB] bg-[#EFF6FF]/60' : 'text-[#334155]'
+                          isSelected ? 'font-semibold text-[#2563EB] bg-[#EFF6FF]' : 'text-[#334155]'
                         }`}
                       >
                         <span className="truncate">{opt.label}</span>
@@ -178,10 +178,10 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
       {activeCount > 0 && onClearAll && (
         <button
           onClick={onClearAll}
-          className="flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-medium text-[#DC2626] hover:bg-[#FEF2F2] transition-colors select-none whitespace-nowrap"
+          className="flex items-center space-x-1 h-[38px] px-3 rounded-[19px] text-[12.5px] font-medium text-[#DC2626] hover:bg-[#FEF2F2] transition-colors select-none whitespace-nowrap"
         >
           <X className="w-3 h-3" />
-          <span>Clear Filters</span>
+          <span>Clear</span>
         </button>
       )}
     </div>

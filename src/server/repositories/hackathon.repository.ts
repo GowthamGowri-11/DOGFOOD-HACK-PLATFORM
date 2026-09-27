@@ -36,48 +36,63 @@ export class HackathonRepository {
         : {}),
     };
 
-    const [total, hackathons] = await Promise.all([
-      prisma.hackathon.count({ where }),
-      prisma.hackathon.findMany({
-        where,
-        skip,
-        take: pageSize,
-        include: {
-          tracks: {
-            include: {
-              problemStatements: {
-                where: { isPublic: true },
+    try {
+      const [total, hackathons] = await Promise.all([
+        prisma.hackathon.count({ where }),
+        prisma.hackathon.findMany({
+          where,
+          skip,
+          take: pageSize,
+          include: {
+            tracks: {
+              include: {
+                problemStatements: {
+                  where: { isPublic: true },
+                },
+              },
+              orderBy: { displayOrder: 'asc' },
+            },
+            prizes: {
+              orderBy: { rankOrder: 'asc' },
+            },
+            _count: {
+              select: {
+                registrations: true,
+                projects: true,
               },
             },
-            orderBy: { displayOrder: 'asc' },
           },
-          prizes: {
-            orderBy: { rankOrder: 'asc' },
-          },
-          _count: {
-            select: {
-              registrations: true,
-              projects: true,
-            },
-          },
+          orderBy: { eventStartTime: 'asc' },
+        }),
+      ]);
+
+      const totalPages = Math.ceil(total / pageSize);
+
+      return {
+        hackathons,
+        pagination: {
+          total,
+          page,
+          pageSize,
+          totalPages,
+          hasMore: page < totalPages,
         },
-        orderBy: { eventStartTime: 'asc' },
-      }),
-    ]);
-
-    const totalPages = Math.ceil(total / pageSize);
-
-    return {
-      hackathons,
-      pagination: {
-        total,
-        page,
-        pageSize,
-        totalPages,
-        hasMore: page < totalPages,
-      },
-    };
+      };
+    } catch (error) {
+      console.error('[HackathonRepository.listPublic] Database unreachable or error:', error);
+      return {
+        hackathons: [],
+        pagination: {
+          total: 0,
+          page,
+          pageSize,
+          totalPages: 0,
+          hasMore: false,
+        },
+      };
+    }
   }
+
 
   public static async findBySlug(slug: string, allowDraft = false) {
     return prisma.hackathon.findFirst({

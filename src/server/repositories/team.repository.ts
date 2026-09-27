@@ -56,132 +56,217 @@ export class TeamRepository {
   }
 
   public static async findById(id: string) {
-    return prisma.team.findUnique({
-      where: { id },
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            organizerId: true,
-            minTeamSize: true,
-            maxTeamSize: true,
-            eventStartTime: true,
-            eventEndTime: true,
-            subStartTime: true,
-            subEndTime: true,
-          },
-        },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-                avatarUrl: true,
-              },
+    try {
+      return await prisma.team.findUnique({
+        where: { id },
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              organizerId: true,
+              minTeamSize: true,
+              maxTeamSize: true,
+              eventStartTime: true,
+              eventEndTime: true,
+              subStartTime: true,
+              subEndTime: true,
             },
           },
-          orderBy: { joinedAt: 'asc' },
-        },
-        invites: {
-          where: {
-            status: 'PENDING',
-            expiresAt: { gt: new Date() },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+            orderBy: { joinedAt: 'asc' },
           },
-          orderBy: { createdAt: 'desc' },
+          invites: {
+            where: {
+              status: 'PENDING',
+              expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('[TeamRepository.findById] DB query failed:', error);
+      return null;
+    }
   }
 
   public static async findByHackathonAndUser(hackathonId: string, userId: string) {
-    return prisma.team.findFirst({
-      where: {
-        hackathonId,
-        members: {
-          some: { userId },
-        },
-      },
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            minTeamSize: true,
-            maxTeamSize: true,
+    try {
+      return await prisma.team.findFirst({
+        where: {
+          hackathonId,
+          members: {
+            some: { userId },
           },
         },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
-              },
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              minTeamSize: true,
+              maxTeamSize: true,
             },
           },
-          orderBy: { joinedAt: 'asc' },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                },
+              },
+            },
+            orderBy: { joinedAt: 'asc' },
+          },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('[TeamRepository.findByHackathonAndUser] DB query failed:', error);
+      return null;
+    }
   }
 
   public static async findByInviteCode(inviteCode: string) {
-    return prisma.team.findUnique({
-      where: { inviteCode },
-      include: {
-        hackathon: {
-          select: {
-            id: true,
-            title: true,
-            slug: true,
-            minTeamSize: true,
-            maxTeamSize: true,
-            status: true,
+    try {
+      return await prisma.team.findUnique({
+        where: { inviteCode },
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              minTeamSize: true,
+              maxTeamSize: true,
+              status: true,
+            },
           },
-        },
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                },
               },
             },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('[TeamRepository.findByInviteCode] DB query failed:', error);
+      return null;
+    }
+  }
+
+  public static async listByUser(userId: string) {
+    try {
+      return await prisma.team.findMany({
+        where: {
+          members: {
+            some: { userId },
+          },
+        },
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+              status: true,
+              minTeamSize: true,
+              maxTeamSize: true,
+              regStartTime: true,
+              regEndTime: true,
+              subStartTime: true,
+              subEndTime: true,
+              judgingStartTime: true,
+              judgingEndTime: true,
+              resultsPublishedAt: true,
+            },
+          },
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                  avatarUrl: true,
+                },
+              },
+            },
+            orderBy: { joinedAt: 'asc' },
+          },
+          project: {
+            include: {
+              track: true,
+              problemStatement: true,
+              submissions: {
+                orderBy: { versionNumber: 'desc' },
+                take: 1,
+              },
+            },
+          },
+          invites: {
+            where: {
+              status: 'PENDING',
+              expiresAt: { gt: new Date() },
+            },
+            orderBy: { createdAt: 'desc' },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      console.error('[TeamRepository.listByUser] DB query failed:', error);
+      return [];
+    }
   }
 
   public static async listByHackathon(hackathonId: string) {
-    return prisma.team.findMany({
-      where: { hackathonId },
-      include: {
-        members: {
-          include: {
-            user: {
-              select: {
-                id: true,
-                fullName: true,
-                email: true,
+    try {
+      return await prisma.team.findMany({
+        where: { hackathonId },
+        include: {
+          members: {
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                },
               },
             },
+            orderBy: { joinedAt: 'asc' },
           },
-          orderBy: { joinedAt: 'asc' },
+          _count: {
+            select: { members: true },
+          },
         },
-        _count: {
-          select: { members: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (error) {
+      console.error('[TeamRepository.listByHackathon] DB query failed:', error);
+      return [];
+    }
   }
 
   public static async addMember(teamId: string, userId: string, isLeader = false) {

@@ -12,15 +12,21 @@ export default async function HackathonsPage() {
   });
 
   // Fetch unique tracks for filter pills
-  const tracks = await prisma.track.findMany({
-    select: { id: true, title: true, slug: true },
-    distinct: ['slug'],
-  });
+  let formattedTracks: { label: string; value: string }[] = [];
+  try {
+    const tracks = await prisma.track.findMany({
+      select: { id: true, title: true, slug: true },
+      distinct: ['slug'],
+    });
 
-  const formattedTracks = tracks.map((t) => ({
-    label: t.title,
-    value: t.slug,
-  }));
+    formattedTracks = tracks.map((t) => ({
+      label: t.title,
+      value: t.slug,
+    }));
+  } catch (err) {
+    console.error('[HackathonsPage] Could not fetch tracks from DB:', err);
+  }
+
 
   const formattedHackathons = hackathons.map((h: any) => ({
     id: h.id,

@@ -36,4 +36,52 @@ export class AuditService {
       return null;
     }
   }
+
+  public static async listByUser(userId: string, limit = 20) {
+    try {
+      return await prisma.auditLog.findMany({
+        where: { userId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        include: {
+          hackathon: {
+            select: {
+              id: true,
+              title: true,
+              slug: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error('[AuditService.listByUser] Failed to fetch audit records:', error);
+      return [];
+    }
+  }
+
+  public static async listByHackathon(hackathonId: string, limit = 50) {
+    try {
+      return await prisma.auditLog.findMany({
+        where: { hackathonId },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        include: {
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+              role: true,
+            },
+          },
+        },
+      });
+    } catch (error) {
+      console.error('[AuditService.listByHackathon] Failed to fetch audit records:', error);
+      return [];
+    }
+  }
 }
+
+
+

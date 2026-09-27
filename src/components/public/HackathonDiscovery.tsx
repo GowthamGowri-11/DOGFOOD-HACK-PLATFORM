@@ -106,15 +106,17 @@ export const HackathonDiscovery: React.FC<HackathonDiscoveryProps> = ({
     'my-hackathons': 1,
   };
 
+  const dynamicTitle = `${initialHackathons.length} Hackathons for Developers`;
+
   return (
     <AppShell
       userRole="PARTICIPANT"
       showFeaturedRail={true}
-      pageTitle="Explore Hackathons"
-      pageSubtitle="Discover hackathons, competitions and challenges to build, learn and showcase your skills."
+      pageTitle={dynamicTitle}
+      pageSubtitle="Discover hackathons, challenge tracks, and live builder competitions."
     >
       {/* Category Tabs: [ All ] [ Hackathons ] [ Open ] [ Upcoming ] [ My Hackathons ] */}
-      <div className="mb-2">
+      <div className="mb-3">
         <CategoryTabs
           activeTab={activeTab}
           onChange={setActiveTab}
@@ -135,13 +137,13 @@ export const HackathonDiscovery: React.FC<HackathonDiscoveryProps> = ({
       {/* Competition Cards List */}
       <div className="space-y-4">
         {filteredHackathons.length === 0 ? (
-          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-10 text-center space-y-3 shadow-card">
+          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-10 text-center space-y-3">
             <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
               <Trophy className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-[#111827]">No Competitions Found</h3>
+            <h3 className="text-base font-semibold text-[#111827]">No Competitions Found</h3>
             <p className="text-xs text-[#64748B] max-w-sm mx-auto">
-              No hackathons matched your active filters. Try adjusting your filter pills or clearing all filters.
+              No hackathons matched your active filters. Try adjusting your filter pills or resetting filters.
             </p>
             <button
               onClick={handleClearAll}

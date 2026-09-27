@@ -35,87 +35,160 @@ export class SubmissionRepository {
   }
 
   public static async findById(id: string) {
-    return prisma.submission.findUnique({
-      where: { id },
-      include: {
-        project: {
-          include: {
-            hackathon: {
-              select: {
-                id: true,
-                title: true,
-                slug: true,
-                organizerId: true,
+    try {
+      return await prisma.submission.findUnique({
+        where: { id },
+        include: {
+          project: {
+            include: {
+              hackathon: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  organizerId: true,
+                },
               },
-            },
-            team: {
-              include: {
-                members: {
-                  include: {
-                    user: {
-                      select: {
-                        id: true,
-                        fullName: true,
-                        email: true,
+              team: {
+                include: {
+                  members: {
+                    include: {
+                      user: {
+                        select: {
+                          id: true,
+                          fullName: true,
+                          email: true,
+                        },
                       },
                     },
                   },
                 },
               },
+              track: true,
+              problemStatement: true,
             },
-            track: true,
-            problemStatement: true,
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('[SubmissionRepository.findById] DB query failed:', error);
+      return null;
+    }
   }
 
   public static async findLatestByProjectId(projectId: string) {
-    return prisma.submission.findFirst({
-      where: { projectId },
-      orderBy: { versionNumber: 'desc' },
-      include: {
-        project: {
-          include: {
-            hackathon: true,
-            team: true,
-            track: true,
-            problemStatement: true,
+    try {
+      return await prisma.submission.findFirst({
+        where: { projectId },
+        orderBy: { versionNumber: 'desc' },
+        include: {
+          project: {
+            include: {
+              hackathon: true,
+              team: true,
+              track: true,
+              problemStatement: true,
+            },
           },
         },
-      },
-    });
+      });
+    } catch (error) {
+      console.error('[SubmissionRepository.findLatestByProjectId] DB query failed:', error);
+      return null;
+    }
   }
 
-  public static async listByHackathon(hackathonId: string) {
-    return prisma.submission.findMany({
-      where: {
-        project: { hackathonId },
-      },
-      include: {
-        project: {
-          include: {
+  public static async listByUser(userId: string) {
+    try {
+      return await prisma.submission.findMany({
+        where: {
+          project: {
             team: {
-              include: {
-                members: {
-                  include: {
-                    user: {
-                      select: {
-                        fullName: true,
-                        email: true,
+              members: {
+                some: { userId },
+              },
+            },
+          },
+        },
+        include: {
+          project: {
+            include: {
+              hackathon: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  status: true,
+                  organizationName: true,
+                  subStartTime: true,
+                  subEndTime: true,
+                  judgingStartTime: true,
+                  judgingEndTime: true,
+                  resultsPublishedAt: true,
+                },
+              },
+              team: {
+                include: {
+                  members: {
+                    include: {
+                      user: {
+                        select: {
+                          id: true,
+                          fullName: true,
+                          email: true,
+                        },
                       },
                     },
                   },
                 },
               },
+              track: true,
+              problemStatement: true,
+              result: true,
             },
-            track: true,
-            problemStatement: true,
           },
         },
-      },
-      orderBy: { submittedAt: 'desc' },
-    });
+        orderBy: { submittedAt: 'desc' },
+      });
+    } catch (error) {
+      console.error('[SubmissionRepository.listByUser] DB query failed:', error);
+      return [];
+    }
+  }
+
+  public static async listByHackathon(hackathonId: string) {
+    try {
+      return await prisma.submission.findMany({
+        where: {
+          project: { hackathonId },
+        },
+        include: {
+          project: {
+            include: {
+              team: {
+                include: {
+                  members: {
+                    include: {
+                      user: {
+                        select: {
+                          fullName: true,
+                          email: true,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+              track: true,
+              problemStatement: true,
+            },
+          },
+        },
+        orderBy: { submittedAt: 'desc' },
+      });
+    } catch (error) {
+      console.error('[SubmissionRepository.listByHackathon] DB query failed:', error);
+      return [];
+    }
   }
 }

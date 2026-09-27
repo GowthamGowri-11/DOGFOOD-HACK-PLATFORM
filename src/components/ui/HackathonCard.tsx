@@ -65,16 +65,36 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
   const getStatusBadge = () => {
     switch (status) {
       case 'REGISTRATION_OPEN':
-        return <Badge variant="emerald">Open</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]/60">
+            Open
+          </span>
+        );
       case 'SUBMISSION_OPEN':
-        return <Badge variant="blue">Submitting</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]/60">
+            Submitting
+          </span>
+        );
       case 'JUDGING':
-        return <Badge variant="purple">In Judging</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]/60">
+            In Judging
+          </span>
+        );
       case 'RESULTS_PUBLISHED':
       case 'COMPLETED':
-        return <Badge variant="slate">Concluded</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]">
+            Concluded
+          </span>
+        );
       default:
-        return <Badge variant="amber">Upcoming</Badge>;
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]/60">
+            Upcoming
+          </span>
+        );
     }
   };
 
@@ -95,9 +115,9 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
   };
 
   return (
-    <div className="group relative bg-white border border-[#E2E8F0] hover:border-[#93C5FD] rounded-[16px] p-5 sm:p-6 transition-all duration-200 hover:shadow-elevated select-none">
+    <div className="group relative bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[16px] p-6 transition-colors select-none shadow-none mb-4">
       {featured && (
-        <div className="absolute -top-2.5 left-6 bg-[#2563EB] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center shadow-sm">
+        <div className="absolute -top-2.5 left-6 bg-[#2563EB] text-white text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full flex items-center">
           <Sparkles className="w-3 h-3 mr-1" /> Featured
         </div>
       )}
@@ -105,63 +125,68 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
       {/* Main card body - horizontal on desktop, vertical on mobile */}
       <div className="flex flex-col sm:flex-row items-start justify-between gap-5">
         {/* Left Column: Details */}
-        <div className="flex-1 min-w-0 space-y-3.5">
-          {/* Header Row: Title & Organization */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {/* Header: Title & Organization */}
           <div>
-            <div className="flex items-center space-x-2 text-xs text-[#64748B] font-medium mb-1">
-              <span className="text-[#334155] font-semibold">{organizationName}</span>
-              <span>•</span>
+            <div className="flex items-center space-x-2 text-[12px] text-[#64748B] font-medium mb-1">
               {getStatusBadge()}
+              <span>•</span>
+              <span className="text-[#334155] text-[15px] font-normal">{organizationName}</span>
             </div>
 
             <Link href={`/hackathons/${slug}`} className="block">
-              <h3 className="text-[19px] font-semibold text-[#111827] group-hover:text-[#2563EB] transition-colors leading-snug truncate">
+              <h3 className="text-[19.5px] font-semibold text-[#1F2937] group-hover:text-[#2563EB] transition-colors leading-[1.3] truncate">
                 {title}
               </h3>
             </Link>
 
             {tagline && (
-              <p className="text-[14px] text-[#475569] line-clamp-1 mt-1 font-normal">
+              <p className="text-[14px] text-[#64748B] line-clamp-1 mt-0.5 font-normal leading-[1.4]">
                 {tagline}
               </p>
             )}
           </div>
 
-          {/* Metadata Row: Team Size, Mode, Prize */}
-          <div className="flex flex-wrap items-center gap-3 text-[13px] text-[#475569]">
-            <span className="inline-flex items-center text-[#334155] font-medium">
-              <Users className="w-3.5 h-3.5 mr-1.5 text-[#64748B]" />
+          {/* Metadata Row: Members, Mode, Prize */}
+          <div className="flex flex-wrap items-center gap-3 text-[13.5px] text-[#475569]">
+            <span className="inline-flex items-center text-[#475569] font-normal">
+              <Users className="w-4 h-4 mr-1.5 text-[#64748B]" />
               {minTeamSize === maxTeamSize
-                ? `${minTeamSize} member`
+                ? `${minTeamSize} Member`
                 : `${minTeamSize}–${maxTeamSize} Members`}
             </span>
 
-            <span className="inline-flex items-center text-[#334155] font-medium">
-              <Globe className="w-3.5 h-3.5 mr-1.5 text-[#2563EB]" />
+            <span className="text-[#CBD5E1]">•</span>
+
+            <span className="inline-flex items-center text-[#475569] font-normal">
+              <Globe className="w-4 h-4 mr-1.5 text-[#64748B]" />
               {eventMode}
             </span>
 
             {totalPrize > 0 && (
-              <span className="inline-flex items-center font-semibold text-[#047857] bg-[#ECFDF5] px-2 py-0.5 rounded-md border border-[#A7F3D0]/60 text-xs">
-                <Trophy className="w-3.5 h-3.5 mr-1 text-[#059669]" />
-                {currency} {totalPrize.toLocaleString()}
-              </span>
+              <>
+                <span className="text-[#CBD5E1]">•</span>
+                <span className="inline-flex items-center font-medium text-[#16A34A]">
+                  <Trophy className="w-4 h-4 mr-1 text-[#16A34A]" />
+                  {currency} {totalPrize.toLocaleString()}
+                </span>
+              </>
             )}
           </div>
 
           {/* Tags Row */}
           {tracks.length > 0 && (
-            <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               {tracks.slice(0, 3).map((t) => (
                 <span
                   key={t.id}
-                  className="px-2.5 py-0.5 rounded-full text-xs font-medium bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0]"
+                  className="h-[32px] px-3 rounded-[16px] text-[13px] font-normal bg-[#F8FAFC] text-[#64748B] flex items-center border border-transparent"
                 >
                   {t.title}
                 </span>
               ))}
               {tracks.length > 3 && (
-                <span className="text-xs text-[#94A3B8] font-medium self-center pl-1">
+                <span className="text-[13px] text-[#94A3B8] font-normal self-center pl-1">
                   +{tracks.length - 3} more
                 </span>
               )}
@@ -169,12 +194,12 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
           )}
         </div>
 
-        {/* Right Column: Logo on desktop (80-90px) */}
-        <div className="w-20 h-20 sm:w-[84px] sm:h-[84px] rounded-2xl bg-[#F8FAFC] border border-[#E2E8F0] flex items-center justify-center flex-shrink-0 p-2 overflow-hidden shadow-card self-center sm:self-start">
+        {/* Right Column: Logo on desktop (84x84px) */}
+        <div className="w-20 h-20 sm:w-[84px] sm:h-[84px] rounded-[10px] bg-white border border-[#E2E8F0] flex items-center justify-center flex-shrink-0 p-2 overflow-hidden self-center sm:self-start">
           {logoUrl ? (
-            <img src={logoUrl} alt={title} className="w-full h-full object-contain rounded-xl" />
+            <img src={logoUrl} alt={title} className="w-full h-full object-contain" />
           ) : (
-            <div className="w-full h-full rounded-xl bg-gradient-to-br from-[#EFF6FF] to-[#DBEAFE] flex items-center justify-center text-[#2563EB] font-bold text-xl">
+            <div className="w-full h-full rounded-[8px] bg-[#EFF6FF] flex items-center justify-center text-[#2563EB] font-bold text-xl">
               {title.charAt(0)}
             </div>
           )}
@@ -182,49 +207,42 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
       </div>
 
       {/* Card Footer Row */}
-      <div className="mt-4 pt-3.5 border-t border-[#F1F5F9] flex items-center justify-between text-xs text-[#64748B]">
+      <div className="mt-4 pt-3.5 border-t border-[#F1F5F9] flex items-center justify-between text-[13px] text-[#64748B]">
         {/* Left: Posted Date & Deadline */}
         <div className="flex items-center space-x-3 sm:space-x-4">
           {postedDate && (
-            <span className="hidden sm:inline text-[#94A3B8]">
+            <span className="text-[#334155] font-normal">
               Posted {new Date(postedDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
             </span>
           )}
 
-          <span className="inline-flex items-center font-medium text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-md border border-[#FDE68A]">
-            <Clock className="w-3 h-3 mr-1" />
+          <span className="text-[#CBD5E1] hidden sm:inline">•</span>
+
+          <span className="text-[#334155] font-medium flex items-center">
+            <Clock className="w-3.5 h-3.5 mr-1 text-[#64748B]" />
             {getDeadlineText()}
           </span>
 
           {registeredCount > 0 && (
-            <span className="hidden md:inline text-[#64748B]">
-              <strong className="text-[#111827]">{registeredCount}</strong> registered
-            </span>
+            <>
+              <span className="text-[#CBD5E1] hidden md:inline">•</span>
+              <span className="hidden md:inline text-[#64748B]">
+                <strong className="text-[#334155] font-semibold">{registeredCount}</strong> registered
+              </span>
+            </>
           )}
         </div>
 
         {/* Right: Actions */}
         <div className="flex items-center space-x-2">
-          {/* Bookmark Button */}
-          <button
-            onClick={handleBookmark}
-            aria-label="Bookmark competition"
-            className={`p-1.5 rounded-lg border transition-colors ${
-              isBookmarked
-                ? 'bg-[#FEF2F2] border-[#FECACA] text-[#DC2626]'
-                : 'bg-white border-[#E2E8F0] text-[#94A3B8] hover:text-[#DC2626] hover:bg-[#F8FAFC]'
-            }`}
-          >
-            <Heart className={`w-3.5 h-3.5 ${isBookmarked ? 'fill-current' : ''}`} />
-          </button>
-
           {/* Share Button */}
           <button
             onClick={handleShare}
             aria-label="Share competition"
-            className="p-1.5 rounded-lg border border-[#E2E8F0] text-[#94A3B8] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors relative"
+            className="p-1.5 rounded-lg text-[#64748B] hover:text-[#111827] hover:bg-[#F8FAFC] transition-colors relative"
+            title="Share"
           >
-            <Share2 className="w-3.5 h-3.5" />
+            <Share2 className="w-[18px] h-[18px]" />
             {sharedToast && (
               <span className="absolute -top-7 right-0 bg-[#111827] text-white text-[10px] px-2 py-0.5 rounded shadow whitespace-nowrap">
                 Link copied!
@@ -232,12 +250,26 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
             )}
           </button>
 
-          {/* CTA Link */}
+          {/* Bookmark Button */}
+          <button
+            onClick={handleBookmark}
+            aria-label="Bookmark competition"
+            className={`p-1.5 rounded-lg transition-colors ${
+              isBookmarked
+                ? 'text-[#DC2626] bg-[#FEF2F2]'
+                : 'text-[#64748B] hover:text-[#DC2626] hover:bg-[#F8FAFC]'
+            }`}
+            title="Favorite"
+          >
+            <Heart className={`w-[18px] h-[18px] ${isBookmarked ? 'fill-current' : ''}`} />
+          </button>
+
+          {/* Compact View Details Link */}
           <Link
             href={`/hackathons/${slug}`}
-            className="inline-flex items-center px-3 py-1.5 bg-[#EFF6FF] hover:bg-[#2563EB] text-[#2563EB] hover:text-white rounded-[10px] font-semibold text-xs transition-all duration-150"
+            className="inline-flex items-center px-3 py-1.5 bg-[#EFF6FF] hover:bg-[#2563EB] text-[#2563EB] hover:text-white rounded-[8px] font-medium text-[13px] transition-colors ml-1"
           >
-            <span>View Details</span>
+            <span>View</span>
             <ArrowUpRight className="w-3.5 h-3.5 ml-1" />
           </Link>
         </div>
