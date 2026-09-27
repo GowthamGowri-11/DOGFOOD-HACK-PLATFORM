@@ -88,6 +88,59 @@ export class SubmissionRepository {
     });
   }
 
+  public static async listByUser(userId: string) {
+    return prisma.submission.findMany({
+      where: {
+        project: {
+          team: {
+            members: {
+              some: { userId },
+            },
+          },
+        },
+      },
+      include: {
+        project: {
+          include: {
+            hackathon: {
+              select: {
+                id: true,
+                title: true,
+                slug: true,
+                status: true,
+                organizationName: true,
+                subStartTime: true,
+                subEndTime: true,
+                judgingStartTime: true,
+                judgingEndTime: true,
+                resultsPublishedAt: true,
+              },
+            },
+            team: {
+              include: {
+                members: {
+                  include: {
+                    user: {
+                      select: {
+                        id: true,
+                        fullName: true,
+                        email: true,
+                      },
+                    },
+                  },
+                },
+              },
+            },
+            track: true,
+            problemStatement: true,
+            result: true,
+          },
+        },
+      },
+      orderBy: { submittedAt: 'desc' },
+    });
+  }
+
   public static async listByHackathon(hackathonId: string) {
     return prisma.submission.findMany({
       where: {

@@ -1,4 +1,7 @@
-import { notFound, redirect } from 'next/navigation';
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   FolderKanban,
@@ -9,335 +12,584 @@ import {
   Lock,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
   ArrowLeft,
   ShieldCheck,
   Code2,
   Clock,
   Sparkles,
   ExternalLink,
+  Save,
+  Send,
 } from 'lucide-react';
-import { getSession } from '@/server/auth/session';
-import { ProjectRepository } from '@/server/repositories/project.repository';
-import { SubmissionValidator } from '@/server/services/submission-validator.service';
-import { SnapshotService } from '@/server/services/snapshot.service';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
-interface ProjectWorkspaceProps {
-  params: {
-    id: string;
+export default function ProjectWorkspacePage() {
+  const params = useParams();
+  const router = useRouter();
+  const projectId = params?.id as string;
+
+  const [project, setProject] = useState<any | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  // Editable fields
+  const [title, setTitle] = useState('');
+  const [tagline, setTagline] = useState('');
+  const [description, setDescription] = useState('');
+  const [repoUrl, setRepoUrl] = useState('');
+  const [demoUrl, setDemoUrl] = useState('');
+  const [videoUrl, setVideoUrl] = useState('');
+  const [documentationUrl, setDocumentationUrl] = useState('');
+  const [techStackInput, setTechStackInput] = useState('');
+
+  const fetchProject = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`/api/v1/projects/${projectId}`);
+      const json = await res.json();
+
+      if (!res.ok || !json.data?.project) {
+        setMessage({ type: 'error', text: json.message || 'Project not found or unauthorized.' });
+        return;
+      }
+
+      const p = json.data.project;
+      setProject(p);
+      setTitle(p.title || '');
+      setTagline(p.tagline || '');
+      setDescription(p.description || '');
+      setRepoUrl(p.repoUrl || '');
+      setDemoUrl(p.demoUrl || '');
+      setVideoUrl(p.videoUrl || '');
+      setDocumentationUrl(p.documentationUrl || '');
+      setTechStackInput(p.techStack ? p.techStack.join(', ') : '');
+    } catch (err) {
+      console.error(err);
+      setMessage({ type: 'error', text: 'Failed to load project.' });
+    } finally {
+      setLoading(false);
+    }
   };
-}
 
-export const dynamic = 'force-dynamic';
+  useEffect(() => {
+    if (projectId) {
+      fetchProject();
+    }
+  }, [projectId]);
 
-export default async function ProjectWorkspacePage({ params }: ProjectWorkspaceProps) {
-  const session = await getSession();
-  if (!session) {
-    redirect(`/login?from=/participant/projects/${params.id}`);
+  const handleSaveDraft = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      setMessage(null);
+
+      const techStack = techStackInput
+        .split(',')
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const res = await fetch(`/api/v1/projects/${projectId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: title.trim(),
+          tagline: tagline.trim() || undefined,
+          description: description.trim(),
+          repoUrl: repoUrl.trim(),
+          demoUrl: demoUrl.trim() || undefined,
+          videoUrl: videoUrl.trim() || undefined,
+          documentationUrl: documentationUrl.trim() || undefined,
+          techStack,
+        }),
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setMessage({
+          type: 'error',
+          text: json.message || json.error?.message || 'Failed to update project.',
+        });
+        return;
+      }
+
+      setMessage({ type: 'success', text: 'Project draft saved successfully!' });
+      fetchProject();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Error saving project' });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSubmitAndLock = async () => {
+    if (!confirm('Are you sure you want to finalize and lock this submission? An immutable snapshot will be generated for judging and you will not be able to make further edits.')) {
+      return;
+    }
+
+    try {
+      setSubmitting(true);
+      setMessage(null);
+
+      const res = await fetch(`/api/v1/projects/${projectId}/submit`, {
+        method: 'POST',
+      });
+
+      const json = await res.json();
+      if (!res.ok) {
+        setMessage({
+          type: 'error',
+          text: json.message || json.error?.message || 'Submission failed.',
+        });
+        return;
+      }
+
+      setMessage({
+        type: 'success',
+        text: 'Project submitted and locked successfully! An immutable snapshot has been generated.',
+      });
+      fetchProject();
+    } catch (err: any) {
+      setMessage({ type: 'error', text: err.message || 'Error submitting project' });
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="py-24 text-center text-xs text-[#64748B]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto mb-2" />
+        Loading project workspace...
+      </div>
+    );
   }
 
-  const project = await ProjectRepository.findById(params.id);
   if (!project) {
-    notFound();
+    return (
+      <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-12 text-center space-y-3 shadow-card max-w-lg mx-auto mt-12">
+        <AlertCircle className="w-12 h-12 text-[#DC2626] mx-auto" />
+        <h2 className="text-base font-bold text-[#111827]">Project Workspace Unavailable</h2>
+        <p className="text-xs text-[#64748B]">{message?.text || 'Project not found or access denied.'}</p>
+        <div className="pt-2">
+          <Link href="/participant/dashboard">
+            <Button variant="primary" size="sm">
+              Back to Dashboard
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
   }
 
-  const isMember = project.team.members.some((m: any) => m.userId === session.id);
-  const isAdmin = session.role === 'ADMIN';
+  const latestSubmission = project.latestSubmission;
+  const isLocked = latestSubmission?.status === 'LOCKED' || latestSubmission?.status === 'SUBMITTED';
 
-  if (!isMember && !isAdmin) {
-    redirect('/participant/dashboard');
-  }
-
-  const latestSubmission = project.submissions?.[0] || null;
-  const isLocked = latestSubmission?.status === 'LOCKED';
-  const validation = SubmissionValidator.validateProjectForSubmission(project, project.hackathon);
-
-  const snapshotPayload = isLocked ? (latestSubmission.payloadSnapshot as any) : null;
-  const contentHash = snapshotPayload ? SnapshotService.calculateContentHash(snapshotPayload) : null;
+  // Artifact & Readiness checks
+  const hasRepo = !!project.repoUrl && project.repoUrl.includes('github.com');
+  const hasDescription = project.description?.length >= 20;
+  const isReadyForSubmit = hasRepo && hasDescription;
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8 select-none">
       {/* Back navigation */}
       <div>
         <Link
           href="/participant/dashboard"
-          className="inline-flex items-center text-sm font-semibold text-slate-500 hover:text-indigo-600 transition-colors"
+          className="inline-flex items-center text-xs font-semibold text-[#64748B] hover:text-[#2563EB] transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Participant Arena
         </Link>
       </div>
 
+      {/* Alerts */}
+      {message && (
+        <div
+          className={`p-4 rounded-[12px] text-xs font-medium flex items-center shadow-xs ${
+            message.type === 'success'
+              ? 'bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46]'
+              : 'bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]'
+          }`}
+        >
+          {message.type === 'success' ? (
+            <CheckCircle2 className="w-4 h-4 mr-2 text-[#059669] flex-shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 mr-2 text-[#DC2626] flex-shrink-0" />
+          )}
+          {message.text}
+        </div>
+      )}
+
       {/* Header Banner */}
-      <div className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
+      <div className="bg-white border border-[#E2E8F0] rounded-[20px] p-6 sm:p-8 shadow-card space-y-4">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div className="space-y-1">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700">
+              <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
                 {project.hackathon.title}
               </span>
               <span
-                className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
+                className={`text-[11px] font-bold px-3 py-1 rounded-full uppercase tracking-wider ${
                   isLocked
-                    ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                    : validation.isValid
-                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                    : 'bg-amber-50 text-amber-700 border border-amber-200'
+                    ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+                    : isReadyForSubmit
+                    ? 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
+                    : 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]'
                 }`}
               >
-                {isLocked ? '🔒 OFFICIAL SUBMISSION LOCKED' : validation.isValid ? 'READY TO SUBMIT' : 'DRAFT IN PROGRESS'}
+                {isLocked
+                  ? '🔒 OFFICIAL SUBMISSION LOCKED'
+                  : isReadyForSubmit
+                  ? 'READY TO SUBMIT'
+                  : 'DRAFT IN PROGRESS'}
               </span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black text-slate-900">{project.title}</h1>
-            <p className="text-slate-500 text-sm">{project.tagline || 'Working project workspace for ' + project.team.name}</p>
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827]">{project.title}</h1>
+            <p className="text-xs sm:text-sm text-[#64748B]">
+              {project.tagline || `Solution workspace for ${project.team.name}`}
+            </p>
           </div>
 
           <div className="flex items-center space-x-2">
-            <span className="text-xs text-slate-400 font-medium">Team: {project.team.name}</span>
+            <span className="text-xs text-[#64748B] font-semibold">
+              Team: <strong className="text-[#111827]">{project.team.name}</strong>
+            </span>
           </div>
         </div>
 
         {/* Lock Notice */}
         {isLocked && latestSubmission && (
-          <div className="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80 text-emerald-900 text-xs space-y-1">
-            <div className="flex items-center space-x-2 font-bold text-sm text-emerald-950">
-              <Lock className="w-4 h-4 text-emerald-600" />
+          <div className="p-4 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46] text-xs space-y-1">
+            <div className="flex items-center space-x-2 font-bold text-sm text-[#065F46]">
+              <Lock className="w-4 h-4 text-[#059669]" />
               <span>Immutable Submission Snapshot Active</span>
             </div>
             <p>
-              Submitted on {latestSubmission.submittedAt ? new Date(latestSubmission.submittedAt).toLocaleString() : 'Recently'} by user #{latestSubmission.createdById.slice(0, 8)}.
+              Submitted on {latestSubmission.submittedAt ? new Date(latestSubmission.submittedAt).toLocaleString() : 'Recently'}.
             </p>
-            {contentHash && (
-              <div className="pt-1 font-mono text-[11px] text-emerald-800 break-all">
-                SHA-256 Digest: <code>{contentHash}</code>
-              </div>
-            )}
           </div>
         )}
       </div>
 
       {/* Main Grid: Challenge & Artifacts */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        {/* Left 2 Cols: Details & Artifacts */}
+        {/* Left 2 Cols: Details & Artifacts Form */}
         <div className="lg:col-span-2 space-y-8">
-          {/* Challenge Selection */}
-          <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center">
-              <Sparkles className="w-5 h-5 mr-2 text-indigo-600" /> Target Challenge
+          {/* Target Challenge Info */}
+          <section className="bg-white border border-[#E2E8F0] rounded-[20px] p-6 shadow-card space-y-4">
+            <h2 className="text-base font-bold text-[#111827] flex items-center">
+              <Sparkles className="w-4 h-4 mr-2 text-[#2563EB]" /> Target Challenge Alignment
             </h2>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                <span className="text-xs font-bold text-slate-400 uppercase">Track</span>
-                <h3 className="text-sm font-bold text-slate-900">{project.track.title}</h3>
+              <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
+                <span className="text-[10px] font-bold text-[#64748B] uppercase">Track</span>
+                <h3 className="text-sm font-bold text-[#111827]">{project.track.title}</h3>
                 {project.track.description && (
-                  <p className="text-xs text-slate-500">{project.track.description}</p>
+                  <p className="text-xs text-[#64748B]">{project.track.description}</p>
                 )}
               </div>
 
-              <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-1">
-                <span className="text-xs font-bold text-slate-400 uppercase">Problem Statement</span>
+              <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
+                <span className="text-[10px] font-bold text-[#64748B] uppercase">Problem Statement</span>
                 <div className="flex items-center space-x-1.5">
-                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-slate-200 rounded">
+                  <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 bg-[#E2E8F0] rounded">
                     {project.problemStatement.code}
                   </span>
-                  <h3 className="text-sm font-bold text-slate-900">{project.problemStatement.title}</h3>
+                  <h3 className="text-sm font-bold text-[#111827]">{project.problemStatement.title}</h3>
                 </div>
-                <p className="text-xs text-slate-500 line-clamp-2">{project.problemStatement.description}</p>
+                <p className="text-xs text-[#64748B] line-clamp-2">{project.problemStatement.description}</p>
               </div>
             </div>
           </section>
 
-          {/* Project Description */}
-          <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center">
-              <FileText className="w-5 h-5 mr-2 text-indigo-600" /> Solution Overview
-            </h2>
-            <div className="text-slate-700 text-sm leading-relaxed whitespace-pre-line">
-              {project.description}
-            </div>
+          {/* Editable Form or Read-only Display */}
+          {isLocked ? (
+            <section className="bg-white border border-[#E2E8F0] rounded-[20px] p-6 shadow-card space-y-6">
+              <h2 className="text-base font-bold text-[#111827] flex items-center">
+                <FileText className="w-4 h-4 mr-2 text-[#2563EB]" /> Submitted Deliverables
+              </h2>
 
-            {project.techStack && project.techStack.length > 0 && (
-              <div className="pt-4 border-t border-slate-100 space-y-2">
-                <span className="text-xs font-bold text-slate-400 uppercase">Tech Stack</span>
-                <div className="flex flex-wrap gap-1.5">
-                  {project.techStack.map((tech: string) => (
-                    <span
-                      key={tech}
-                      className="px-2.5 py-0.5 rounded-lg bg-indigo-50 text-indigo-700 border border-indigo-100 text-xs font-medium"
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
+                  <span className="text-[10px] font-bold text-[#64748B] uppercase">Description</span>
+                  <p className="text-xs text-[#334155] whitespace-pre-line leading-relaxed">
+                    {project.description}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                  <div className="flex items-center space-x-3">
+                    <Github className="w-5 h-5 text-slate-800" />
+                    <div>
+                      <span className="text-xs font-bold text-[#111827] block">GitHub Repository</span>
+                      <span className="text-xs text-[#64748B] font-mono">{project.repoUrl}</span>
+                    </div>
+                  </div>
+                  <a
+                    href={project.repoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-[#2563EB] hover:underline text-xs font-bold"
+                  >
+                    Inspect ↗
+                  </a>
+                </div>
+
+                {project.demoUrl && (
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                    <div className="flex items-center space-x-3">
+                      <Globe className="w-5 h-5 text-[#2563EB]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#111827] block">Live Deployment</span>
+                        <span className="text-xs text-[#64748B]">{project.demoUrl}</span>
+                      </div>
+                    </div>
+                    <a
+                      href={project.demoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#2563EB] hover:underline text-xs font-bold"
                     >
-                      {tech}
-                    </span>
-                  ))}
-                </div>
+                      Open ↗
+                    </a>
+                  </div>
+                )}
+
+                {project.videoUrl && (
+                  <div className="flex items-center justify-between p-4 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0]">
+                    <div className="flex items-center space-x-3">
+                      <Video className="w-5 h-5 text-[#7E22CE]" />
+                      <div>
+                        <span className="text-xs font-bold text-[#111827] block">Demo Video</span>
+                        <span className="text-xs text-[#64748B]">{project.videoUrl}</span>
+                      </div>
+                    </div>
+                    <a
+                      href={project.videoUrl}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-[#7E22CE] hover:underline text-xs font-bold"
+                    >
+                      Watch ↗
+                    </a>
+                  </div>
+                )}
               </div>
-            )}
-          </section>
+            </section>
+          ) : (
+            <form onSubmit={handleSaveDraft} className="space-y-6">
+              <section className="bg-white border border-[#E2E8F0] rounded-[20px] p-6 shadow-card space-y-4">
+                <h2 className="text-base font-bold text-[#111827] flex items-center">
+                  <FileText className="w-4 h-4 mr-2 text-[#2563EB]" /> Solution Specifications
+                </h2>
 
-          {/* Submission Artifacts */}
-          <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-8 shadow-sm space-y-4">
-            <h2 className="text-lg font-bold text-slate-900 flex items-center">
-              <Code2 className="w-5 h-5 mr-2 text-indigo-600" /> Deliverable Artifacts
-            </h2>
-
-            <div className="space-y-3">
-              {/* GitHub Repo */}
-              <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                <div className="flex items-center space-x-3">
-                  <Github className="w-5 h-5 text-slate-800" />
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <span className="text-xs font-bold text-slate-900 block">GitHub Repository</span>
-                    <span className="text-xs text-slate-500 font-mono">{project.repoUrl}</span>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      Project Title *
+                    </label>
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
+                      required
+                    />
                   </div>
-                </div>
-                <a
-                  href={project.repoUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="text-indigo-600 hover:text-indigo-700 text-xs font-bold"
-                >
-                  Inspect ↗
-                </a>
-              </div>
 
-              {/* Demo URL */}
-              {project.demoUrl && (
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center space-x-3">
-                    <Globe className="w-5 h-5 text-blue-600" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Live Deployment / Demo</span>
-                      <span className="text-xs text-slate-500">{project.demoUrl}</span>
-                    </div>
+                  <div>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      Tagline
+                    </label>
+                    <input
+                      type="text"
+                      value={tagline}
+                      onChange={(e) => setTagline(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
+                    />
                   </div>
-                  <a
-                    href={project.demoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 hover:text-indigo-700 text-xs font-bold"
-                  >
-                    Open ↗
-                  </a>
                 </div>
-              )}
 
-              {/* Video URL */}
-              {project.videoUrl && (
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center space-x-3">
-                    <Video className="w-5 h-5 text-purple-600" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Demo Video Presentation</span>
-                      <span className="text-xs text-slate-500">{project.videoUrl}</span>
-                    </div>
-                  </div>
-                  <a
-                    href={project.videoUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 hover:text-indigo-700 text-xs font-bold"
-                  >
-                    Watch ↗
-                  </a>
+                <div>
+                  <label className="text-xs font-bold text-[#334155] block mb-1">
+                    Description * (min 20 characters)
+                  </label>
+                  <textarea
+                    rows={4}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
+                    required
+                  />
                 </div>
-              )}
 
-              {/* Documentation URL */}
-              {project.documentationUrl && (
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-100">
-                  <div className="flex items-center space-x-3">
-                    <FileText className="w-5 h-5 text-emerald-600" />
-                    <div>
-                      <span className="text-xs font-bold text-slate-900 block">Documentation / Architecture Doc</span>
-                      <span className="text-xs text-slate-500">{project.documentationUrl}</span>
-                    </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      GitHub Repository URL *
+                    </label>
+                    <input
+                      type="url"
+                      value={repoUrl}
+                      onChange={(e) => setRepoUrl(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
+                      required
+                    />
                   </div>
-                  <a
-                    href={project.documentationUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-indigo-600 hover:text-indigo-700 text-xs font-bold"
-                  >
-                    Read ↗
-                  </a>
+
+                  <div>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      Live Deployment URL
+                    </label>
+                    <input
+                      type="url"
+                      value={demoUrl}
+                      onChange={(e) => setDemoUrl(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
-          </section>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                  <div>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      Demo Video URL
+                    </label>
+                    <input
+                      type="url"
+                      value={videoUrl}
+                      onChange={(e) => setVideoUrl(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      Docs URL
+                    </label>
+                    <input
+                      type="url"
+                      value={documentationUrl}
+                      onChange={(e) => setDocumentationUrl(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-xs font-bold text-[#334155] block mb-1">
+                      Tech Stack
+                    </label>
+                    <input
+                      type="text"
+                      value={techStackInput}
+                      onChange={(e) => setTechStackInput(e.target.value)}
+                      className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs text-[#111827]"
+                    />
+                  </div>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <Button
+                    variant="secondary"
+                    size="md"
+                    type="submit"
+                    disabled={saving}
+                    icon={<Save className="w-4 h-4" />}
+                  >
+                    {saving ? 'Saving...' : 'Save Draft Updates'}
+                  </Button>
+                </div>
+              </section>
+            </form>
+          )}
         </div>
 
         {/* Right 1 Col: Validation & Submission Controls */}
         <div className="space-y-8">
-          <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-sm space-y-5">
-            <h2 className="text-base font-bold text-slate-900 flex items-center">
-              <ShieldCheck className="w-5 h-5 mr-2 text-indigo-600" /> Submission Readiness
+          <section className="bg-white border border-[#E2E8F0] rounded-[20px] p-6 shadow-card space-y-5">
+            <h2 className="text-base font-bold text-[#111827] flex items-center">
+              <ShieldCheck className="w-5 h-5 mr-2 text-[#2563EB]" /> Submission Readiness
             </h2>
 
             {/* Validation Checklist */}
             <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC]">
                 <span>GitHub Repository</span>
-                {project.repoUrl ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                {hasRepo ? (
+                  <CheckCircle2 className="w-4 h-4 text-[#059669]" />
                 ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
+                  <AlertTriangle className="w-4 h-4 text-[#D97706]" />
                 )}
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-                <span>Track & Challenge Selected</span>
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC]">
+                <span>Detailed Description (≥ 20 chars)</span>
+                {hasDescription ? (
+                  <CheckCircle2 className="w-4 h-4 text-[#059669]" />
+                ) : (
+                  <AlertTriangle className="w-4 h-4 text-[#D97706]" />
+                )}
               </div>
 
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50">
-                <span>Team Bounds Compliance</span>
-                {project.team.members.length >= project.hackathon.minTeamSize ? (
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                ) : (
-                  <AlertTriangle className="w-4 h-4 text-amber-500" />
-                )}
+              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#F8FAFC]">
+                <span>Track & Problem Selected</span>
+                <CheckCircle2 className="w-4 h-4 text-[#059669]" />
               </div>
             </div>
 
-            {/* Validation Warnings/Errors */}
-            {validation.errors.length > 0 && (
-              <div className="p-3 bg-red-50 border border-red-200 rounded-xl space-y-1">
-                <span className="text-[11px] font-bold text-red-800 uppercase">Attention Required:</span>
-                <ul className="list-disc list-inside text-xs text-red-700 space-y-0.5">
-                  {validation.errors.map((e: any, i: number) => (
-                    <li key={i}>{e.message}</li>
-                  ))}
-                </ul>
-              </div>
-            )}
-
             {/* Action State */}
             {isLocked ? (
-              <div className="text-center p-4 bg-slate-100 rounded-2xl text-xs text-slate-500 font-semibold space-y-1">
-                <Lock className="w-5 h-5 text-slate-400 mx-auto" />
-                <span>Project Frozen for Evaluation</span>
+              <div className="text-center p-4 bg-[#F8FAFC] rounded-xl text-xs text-[#64748B] font-semibold space-y-1">
+                <Lock className="w-5 h-5 text-[#059669] mx-auto mb-1" />
+                <span className="text-[#065F46] font-bold block">Submission Locked for Evaluation</span>
+                <span>Your project snapshot is frozen for jury review.</span>
               </div>
             ) : (
-              <div className="space-y-2 pt-2">
-                <p className="text-xs text-slate-500 text-center">
+              <div className="space-y-3 pt-2">
+                <p className="text-xs text-[#64748B] leading-relaxed">
                   Once submitted, your solution will be locked into an immutable snapshot for jury evaluation.
                 </p>
+
+                <Button
+                  variant="primary"
+                  size="md"
+                  onClick={handleSubmitAndLock}
+                  disabled={submitting || !isReadyForSubmit}
+                  className="w-full"
+                  icon={<Send className="w-4 h-4" />}
+                >
+                  {submitting ? 'Submitting & Locking...' : 'Submit & Lock Project'}
+                </Button>
               </div>
             )}
           </section>
 
           {/* Submission Timeline */}
-          <section className="bg-white border border-slate-200/90 rounded-3xl p-6 sm:p-7 shadow-sm space-y-4 text-xs">
-            <h2 className="text-base font-bold text-slate-900 flex items-center">
-              <Clock className="w-4 h-4 mr-2 text-indigo-600" /> Submission Window
+          <section className="bg-white border border-[#E2E8F0] rounded-[20px] p-6 shadow-card space-y-3 text-xs">
+            <h2 className="text-base font-bold text-[#111827] flex items-center">
+              <Clock className="w-4 h-4 mr-2 text-[#2563EB]" /> Event Timeline
             </h2>
 
-            <div className="space-y-2 text-slate-600">
+            <div className="space-y-2 text-[#475569]">
               <div>
-                <span className="text-slate-400 block font-medium">Opens:</span>
-                <span className="font-bold text-slate-800">{new Date(project.hackathon.subStartTime).toLocaleString()}</span>
+                <span className="text-[#64748B] block font-medium">Submission Deadline:</span>
+                <span className="font-bold text-[#111827]">
+                  {project.hackathon.subEndTime ? new Date(project.hackathon.subEndTime).toLocaleString() : 'Open'}
+                </span>
               </div>
               <div>
-                <span className="text-slate-400 block font-medium">Deadline:</span>
-                <span className="font-bold text-slate-800">{new Date(project.hackathon.subEndTime).toLocaleString()}</span>
+                <span className="text-[#64748B] block font-medium">Evaluation Status:</span>
+                <span className="font-bold text-[#2563EB]">
+                  {project.hackathon.status === 'RESULTS_PUBLISHED'
+                    ? 'Results Published'
+                    : isLocked
+                    ? 'In Judging Pipeline'
+                    : 'Awaiting Participant Submission'}
+                </span>
               </div>
             </div>
           </section>

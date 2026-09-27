@@ -22,7 +22,7 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
   ];
 
   return (
-    <div className="flex items-center space-x-2 border-b border-[#E2E8F0] pb-2 overflow-x-auto no-scrollbar">
+    <div className="flex items-center space-x-2.5 overflow-x-auto no-scrollbar py-1">
       {tabs.map((tab) => {
         const isActive = activeTab === tab.id;
         const count = counts[tab.id];
@@ -31,17 +31,17 @@ export const CategoryTabs: React.FC<CategoryTabsProps> = ({
           <button
             key={tab.id}
             onClick={() => onChange(tab.id)}
-            className={`flex items-center space-x-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all duration-150 whitespace-nowrap select-none ${
+            className={`flex items-center space-x-2 h-[42px] px-[18px] rounded-[22px] text-[13.5px] font-medium transition-colors whitespace-nowrap select-none ${
               isActive
-                ? 'bg-[#2563EB] text-white shadow-sm font-semibold'
-                : 'bg-white text-[#475569] hover:text-[#111827] hover:bg-[#F8FAFC] border border-[#E2E8F0]'
+                ? 'bg-white text-[#2563EB] border-[1.5px] border-[#3B82F6] font-semibold'
+                : 'bg-white text-[#334155] hover:text-[#111827] hover:border-[#CBD5E1] border border-[#E2E8F0]'
             }`}
           >
             <span>{tab.label}</span>
             {count !== undefined && count > 0 && (
               <span
-                className={`text-[11px] px-1.5 py-0.2 rounded-full font-bold ${
-                  isActive ? 'bg-white/25 text-white' : 'bg-[#F1F5F9] text-[#64748B]'
+                className={`text-[11px] px-1.5 py-0.5 rounded-full font-bold ${
+                  isActive ? 'bg-[#EFF6FF] text-[#2563EB]' : 'bg-[#F1F5F9] text-[#64748B]'
                 }`}
               >
                 {count}

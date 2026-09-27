@@ -87,6 +87,58 @@ export class TeamInviteRepository {
     });
   }
 
+  public static async listPendingForUser(email: string, userId?: string) {
+    try {
+      return await prisma.teamInvite.findMany({
+        where: {
+          OR: [
+            { invitedEmail: email.toLowerCase().trim() },
+            ...(userId ? [{ invitedUserId: userId }] : []),
+          ],
+          status: 'PENDING',
+          expiresAt: { gt: new Date() },
+        },
+        include: {
+          team: {
+            include: {
+              hackathon: {
+                select: {
+                  id: true,
+                  title: true,
+                  slug: true,
+                  minTeamSize: true,
+                  maxTeamSize: true,
+                },
+              },
+              members: {
+                include: {
+                  user: {
+                    select: {
+                      id: true,
+                      fullName: true,
+                    },
+                  },
+                },
+              },
+            },
+          },
+          invitedBy: {
+            select: {
+              id: true,
+              fullName: true,
+              email: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+    } catch (err) {
+      console.error('[TeamInviteRepository.listPendingForUser] DB error:', err);
+      return [];
+    }
+  }
+
+
   public static async updateStatus(id: string, status: TeamInviteStatus) {
     return prisma.teamInvite.update({
       where: { id },

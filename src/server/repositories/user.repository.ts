@@ -47,6 +47,25 @@ export class UserRepository {
     });
   }
 
+  public static async updateProfile(userId: string, data: {
+    fullName?: string;
+    bio?: string;
+    avatarUrl?: string;
+    githubUrl?: string;
+    linkedinUrl?: string;
+  }) {
+    return prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(data.fullName !== undefined ? { fullName: data.fullName.trim() } : {}),
+        ...(data.bio !== undefined ? { bio: data.bio.trim() } : {}),
+        ...(data.avatarUrl !== undefined ? { avatarUrl: data.avatarUrl.trim() } : {}),
+        ...(data.githubUrl !== undefined ? { githubUrl: data.githubUrl.trim() } : {}),
+        ...(data.linkedinUrl !== undefined ? { linkedinUrl: data.linkedinUrl.trim() } : {}),
+      },
+    });
+  }
+
   public static toSafeUser(user: {
     id: string;
     email: string;

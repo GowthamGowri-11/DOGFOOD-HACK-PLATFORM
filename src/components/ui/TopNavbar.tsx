@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -32,6 +32,42 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const [profileDropdownOpen, setProfileDropdownOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
 
+  const [searchResults, setSearchResults] = useState<{
+    hackathons: Array<{ id: string; title: string; subtitle?: string; href: string; status?: string }>;
+    tracks: Array<{ id: string; title: string; subtitle?: string; href: string }>;
+    projects: Array<{ id: string; title: string; subtitle?: string; href: string }>;
+  } | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  // Debounced search query
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setSearchLoading(true);
+      try {
+        const res = await fetch(`/api/v1/search?q=${encodeURIComponent(searchQuery.trim())}`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          setSearchResults(data.data);
+        } else {
+          setSearchResults({ hackathons: [], tracks: [], projects: [] });
+        }
+      } catch (err) {
+        console.error('Search query failed:', err);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
   // Generate dynamic breadcrumb
   const pathSegments = pathname.split('/').filter(Boolean);
   const breadcrumbItems = [
@@ -48,9 +84,16 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      setSearchFocused(false);
       router.push(`/hackathons?q=${encodeURIComponent(searchQuery.trim())}`);
     }
   };
+
+  const hasResults =
+    searchResults &&
+    (searchResults.hackathons.length > 0 ||
+      searchResults.tracks.length > 0 ||
+      searchResults.projects.length > 0);
 
   return (
     <header className="h-[72px] bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 select-none">
@@ -88,7 +131,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       </div>
 
       {/* CENTER: Prominent Centered Global Search (400–420px wide, 44px high, rounded 22px) */}
-      <div className="flex-1 max-w-[420px] mx-4">
+      <div className="flex-1 max-w-[420px] mx-4 relative">
         <form onSubmit={handleSearchSubmit} className="relative w-full">
           <div className="relative flex items-center">
             <Search className="w-4 h-4 text-[#94A3B8] absolute left-4 pointer-events-none" />
@@ -96,13 +139,17 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onFocus={() => setSearchFocused(true)}
               placeholder="Search Hackathons, Tracks, Projects..."
               className="w-full h-[44px] pl-11 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] rounded-[22px] text-xs text-[#111827] placeholder-[#94A3B8] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 shadow-card"
             />
             {searchQuery && (
               <button
                 type="button"
-                onClick={() => setSearchQuery('')}
+                onClick={() => {
+                  setSearchQuery('');
+                  setSearchResults(null);
+                }}
                 className="absolute right-3.5 text-[#94A3B8] hover:text-[#475569] text-xs"
               >
                 ✕
@@ -110,7 +157,133 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             )}
           </div>
         </form>
+
+        {/* Live Search Results Dropdown */}
+        {searchFocused && searchQuery.trim().length > 0 && (
+          <>
+            <div
+              className="fixed inset-0 z-40"
+              onClick={() => setSearchFocused(false)}
+            />
+            <div className="absolute top-full mt-2 left-0 right-0 bg-white rounded-2xl border border-[#E2E8F0] shadow-elevated p-3 z-50 text-xs animate-in fade-in duration-100 max-h-96 overflow-y-auto">
+              {searchLoading ? (
+                <div className="py-6 text-center text-[#64748B]">
+                  <span className="inline-block w-4 h-4 border-2 border-[#2563EB] border-t-transparent rounded-full animate-spin mb-1.5" />
+                  <p className="text-[11px] font-medium">Searching competitions & projects...</p>
+                </div>
+              ) : !hasResults ? (
+                <div className="py-6 text-center text-[#64748B]">
+                  <p className="font-semibold text-xs text-[#111827]">No results found</p>
+                  <p className="text-[11px] text-[#94A3B8] mt-0.5">Try searching for another hackathon, track, or project.</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  {/* Hackathons Group */}
+                  {searchResults.hackathons.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider px-2 block mb-1">
+                        Hackathons
+                      </span>
+                      <div className="space-y-0.5">
+                        {searchResults.hackathons.map((h) => (
+                          <Link
+                            key={h.id}
+                            href={h.href}
+                            onClick={() => setSearchFocused(false)}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-[#F8FAFC] group transition"
+                          >
+                            <div className="truncate">
+                              <p className="font-bold text-xs text-[#111827] group-hover:text-[#2563EB] truncate">
+                                {h.title}
+                              </p>
+                              {h.subtitle && (
+                                <p className="text-[10px] text-[#64748B] truncate">{h.subtitle}</p>
+                              )}
+                            </div>
+                            {h.status && (
+                              <span className="ml-2 shrink-0 px-2 py-0.5 rounded-full text-[9px] font-bold bg-blue-50 text-[#2563EB] border border-blue-100">
+                                {h.status}
+                              </span>
+                            )}
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tracks Group */}
+                  {searchResults.tracks.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider px-2 block mb-1">
+                        Tracks
+                      </span>
+                      <div className="space-y-0.5">
+                        {searchResults.tracks.map((t) => (
+                          <Link
+                            key={t.id}
+                            href={t.href}
+                            onClick={() => setSearchFocused(false)}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-[#F8FAFC] group transition"
+                          >
+                            <div className="truncate">
+                              <p className="font-bold text-xs text-[#111827] group-hover:text-[#2563EB] truncate">
+                                {t.title}
+                              </p>
+                              {t.subtitle && (
+                                <p className="text-[10px] text-[#64748B] truncate">{t.subtitle}</p>
+                              )}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Projects Group */}
+                  {searchResults.projects.length > 0 && (
+                    <div>
+                      <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider px-2 block mb-1">
+                        Projects
+                      </span>
+                      <div className="space-y-0.5">
+                        {searchResults.projects.map((p) => (
+                          <Link
+                            key={p.id}
+                            href={p.href}
+                            onClick={() => setSearchFocused(false)}
+                            className="flex items-center justify-between p-2 rounded-xl hover:bg-[#F8FAFC] group transition"
+                          >
+                            <div className="truncate">
+                              <p className="font-bold text-xs text-[#111827] group-hover:text-[#2563EB] truncate">
+                                {p.title}
+                              </p>
+                              {p.subtitle && (
+                                <p className="text-[10px] text-[#64748B] truncate">{p.subtitle}</p>
+                              )}
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* View All Results Link */}
+                  <div className="pt-2 border-t border-[#F1F5F9]">
+                    <Link
+                      href={`/hackathons?q=${encodeURIComponent(searchQuery.trim())}`}
+                      onClick={() => setSearchFocused(false)}
+                      className="block text-center py-1.5 text-xs font-bold text-[#2563EB] hover:underline"
+                    >
+                      View all results &rarr;
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
+        )}
       </div>
+
 
       {/* RIGHT: Notifications, Community & Profile Avatar */}
       <div className="flex items-center space-x-2 sm:space-x-3">

@@ -192,25 +192,25 @@ export const Sidebar: React.FC<SidebarProps> = ({
         />
       )}
 
-      {/* Permanent Desktop Sidebar (width: 250–270px, background: #F4F8FC, border: #E2E8F0) */}
+      {/* Permanent Desktop Sidebar (width: ~270px, background: #F4F8FC, border: #E2E8F0) */}
       <aside
         className={`fixed top-0 bottom-0 left-0 z-40 bg-[#F4F8FC] border-r border-[#E2E8F0] transition-all duration-200 flex flex-col justify-between select-none ${
-          collapsed ? 'w-[72px]' : 'w-[260px]'
+          collapsed ? 'w-[72px]' : 'w-[270px]'
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
         {/* TOP: Brand Wordmark & Collapse Icon */}
-        <div className="h-[72px] px-4 border-b border-[#E2E8F0] flex items-center justify-between">
+        <div className="h-[72px] px-5 border-b border-[#E2E8F0] flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2.5 overflow-hidden">
-            <div className="w-9 h-9 rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black shadow-sm flex-shrink-0">
-              <Trophy className="w-5 h-5 text-white" />
+            <div className="w-[34px] h-[34px] rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black shadow-sm flex-shrink-0">
+              <Trophy className="w-4 h-4 text-white" />
             </div>
             {!collapsed && (
               <div className="truncate">
-                <span className="font-extrabold text-base tracking-tight text-[#111827]">
+                <span className="font-bold text-[17px] tracking-tight text-[#111827]">
                   Apex<span className="text-[#2563EB]">Hack</span>
                 </span>
-                <span className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wider -mt-1">
-                  Enterprise Arena
+                <span className="block text-[10px] font-medium text-[#64748B] uppercase tracking-wider -mt-0.5">
+                  Competition Arena
                 </span>
               </div>
             )}
@@ -228,37 +228,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* MIDDLE SECTION: Role Selector, Primary CTA, Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3">
+        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
           {/* Role Switcher Pill */}
           {!collapsed ? (
             <div className="relative">
-              <span className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wider px-2 mb-1">
+              <span className="block text-[12px] font-medium text-[#64748B] px-1 mb-1.5">
                 You&apos;re viewing as
               </span>
               <button
                 onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className="w-full flex items-center justify-between px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-xl text-xs font-semibold text-[#111827] shadow-card transition-colors"
+                className="w-full h-[48px] flex items-center justify-between px-3.5 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[13px] text-[14px] font-medium text-[#111827] transition-colors"
               >
-                <div className="flex items-center space-x-2 truncate">
-                  <span>{roleMeta[currentRole].icon}</span>
+                <div className="flex items-center space-x-2.5 truncate">
+                  <span className="text-base">{roleMeta[currentRole].icon}</span>
                   <span className="truncate">{roleMeta[currentRole].label}</span>
                 </div>
-                <ChevronDown className="w-3.5 h-3.5 text-[#94A3B8]" />
+                <ChevronDown className="w-4 h-4 text-[#94A3B8]" />
               </button>
 
               {/* Role Dropdown */}
               {roleDropdownOpen && (
-                <div className="absolute top-full mt-1.5 left-0 right-0 z-50 bg-white rounded-xl border border-[#E2E8F0] shadow-lg py-1 text-xs animate-in fade-in duration-100">
+                <div className="absolute top-full mt-1.5 left-0 right-0 z-50 bg-white rounded-xl border border-[#E2E8F0] shadow-md py-1 text-xs animate-in fade-in duration-100">
                   {(['PARTICIPANT', 'ORGANIZER', 'JUDGE', 'ADMIN'] as UserRole[]).map((r) => (
                     <button
                       key={r}
                       onClick={() => handleRoleSelect(r)}
-                      className={`w-full flex items-center space-x-2 px-3 py-2 text-left hover:bg-[#F8FAFC] transition-colors ${
-                        currentRole === r ? 'font-bold text-[#2563EB] bg-[#EFF6FF]' : 'text-[#334155]'
+                      className={`w-full flex items-center space-x-2.5 px-3.5 py-2.5 text-left hover:bg-[#F8FAFC] transition-colors ${
+                        currentRole === r ? 'font-semibold text-[#2563EB] bg-[#EFF6FF]' : 'text-[#334155]'
                       }`}
                     >
                       <span>{roleMeta[r].icon}</span>
-                      <span>{roleMeta[r].label}</span>
+                      <span className="text-[13px]">{roleMeta[r].label}</span>
                     </button>
                   ))}
                 </div>
@@ -270,18 +270,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           )}
 
-          {/* Primary CTA Button */}
+          {/* Primary CTA Button (42-44px height, 22px radius, 13-14px font, 500-600 weight) */}
           {!collapsed && (
             <Link
               href={roleMeta[currentRole].ctaHref}
-              className="flex items-center justify-center space-x-2 w-full py-2.5 px-3 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white rounded-xl text-xs font-semibold shadow-sm transition-all duration-150"
+              className="flex items-center justify-center space-x-2 w-full h-[42px] px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white rounded-[22px] text-[13.5px] font-medium transition-colors shadow-none"
             >
               <span>{roleMeta[currentRole].ctaLabel}</span>
             </Link>
           )}
 
           {/* Navigation Links List */}
-          <nav className="space-y-0.5 pt-1">
+          <nav className="space-y-[3px] pt-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -293,15 +293,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={item.label}
                   href={item.href}
                   onClick={onCloseMobile}
-                  className={`flex items-center group h-[44px] px-3 rounded-[11px] text-[14px] font-medium transition-all duration-150 ${
+                  className={`flex items-center group h-[42px] px-3 rounded-[9px] text-[14px] transition-colors ${
                     isActive
-                      ? 'bg-[#EFF6FF] text-[#111827] font-semibold'
-                      : 'text-[#475569] hover:text-[#111827] hover:bg-white/60'
+                      ? 'bg-[#E5EDF5] text-[#334155] font-medium'
+                      : 'text-[#334155] hover:text-[#111827] hover:bg-white/70 font-normal'
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
                   <Icon
-                    className={`w-[19px] h-[19px] flex-shrink-0 transition-colors ${
+                    className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${
                       isActive ? 'text-[#2563EB]' : 'text-[#64748B] group-hover:text-[#2563EB]'
                     } ${collapsed ? 'mx-auto' : 'mr-3'}`}
                   />
@@ -311,7 +311,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
 
                   {!collapsed && item.badge && (
-                    <span className="ml-auto px-1.5 py-0.5 text-[10px] font-bold rounded-md bg-[#DBEAFE] text-[#1E40AF]">
+                    <span className="ml-auto px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-[#DBEAFE] text-[#1E40AF]">
                       {item.badge}
                     </span>
                   )}
@@ -321,12 +321,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
-        {/* BOTTOM: Profile Summary / Quick Settings */}
-        <div className="p-3 border-t border-[#E2E8F0] bg-white/50">
+        {/* BOTTOM: Profile Summary */}
+        <div className="p-3.5 border-t border-[#E2E8F0] bg-white/40">
           {!collapsed ? (
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E2E8F0] shadow-card">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E2E8F0]">
               <div className="flex items-center space-x-2.5 truncate">
-                <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                <div className="w-[32px] h-[32px] rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
                   A
                 </div>
                 <div className="truncate">
