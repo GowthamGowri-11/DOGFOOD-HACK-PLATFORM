@@ -85,11 +85,11 @@ const ORGANIZER_ITEMS: NavItem[] = [
 
 const JUDGE_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/judge/dashboard', icon: LayoutDashboard },
-  { label: 'My Assignments', href: '/judge/assignments', icon: Scale },
+  { label: 'My Assignments', href: '/judge/dashboard', icon: Scale },
   { label: 'Projects', href: '/projects', icon: FolderKanban },
-  { label: 'Pending Evaluations', href: '/judge/evaluations', icon: FileCheck },
-  { label: 'Completed Evaluations', href: '/judge/completed', icon: ShieldCheck },
-  { label: 'Profile', href: '/judge/profile', icon: UserCheck2 },
+  { label: 'Evaluations', href: '/judge/dashboard', icon: FileCheck },
+  { label: 'Leaderboard', href: '/leaderboard', icon: Award },
+  { label: 'Profile & Settings', href: '/participant/settings', icon: UserCheck2 },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [
