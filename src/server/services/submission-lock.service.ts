@@ -18,12 +18,12 @@ export class SubmissionLockService {
     currentTime: Date = new Date(),
     targetRoundNumber?: number
   ) {
-    const project = await ProjectRepository.findById(projectId);
+    const project = (await ProjectRepository.findById(projectId)) as any;
     if (!project) {
       throw { message: 'Project not found.', code: 'NOT_FOUND', status: 404 };
     }
 
-    const isMember = project.team.members.some((m) => m.userId === userId);
+    const isMember = project.team?.members?.some((m: any) => m.userId === userId);
     if (!isMember) {
       throw { message: 'You are not authorized to submit for this team.', code: 'FORBIDDEN', status: 403 };
     }
@@ -32,7 +32,7 @@ export class SubmissionLockService {
     SubmissionWindowService.assertSubmissionWindowOpen(project.hackathon, currentTime);
 
     // 2. Round Progression Access Verification
-    const activeRound = targetRoundNumber || (project.hackathon as any).currentRoundNumber || 1;
+    const activeRound = targetRoundNumber || project.hackathon?.currentRoundNumber || 1;
     const { RoundProgressionService } = await import('@/server/services/round-progression.service');
     const access = await RoundProgressionService.checkTeamRoundAccess(userId, project.hackathon.id, activeRound);
     if (!access.allowed) {

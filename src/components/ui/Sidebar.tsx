@@ -232,15 +232,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   />
                 ) : (
                   <div className="w-[30px] h-[30px] rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">
-                    {userName ? userName.charAt(0).toUpperCase() : 'A'}
+                    {userName
+                      ? userName.charAt(0).toUpperCase()
+                      : currentRole === 'JUDGE'
+                      ? 'D'
+                      : 'A'}
                   </div>
                 )}
                 <div className="truncate">
                   <div className="font-bold text-xs text-white truncate">
-                    {userName || 'Apex Event Lead'}
+                    {userName ||
+                      (currentRole === 'JUDGE'
+                        ? 'Dr. Sarah Chen'
+                        : currentRole === 'ADMIN'
+                        ? 'System Administrator'
+                        : 'Apex Event Lead')}
                   </div>
                   <div className="text-[10px] text-[#94A3B8] truncate">
-                    {userEmail || 'organizer@hackathon.dev'}
+                    {userEmail ||
+                      (currentRole === 'JUDGE'
+                        ? 'judge.alpha@hackathon.dev'
+                        : currentRole === 'ADMIN'
+                        ? 'admin@hackathon.dev'
+                        : 'organizer@hackathon.dev')}
                   </div>
                 </div>
               </div>

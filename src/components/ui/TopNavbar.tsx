@@ -128,9 +128,12 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
     { label: 'Home', href: '/' },
     ...pathSegments.map((segment, index) => {
       const href = '/' + pathSegments.slice(0, index + 1).join('/');
-      const label =
+      let label =
         segment.charAt(0).toUpperCase() +
         segment.slice(1).replace(/-/g, ' ');
+      if (segment.toLowerCase() === 'assignments') {
+        label = 'My Assignments';
+      }
       return { label, href };
     }),
   ];
@@ -221,11 +224,21 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
             className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-[#151D28] hover:bg-[#1E293B] border border-[#273549] transition-all"
           >
             <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-white font-bold text-xs flex items-center justify-center">
-              {currentUser?.name ? currentUser.name.charAt(0).toUpperCase() : 'A'}
+              {currentUser?.name
+                ? currentUser.name.charAt(0).toUpperCase()
+                : userRole === 'JUDGE'
+                ? 'D'
+                : 'A'}
             </div>
             <div className="text-left hidden lg:block">
               <div className="text-xs font-bold text-white leading-tight">
-                {currentUser?.name || userName || 'Apex Event Lead'}
+                {currentUser?.name ||
+                  userName ||
+                  (userRole === 'JUDGE'
+                    ? 'Dr. Sarah Chen'
+                    : userRole === 'ADMIN'
+                    ? 'System Administrator'
+                    : 'Apex Event Lead')}
               </div>
               <div className="text-[10px] font-extrabold text-[#FF5500] uppercase tracking-wider">
                 {currentUser?.role || userRole || 'ORGANIZER'}
