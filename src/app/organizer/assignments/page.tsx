@@ -7,12 +7,10 @@ import {
   ShieldCheck,
   Zap,
   Trophy,
-  ChevronRight,
   Settings,
   CheckCircle2,
   AlertCircle,
   X,
-  FileText,
 } from 'lucide-react';
 
 interface AssignmentItem {
@@ -250,7 +248,7 @@ export default function OrganizerAssignmentsPage() {
       if (!res.ok) throw new Error(json.message || 'Auto-assignment failed');
       setMessage({ type: 'success', text: json.message || 'Assignments generated and balanced across judges.' });
       fetchAssignments(selectedHackathonId);
-    } catch (err: any) {
+    } catch {
       // Local demo fallback to keep workflow responsive
       setMessage({
         type: 'success',
@@ -264,21 +262,8 @@ export default function OrganizerAssignmentsPage() {
 
   return (
     <div className="space-y-6 select-none font-sans max-w-7xl mx-auto pb-12">
-      {/* ================= BREADCRUMBS ================= */}
-      <nav className="flex items-center text-xs text-slate-400 font-medium space-x-2">
-        <Link href="/" className="hover:text-slate-700 transition-colors">
-          Home
-        </Link>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <Link href="/organizer/dashboard" className="hover:text-slate-700 transition-colors">
-          Organizer
-        </Link>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <span className="text-slate-800 font-semibold">Assignments</span>
-      </nav>
-
       {/* ================= HEADER TOOLBAR ================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 pb-2">
         <div className="space-y-2">
           {/* Top Badges */}
           <div className="flex flex-wrap items-center gap-2.5">
@@ -303,10 +288,10 @@ export default function OrganizerAssignmentsPage() {
           </div>
         </div>
 
-        {/* Right Controls */}
+        {/* Right Controls - Single aligned toolbar matching Image 1 */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Hackathon Selector */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2 shadow-xs">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
               <Trophy className="w-4 h-4 text-amber-500 flex-shrink-0" />
               <select
@@ -325,7 +310,7 @@ export default function OrganizerAssignmentsPage() {
           </div>
 
           {/* Judges Per Project Stepper */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs text-xs font-medium text-slate-600">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2 shadow-xs text-xs font-medium text-slate-600">
             <span className="whitespace-nowrap font-semibold">Judges / Project:</span>
             <input
               type="number"
@@ -398,72 +383,116 @@ export default function OrganizerAssignmentsPage() {
             No judge assignments created yet. Click &quot;Run Assignment Engine&quot; to automatically distribute projects to the jury.
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#F8FAFC] text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200/80 text-[11px]">
-                  <th className="py-3.5 px-6">PROJECT</th>
-                  <th className="py-3.5 px-6">TEAM</th>
-                  <th className="py-3.5 px-6">ASSIGNED JUDGE</th>
-                  <th className="py-3.5 px-6">STATUS</th>
-                  <th className="py-3.5 px-6">ASSIGNED AT</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {assignments.map((a) => {
-                  const isCompleted = a.status === 'COMPLETED';
-                  const formattedDate = a.assignedAt
-                    ? new Date(a.assignedAt).toLocaleDateString('en-US')
-                    : '9/27/2026';
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#F8FAFC] text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200/80 text-[11px]">
+                    <th className="py-3.5 px-6">PROJECT</th>
+                    <th className="py-3.5 px-6">TEAM</th>
+                    <th className="py-3.5 px-6">ASSIGNED JUDGE</th>
+                    <th className="py-3.5 px-6">STATUS</th>
+                    <th className="py-3.5 px-6">ASSIGNED AT</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {assignments.map((a) => {
+                    const isCompleted = a.status === 'COMPLETED';
+                    const formattedDate = a.assignedAt
+                      ? new Date(a.assignedAt).toLocaleDateString('en-US')
+                      : '9/27/2026';
 
-                  return (
-                    <tr key={a.id} className="hover:bg-slate-50/70 transition-colors">
-                      {/* Project */}
-                      <td className="py-4 px-6 font-bold text-slate-900 text-xs sm:text-sm">
-                        {a.project.title}
-                      </td>
+                    return (
+                      <tr key={a.id} className="hover:bg-slate-50/70 transition-colors">
+                        {/* Project */}
+                        <td className="py-4 px-6 font-bold text-slate-900 text-xs sm:text-sm">
+                          {a.project.title}
+                        </td>
 
-                      {/* Team */}
-                      <td className="py-4 px-6 text-slate-600 font-medium text-xs">
-                        {a.project.team?.name || 'Vanguard Core'}
-                      </td>
+                        {/* Team */}
+                        <td className="py-4 px-6 text-slate-600 font-medium text-xs">
+                          {a.project.team?.name || 'Vanguard Core'}
+                        </td>
 
-                      {/* Assigned Judge */}
-                      <td className="py-4 px-6">
-                        <div className="font-bold text-slate-900 text-xs sm:text-sm leading-tight">
-                          {a.judge?.user?.fullName || 'Vikram Malhotra'}
+                        {/* Assigned Judge */}
+                        <td className="py-4 px-6">
+                          <div className="font-bold text-slate-900 text-xs sm:text-sm leading-tight">
+                            {a.judge?.user?.fullName || 'Vikram Malhotra'}
+                          </div>
+                          <div className="text-[11px] text-slate-400 font-normal">
+                            {a.judge?.user?.email || 'judge.vikram@apex-hack.dev'}
+                          </div>
+                        </td>
+
+                        {/* Status */}
+                        <td className="py-4 px-6">
+                          {isCompleted ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                              COMPLETED
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
+                              ASSIGNED
+                            </span>
+                          )}
+                        </td>
+
+                        {/* Assigned At */}
+                        <td className="py-4 px-6 text-slate-500 font-medium text-xs whitespace-nowrap">
+                          {formattedDate}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< 768px) */}
+            <div className="block md:hidden divide-y divide-slate-100">
+              {assignments.map((a) => {
+                const isCompleted = a.status === 'COMPLETED';
+                const formattedDate = a.assignedAt
+                  ? new Date(a.assignedAt).toLocaleDateString('en-US')
+                  : '9/27/2026';
+
+                return (
+                  <div key={a.id} className="p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <h4 className="font-bold text-sm text-slate-900 leading-snug">{a.project.title}</h4>
+                        <div className="text-xs text-slate-500 mt-0.5">
+                          Team: <strong className="text-slate-700">{a.project.team?.name || 'Vanguard Core'}</strong>
                         </div>
-                        <div className="text-[11px] text-slate-400 font-normal">
-                          {a.judge?.user?.email || 'judge.vikram@apex-hack.dev'}
-                        </div>
-                      </td>
+                      </div>
+                      {isCompleted ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] flex-shrink-0">
+                          COMPLETED
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700 flex-shrink-0">
+                          ASSIGNED
+                        </span>
+                      )}
+                    </div>
 
-                      {/* Status */}
-                      <td className="py-4 px-6">
-                        {isCompleted ? (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-                            COMPLETED
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-slate-100 text-slate-700">
-                            ASSIGNED
-                          </span>
-                        )}
-                      </td>
-
-                      {/* Assigned At */}
-                      <td className="py-4 px-6 text-slate-500 font-medium text-xs whitespace-nowrap">
+                    <div className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 text-xs flex items-center justify-between">
+                      <div>
+                        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400">Assigned Judge</div>
+                        <div className="font-bold text-slate-900 mt-0.5">{a.judge?.user?.fullName || 'Vikram Malhotra'}</div>
+                      </div>
+                      <div className="text-right text-[11px] text-slate-500">
                         {formattedDate}
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>
   );
 }
-

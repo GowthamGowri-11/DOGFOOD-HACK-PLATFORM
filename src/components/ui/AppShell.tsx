@@ -110,10 +110,10 @@ export const AppShell: React.FC<AppShellProps> = ({
         }
       />
 
-      {/* Main Application Area (offset by 270px sidebar width on desktop) */}
+      {/* Main Application Area (offset by 260px sidebar width on desktop) */}
       <div
         className={`flex-1 flex flex-col transition-all duration-200 ${
-          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[270px]'
+          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[260px]'
         }`}
       >
         {/* Top Global Navbar */}

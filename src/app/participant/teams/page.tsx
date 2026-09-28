@@ -672,6 +672,54 @@ export default function ParticipantTeamsPage() {
                     </div>
                   </div>
 
+                  {/* Round Progression Notification Banner */}
+                  {(t.progressionStatus === 'ADVANCED' || t.progressionStatus === 'ELIMINATED') && (
+                    <div
+                      className={`p-4 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                        t.progressionStatus === 'ADVANCED'
+                          ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]'
+                          : 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
+                      }`}
+                    >
+                      <div className="flex items-center space-x-3">
+                        {t.progressionStatus === 'ADVANCED' ? (
+                          <div className="w-9 h-9 rounded-xl bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0] flex items-center justify-center flex-shrink-0">
+                            <CheckCircle2 className="w-5 h-5" />
+                          </div>
+                        ) : (
+                          <div className="w-9 h-9 rounded-xl bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] flex items-center justify-center flex-shrink-0">
+                            <AlertCircle className="w-5 h-5" />
+                          </div>
+                        )}
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <span className="text-xs font-bold">
+                              {t.progressionStatus === 'ADVANCED'
+                                ? `Your team has been selected for the next round of ${t.hackathon?.title || 'the hackathon'}.`
+                                : `Your team was not selected for the next round of ${t.hackathon?.title || 'the hackathon'}.`}
+                            </span>
+                            <Badge variant={t.progressionStatus === 'ADVANCED' ? 'emerald' : 'amber'}>
+                              {t.progressionStatus === 'ADVANCED' ? `ROUND ${t.highestRound} UNLOCKED` : 'NOT SELECTED'}
+                            </Badge>
+                          </div>
+                          <span className="text-[11px] opacity-90 block mt-0.5">
+                            {t.progressionStatus === 'ADVANCED'
+                              ? 'Your team is eligible and can access all next round features and submission channels.'
+                              : 'You can still view the published leaderboard. Historical submissions and scores remain saved.'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {t.progressionStatus === 'ELIMINATED' && (
+                        <Link href="/leaderboard">
+                          <Button variant="secondary" size="sm" className="font-semibold text-xs whitespace-nowrap">
+                            View Leaderboard →
+                          </Button>
+                        </Link>
+                      )}
+                    </div>
+                  )}
+
                   {/* Team Roster Grid */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">

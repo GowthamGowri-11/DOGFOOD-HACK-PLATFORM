@@ -12,13 +12,18 @@ export class SubmissionLockService {
   /**
    * Validates project submission criteria, builds the canonical snapshot, and freezes the submission.
    */
-  public static async submitAndLockProject(projectId: string, userId: string, currentTime: Date = new Date()) {
-    const project = await ProjectRepository.findById(projectId);
+  public static async submitAndLockProject(
+    projectId: string,
+    userId: string,
+    currentTime: Date = new Date(),
+    targetRoundNumber?: number
+  ) {
+    const project = (await ProjectRepository.findById(projectId)) as any;
     if (!project) {
       throw { message: 'Project not found.', code: 'NOT_FOUND', status: 404 };
     }
 
-    const isMember = project.team.members.some((m) => m.userId === userId);
+    const isMember = project.team?.members?.some((m: any) => m.userId === userId);
     if (!isMember) {
       throw { message: 'You are not authorized to submit for this team.', code: 'FORBIDDEN', status: 403 };
     }
@@ -26,7 +31,19 @@ export class SubmissionLockService {
     // 1. Authoritative Submission Window Timing Check
     SubmissionWindowService.assertSubmissionWindowOpen(project.hackathon, currentTime);
 
-    // 2. Race Condition / Double Submit Guard
+    // 2. Round Progression Access Verification
+    const activeRound = targetRoundNumber || project.hackathon?.currentRoundNumber || 1;
+    const { RoundProgressionService } = await import('@/server/services/round-progression.service');
+    const access = await RoundProgressionService.checkTeamRoundAccess(userId, project.hackathon.id, activeRound);
+    if (!access.allowed) {
+      throw {
+        message: access.message,
+        code: access.code,
+        status: access.status,
+      };
+    }
+
+    // 3. Race Condition / Double Submit Guard
     const latest = await SubmissionRepository.findLatestByProjectId(projectId);
     if (latest && latest.status === 'LOCKED') {
       throw {
@@ -36,7 +53,7 @@ export class SubmissionLockService {
       };
     }
 
-    // 3. Authoritative Server-Side Validation Pipeline
+    // 4. Authoritative Server-Side Validation Pipeline
     const validation = SubmissionValidator.validateProjectForSubmission(project, project.hackathon, currentTime);
     if (!validation.isValid) {
       throw {
@@ -47,12 +64,12 @@ export class SubmissionLockService {
       };
     }
 
-    // 3. Create Canonical Immutable Snapshot
+    // 5. Create Canonical Immutable Snapshot
     const versionNumber = latest ? latest.versionNumber + 1 : 1;
     const snapshotPayload = SnapshotService.createPayload(project, userId, versionNumber);
     const contentHash = SnapshotService.calculateContentHash(snapshotPayload);
 
-    // 4. Transactional Locking
+    // 6. Transactional Locking
     const submission = await prisma.$transaction(async (tx) => {
       const sub = await tx.submission.create({
         data: {

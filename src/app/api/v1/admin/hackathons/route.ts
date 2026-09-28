@@ -68,11 +68,46 @@ export async function POST(req: NextRequest) {
       judgingEndTime,
       eligibilityRules,
       rulesAndGuidelines,
+      progressionMode = 'OVERALL_PERFORMANCE',
+      rounds,
     } = body;
 
     // Validate required fields
     if (!title || !slug || !description || !organizationName) {
       return errorResponse('Title, slug, description, and organization name are required', 'VALIDATION_ERROR', 400);
+    }
+
+    // Resolve rounds configuration
+    let roundsList: any[] = [];
+    if (Array.isArray(rounds)) {
+      roundsList = rounds;
+    } else if (rulesAndGuidelines) {
+      try {
+        const parsed = JSON.parse(rulesAndGuidelines);
+        if (Array.isArray(parsed.rounds)) roundsList = parsed.rounds;
+      } catch {
+        // ignore
+      }
+    }
+
+    // Progression Mode validation
+    const validProgressionMode =
+      progressionMode === 'SELECTION_BASED' ? 'SELECTION_BASED' : 'OVERALL_PERFORMANCE';
+
+    if (validProgressionMode === 'SELECTION_BASED') {
+      for (let i = 0; i < roundsList.length; i++) {
+        const r = roundsList[i];
+        if (r.selectionCount !== undefined && r.selectionCount !== null && r.selectionCount !== '') {
+          const count = Number(r.selectionCount);
+          if (!Number.isInteger(count) || count <= 0) {
+            return errorResponse(
+              `Selection count for Round ${i + 1} ("${r.name || 'Round ' + (i + 1)}") must be a positive integer greater than zero.`,
+              'VALIDATION_ERROR',
+              400
+            );
+          }
+        }
+      }
     }
 
     // Auto-calibrate lifecycle window dates to ensure valid sequencing
@@ -151,7 +186,14 @@ export async function POST(req: NextRequest) {
       judgingEndTime: finalJudgingEnd,
       eligibilityRules,
       rulesAndGuidelines,
+      progressionMode: validProgressionMode as any,
     });
+
+    // Sync Rounds if configured
+    if (roundsList.length > 0) {
+      const { RoundProgressionService } = await import('@/server/services/round-progression.service');
+      await RoundProgressionService.syncRoundsFromConfig(hackathon.id, roundsList);
+    }
 
     // Handle Prizes / Prize Pool
     if (body.prizes && Array.isArray(body.prizes) && body.prizes.length > 0) {

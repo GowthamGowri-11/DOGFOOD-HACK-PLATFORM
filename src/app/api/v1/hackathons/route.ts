@@ -7,8 +7,9 @@ import { requireAuth, requireRole } from '@/server/permissions/guards';
 import { ResourceGuards } from '@/server/permissions/resource-guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { AuditService } from '@/server/services/audit.service';
-import { EventStatus } from '@prisma/client';
+import { EventStatus, ProgressionMode } from '@prisma/client';
 import prisma from '@/lib/prisma';
+import { RoundProgressionService } from '@/server/services/round-progression.service';
 import { revalidatePath } from 'next/cache';
 import { getCache, setCache, deleteCache, deleteCachePattern, CACHE_KEYS } from '@/lib/cache';
 
@@ -74,6 +75,8 @@ const createHackathonSchema = z.object({
   currency: z.string().default('USD'),
   prizes: z.array(z.any()).optional(),
   tracks: z.array(trackInputSchema).optional().default([]),
+  progressionMode: z.enum(['SELECTION_BASED', 'OVERALL_PERFORMANCE']).default('OVERALL_PERFORMANCE'),
+  rounds: z.array(z.any()).optional(),
 });
 
 export async function GET(req: NextRequest) {
@@ -220,6 +223,7 @@ export async function POST(req: NextRequest) {
       judgingEndTime: finalJudgingEnd,
       eligibilityRules: data.eligibilityRules,
       rulesAndGuidelines: data.rulesAndGuidelines,
+      progressionMode: data.progressionMode as ProgressionMode,
     });
 
     // Handle Prizes / Prize Pool
@@ -335,6 +339,26 @@ export async function POST(req: NextRequest) {
         }
       } catch {
         // Fallback gracefully if rulesAndGuidelines is plain text
+      }
+    }
+
+    // Sync evaluation rounds into database models for progression engine
+    let roundsToSync = data.rounds;
+    if (!roundsToSync && data.rulesAndGuidelines) {
+      try {
+        const parsed = JSON.parse(data.rulesAndGuidelines);
+        if (parsed.rounds && Array.isArray(parsed.rounds)) {
+          roundsToSync = parsed.rounds;
+        }
+      } catch {
+        // Ignore JSON parse errors
+      }
+    }
+    if (roundsToSync && Array.isArray(roundsToSync) && roundsToSync.length > 0) {
+      try {
+        await RoundProgressionService.syncRoundsFromConfig(created.id, roundsToSync, data.progressionMode as ProgressionMode);
+      } catch (roundErr) {
+        console.error('Failed to sync evaluation rounds:', roundErr);
       }
     }
 

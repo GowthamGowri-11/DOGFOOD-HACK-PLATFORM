@@ -10,6 +10,9 @@ import {
   ShieldCheck,
   Check,
   Info,
+  Trophy,
+  AlertCircle,
+  Award,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -110,58 +113,101 @@ export default function ParticipantNotificationsPage() {
         </div>
       ) : (
         <div className="bg-white border border-[#E2E8F0] rounded-[18px] divide-y divide-[#F1F5F9] shadow-card overflow-hidden">
-          {notifications.map((n) => (
-            <div
-              key={n.id}
-              className={`p-5 flex items-start justify-between gap-4 transition-colors ${
-                n.isRead ? 'bg-white hover:bg-[#F8FAFC]' : 'bg-[#EFF6FF]/40 hover:bg-[#EFF6FF]/60'
-              }`}
-            >
-              <div className="flex items-start space-x-3.5">
-                <div
-                  className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
-                    n.isRead
-                      ? 'bg-[#F1F5F9] text-[#64748B]'
-                      : 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
-                  }`}
-                >
-                  <Info className="w-4 h-4" />
-                </div>
+          {notifications.map((n) => {
+            const isSelectedNotif = n.type === 'TEAM_SELECTED_FOR_NEXT_ROUND' || n.title?.includes('Selected for Next Round');
+            const isEliminatedNotif = n.type === 'TEAM_NOT_SELECTED_FOR_NEXT_ROUND' || n.title?.includes('Not Selected');
+            const isFinalResultNotif = n.type === 'FINAL_RESULT_PUBLISHED';
 
-                <div className="space-y-1">
-                  <div className="flex items-center space-x-2">
-                    <h4 className="text-sm font-bold text-[#111827]">{n.title}</h4>
-                    {!n.isRead && (
-                      <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+            return (
+              <div
+                key={n.id}
+                className={`p-5 flex items-start justify-between gap-4 transition-colors ${
+                  isSelectedNotif
+                    ? 'bg-[#ECFDF5]/50 hover:bg-[#ECFDF5]/80 border-l-4 border-l-[#10B981]'
+                    : isEliminatedNotif
+                    ? 'bg-[#FFFBEB]/50 hover:bg-[#FFFBEB]/80 border-l-4 border-l-[#F59E0B]'
+                    : n.isRead
+                    ? 'bg-white hover:bg-[#F8FAFC]'
+                    : 'bg-[#EFF6FF]/40 hover:bg-[#EFF6FF]/60'
+                }`}
+              >
+                <div className="flex items-start space-x-3.5">
+                  <div
+                    className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                      isSelectedNotif
+                        ? 'bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0]'
+                        : isEliminatedNotif
+                        ? 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
+                        : isFinalResultNotif
+                        ? 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
+                        : n.isRead
+                        ? 'bg-[#F1F5F9] text-[#64748B]'
+                        : 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
+                    }`}
+                  >
+                    {isSelectedNotif ? (
+                      <Trophy className="w-4 h-4" />
+                    ) : isEliminatedNotif ? (
+                      <AlertCircle className="w-4 h-4" />
+                    ) : isFinalResultNotif ? (
+                      <Award className="w-4 h-4" />
+                    ) : (
+                      <Info className="w-4 h-4" />
                     )}
                   </div>
-                  <p className="text-xs text-[#475569] leading-relaxed">{n.message}</p>
-                  <span className="text-[11px] text-[#94A3B8] block">
-                    {new Date(n.createdAt).toLocaleString()}
-                  </span>
+
+                  <div className="space-y-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h4 className="text-sm font-bold text-[#111827]">{n.title}</h4>
+                      {isSelectedNotif && (
+                        <Badge variant="emerald">ADVANCED</Badge>
+                      )}
+                      {isEliminatedNotif && (
+                        <Badge variant="amber">NOT SELECTED</Badge>
+                      )}
+                      {isFinalResultNotif && (
+                        <Badge variant="blue">LEADERBOARD</Badge>
+                      )}
+                      {!n.isRead && (
+                        <span className="w-2 h-2 rounded-full bg-[#2563EB]" />
+                      )}
+                    </div>
+                    <p className="text-xs text-[#334155] font-medium leading-relaxed">{n.message}</p>
+                    <span className="text-[11px] text-[#94A3B8] block">
+                      {new Date(n.createdAt).toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-2 flex-shrink-0">
+                  {n.linkUrl && (
+                    <Link href={n.linkUrl}>
+                      <Button
+                        variant={isSelectedNotif ? 'primary' : 'outline'}
+                        size="sm"
+                        icon={<ExternalLink className="w-3.5 h-3.5" />}
+                      >
+                        {isSelectedNotif
+                          ? 'View Round'
+                          : isEliminatedNotif
+                          ? 'View Leaderboard'
+                          : 'View'}
+                      </Button>
+                    </Link>
+                  )}
+                  {!n.isRead && (
+                    <button
+                      onClick={() => markSingleAsRead(n.id)}
+                      className="p-1.5 text-xs text-[#64748B] hover:text-[#2563EB] rounded-lg transition-colors"
+                      title="Mark as read"
+                    >
+                      <Check className="w-4 h-4" />
+                    </button>
+                  )}
                 </div>
               </div>
-
-              <div className="flex items-center space-x-2 flex-shrink-0">
-                {n.linkUrl && (
-                  <Link href={n.linkUrl}>
-                    <Button variant="outline" size="sm" icon={<ExternalLink className="w-3.5 h-3.5" />}>
-                      View
-                    </Button>
-                  </Link>
-                )}
-                {!n.isRead && (
-                  <button
-                    onClick={() => markSingleAsRead(n.id)}
-                    className="p-1.5 text-xs text-[#64748B] hover:text-[#2563EB] rounded-lg transition-colors"
-                    title="Mark as read"
-                  >
-                    <Check className="w-4 h-4" />
-                  </button>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

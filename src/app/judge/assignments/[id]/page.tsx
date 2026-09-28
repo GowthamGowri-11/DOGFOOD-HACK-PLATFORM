@@ -850,12 +850,12 @@ export default function JudgeAssignmentPage({ params }: { params: { id: string }
 
               {/* Actions Footer */}
               {!isLocked ? (
-                <div className="flex items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 border-t border-[#E2E8F0] pt-4">
                   <button
                     type="button"
                     disabled={saving || submitting}
                     onClick={handleSaveDraft}
-                    className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F8FAFC] text-xs sm:text-sm font-bold rounded-xl transition-colors shadow-2xs"
+                    className="inline-flex items-center justify-center gap-2 px-4 py-3 sm:py-2.5 bg-white border border-[#CBD5E1] text-[#0F172A] hover:bg-[#F8FAFC] text-xs sm:text-sm font-bold rounded-xl transition-colors shadow-2xs min-h-[44px]"
                   >
                     <Save className="w-4 h-4 text-[#64748B]" /> {saving ? 'Saving Draft...' : 'Save Draft'}
                   </button>
@@ -864,7 +864,7 @@ export default function JudgeAssignmentPage({ params }: { params: { id: string }
                     type="button"
                     disabled={saving || submitting}
                     onClick={handleSubmitEvaluation}
-                    className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold rounded-xl transition-colors shadow-xs"
+                    className="inline-flex items-center justify-center gap-2 px-5 py-3 sm:py-2.5 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs sm:text-sm font-bold rounded-xl transition-colors shadow-xs min-h-[44px]"
                   >
                     <Send className="w-4 h-4" /> {submitting ? 'Submitting...' : 'Submit & Lock Evaluation 🔒'}
                   </button>

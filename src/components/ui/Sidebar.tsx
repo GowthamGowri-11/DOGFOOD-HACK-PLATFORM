@@ -170,7 +170,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Mobile Backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-[#0F172A]/70 backdrop-blur-xs z-40 lg:hidden"
           onClick={onCloseMobile}
         />
       )}
@@ -214,7 +214,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* NAVIGATION LINKS SECTION (Full Height) */}
-        <div className="flex-1 overflow-y-auto px-3.5 py-4">
+        <div className="flex-1 overflow-y-auto px-3.5 py-4 custom-scrollbar">
           <nav className="space-y-[4px]">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -255,6 +255,72 @@ export const Sidebar: React.FC<SidebarProps> = ({
             })}
           </nav>
         </div>
+
+        {/* BOTTOM: Profile Summary Card */}
+        {isAuthenticated && (
+          <div className="p-3 border-t border-[#202228] bg-[#101114]">
+            {!collapsed ? (
+              <div className="flex items-center justify-between p-2 rounded-xl bg-[#16181D] border border-[#23262E]">
+                <div className="flex items-center space-x-2.5 truncate">
+                  {userAvatarUrl ? (
+                    <img
+                      src={userAvatarUrl}
+                      alt={userName || 'User'}
+                      className="w-[30px] h-[30px] rounded-full object-cover ring-1 ring-neutral-700 flex-shrink-0"
+                    />
+                  ) : (
+                    <div className="w-[30px] h-[30px] rounded-full bg-[#FA541C]/20 text-[#FA541C] font-bold text-xs flex items-center justify-center border border-[#FA541C]/30 flex-shrink-0">
+                      {userName
+                        ? userName.charAt(0).toUpperCase()
+                        : currentRole === 'JUDGE'
+                        ? 'D'
+                        : 'A'}
+                    </div>
+                  )}
+                  <div className="truncate">
+                    <div className="font-bold text-xs text-white truncate">
+                      {userName ||
+                        (currentRole === 'JUDGE'
+                          ? 'Dr. Sarah Chen'
+                          : currentRole === 'ADMIN'
+                          ? 'System Administrator'
+                          : 'Apex Event Lead')}
+                    </div>
+                    <div className="text-[10px] text-[#9CA3AF] truncate">
+                      {userEmail ||
+                        (currentRole === 'JUDGE'
+                          ? 'judge.alpha@hackathon.dev'
+                          : currentRole === 'ADMIN'
+                          ? 'admin@hackathon.dev'
+                          : 'organizer@hackathon.dev')}
+                    </div>
+                  </div>
+                </div>
+                <Link
+                  href={
+                    userName
+                      ? currentRole === 'JUDGE'
+                        ? '/judge/profile'
+                        : currentRole === 'ADMIN'
+                        ? '/admin/dashboard'
+                        : currentRole === 'ORGANIZER'
+                        ? '/organizer/dashboard'
+                        : '/participant/settings'
+                      : '/login'
+                  }
+                  className="p-1 text-[#9CA3AF] hover:text-white transition-colors"
+                  title="Settings / Workspace"
+                >
+                  <Settings className="w-3.5 h-3.5" />
+                </Link>
+              </div>
+            ) : (
+              <div className="w-8 h-8 mx-auto rounded-full bg-[#FA541C]/20 text-[#FA541C] font-bold text-xs flex items-center justify-center border border-[#FA541C]/30">
+                {userName ? userName.charAt(0).toUpperCase() : 'A'}
+              </div>
+            )}
+          </div>
+        )}
       </aside>
     </>
   );

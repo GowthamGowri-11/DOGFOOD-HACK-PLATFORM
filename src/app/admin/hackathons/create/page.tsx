@@ -54,6 +54,7 @@ interface EvaluationRound {
   endDate: string;
   submissionDeadline: string;
   maxTeamsAllowed: number;
+  selectionCount?: number | string;
   requiredSubmissions: {
     github: boolean;
     ppt: boolean;
@@ -105,6 +106,9 @@ export default function AdminCreateHackathonPage() {
   const [subEndTime, setSubEndTime] = useState(formatForInput(addDays(now, 10)));
   const [showAdvancedWindow, setShowAdvancedWindow] = useState(false);
 
+  // Section: Progression Mode
+  const [progressionMode, setProgressionMode] = useState<'SELECTION_BASED' | 'OVERALL_PERFORMANCE'>('OVERALL_PERFORMANCE');
+
   // Evaluation Rounds & Criteria
   const [activeRoundIdx, setActiveRoundIdx] = useState(0);
   const [roundCollapsed, setRoundCollapsed] = useState<Record<number, boolean>>({});
@@ -117,6 +121,7 @@ export default function AdminCreateHackathonPage() {
       endDate: formatForInput(addDays(now, 10)),
       submissionDeadline: formatForInput(addDays(now, 10)),
       maxTeamsAllowed: 50,
+      selectionCount: 25,
       requiredSubmissions: {
         github: true,
         ppt: true,
@@ -250,6 +255,7 @@ export default function AdminCreateHackathonPage() {
       name: `Round ${nextNum}`,
       isFinal: false,
       roundType: 'Hackathon',
+      selectionCount: rounds.length === 1 ? 10 : 5,
       startDate: eventStartTime,
       endDate: eventEndTime,
       submissionDeadline: eventEndTime,
@@ -347,6 +353,18 @@ export default function AdminCreateHackathonPage() {
       return;
     }
 
+    // Validate Selection-Based Progression Counts
+    if (progressionMode === 'SELECTION_BASED') {
+      for (let i = 0; i < rounds.length; i++) {
+        const count = Number(rounds[i].selectionCount);
+        if (!rounds[i].selectionCount || isNaN(count) || count <= 0 || !Number.isInteger(count)) {
+          setError(`Please specify a valid positive number of teams advancing for Round ${i + 1} ("${rounds[i].name || 'Round ' + (i + 1)}").`);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+    }
+
     setSaving(true);
 
     try {
@@ -371,9 +389,19 @@ export default function AdminCreateHackathonPage() {
         });
       });
 
+      const processedRounds = rounds.map(r => ({
+        ...r,
+        selectionCount: progressionMode === 'SELECTION_BASED' && r.selectionCount ? Number(r.selectionCount) : null,
+        criteria: r.criteria.map(c => ({
+          ...c,
+          maxMarks: Number(c.maxMarks) || 10
+        }))
+      }));
+
       const extendedConfig = {
         organizers: cleanedOrganizers.length > 0 ? cleanedOrganizers : [{ name: 'ATLYX Academic Lead', contact: 'lead@atlyx.io' }],
         maxTeamsAllowed: maxTeamsAllowed ? Number(maxTeamsAllowed) : null,
+        progressionMode,
         rounds: rounds.map(r => ({
           ...r,
           criteria: r.criteria.map(c => ({
@@ -402,6 +430,7 @@ export default function AdminCreateHackathonPage() {
         bannerUrl: bannerUrl.trim() || null,
         minTeamSize: Number(minTeamSize),
         maxTeamSize: Number(maxTeamSize),
+        progressionMode,
         regStartTime: regStart.toISOString(),
         regEndTime: regEnd.toISOString(),
         eventStartTime: eventStart.toISOString(),
@@ -413,6 +442,7 @@ export default function AdminCreateHackathonPage() {
         prizePool: Number(prizePool) || 0,
         currency,
         tracks: allTracks,
+        rounds: processedRounds,
         rulesAndGuidelines: JSON.stringify(extendedConfig),
       };
 

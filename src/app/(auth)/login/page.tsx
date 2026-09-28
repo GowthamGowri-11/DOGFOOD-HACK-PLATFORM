@@ -12,12 +12,16 @@ import {
   Zap,
   AlertCircle,
   CheckCircle2,
+  Users,
+  Scale,
+  User,
+  Crown,
 } from 'lucide-react';
 
 interface DemoRole {
   role: 'ADMIN' | 'ORGANIZER' | 'JUDGE' | 'PARTICIPANT';
   label: string;
-  icon: string;
+  icon: React.ComponentType<{ className?: string }>;
   email: string;
   password: string;
   pillClasses: string;
@@ -28,37 +32,37 @@ const DEMO_ROLES: DemoRole[] = [
   {
     role: 'ADMIN',
     label: 'Admin',
-    icon: '👑',
+    icon: Crown,
     email: 'admin@hackathon.dev',
     password: 'Password123!',
-    pillClasses: 'bg-[#FEE2E2] text-[#991B1B] border-[#FECACA] hover:bg-[#FED7D7]',
+    pillClasses: 'bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA] hover:bg-[#FDBA74]/40',
     route: '/admin/dashboard',
   },
   {
     role: 'ORGANIZER',
     label: 'Organizer',
-    icon: '👥',
+    icon: Users,
     email: 'organizer@hackathon.dev',
     password: 'Password123!',
-    pillClasses: 'bg-[#FEF3C7] text-[#92400E] border-[#FDE68A] hover:bg-[#FEEBB0]',
+    pillClasses: 'bg-[#FEF3C7] text-[#B45309] border-[#FDE68A] hover:bg-[#FDE68A]/40',
     route: '/organizer/dashboard',
   },
   {
     role: 'JUDGE',
     label: 'Judge',
-    icon: '⚖️',
+    icon: Scale,
     email: 'judge.alpha@hackathon.dev',
     password: 'Password123!',
-    pillClasses: 'bg-[#D1FAE5] text-[#065F46] border-[#A7F3D0] hover:bg-[#BCF5DC]',
+    pillClasses: 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0] hover:bg-[#A7F3D0]/40',
     route: '/judge/dashboard',
   },
   {
     role: 'PARTICIPANT',
     label: 'Participant',
-    icon: '👤',
+    icon: User,
     email: 'alice.hacker@hackathon.dev',
     password: 'Password123!',
-    pillClasses: 'bg-[#DBEAFE] text-[#1E40AF] border-[#BFDBFE] hover:bg-[#CEE3FE]',
+    pillClasses: 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE] hover:bg-[#BFDBFE]/40',
     route: '/participant/dashboard',
   },
 ];
@@ -281,7 +285,7 @@ export default function LoginPage() {
           <div className="mt-8 pt-5 border-t border-[#E5E0D8]">
             <div className="flex items-center justify-between mb-3">
               <span className="text-[10px] font-bold uppercase tracking-wider text-[#6B7280] flex items-center gap-1.5">
-                <Zap className="w-3.5 h-3.5 text-[#FA541C] fill-[#FA541C] animate-pulse-subtle" />
+                <Zap className="w-3.5 h-3.5 text-[#FA541C] fill-[#FA541C]" />
                 <span>1-CLICK DEMO LOGIN PILLS</span>
               </span>
               <span className="text-[9.5px] font-medium uppercase tracking-wider text-[#9CA3AF] font-mono">
@@ -292,6 +296,7 @@ export default function LoginPage() {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {DEMO_ROLES.map((demo) => {
                 const isCurrent = activePill === demo.role;
+                const Icon = demo.icon;
 
                 return (
                   <button
@@ -304,7 +309,7 @@ export default function LoginPage() {
                     {isCurrent ? (
                       <div className="w-3 h-3 border-2 border-current border-t-transparent rounded-full animate-spin" />
                     ) : (
-                      <span>{demo.icon}</span>
+                      <Icon className="w-3.5 h-3.5 flex-shrink-0" />
                     )}
                     <span>{demo.label}</span>
                   </button>
@@ -336,9 +341,9 @@ export default function LoginPage() {
       <div className="hidden lg:flex lg:w-[52%] xl:w-[54%] relative bg-[#090A0D] flex-col justify-between p-12 xl:p-16 overflow-hidden select-none group/showcase">
         {/* Background Architectural Image */}
         <img
-          src="/login-bg.jpg"
+          src="/atlyx-login-architecture.jpg"
           alt="ATLYX Arena Architecture"
-          className="absolute inset-0 w-full h-full object-cover object-right opacity-65 group-hover/showcase:scale-105 transition-transform duration-1000 ease-out"
+          className="absolute inset-0 w-full h-full object-cover object-right opacity-70 group-hover/showcase:scale-105 transition-transform duration-1000 ease-out"
         />
 
         {/* Dark Vignette Overlay for Crisp Contrast */}
@@ -366,7 +371,7 @@ export default function LoginPage() {
 
         {/* MIDDLE/BOTTOM: 4-Column Metric Statistics with Clean Vertical Dividers */}
         <div className="relative z-10 my-auto py-6">
-          <div className="grid grid-cols-4 gap-4 items-center">
+          <div className="grid grid-cols-4 gap-4 items-center bg-black/40 backdrop-blur-md rounded-2xl p-4 border border-white/10">
             <div className="pr-3 hover:bg-white/10 rounded-xl p-2.5 -m-2.5 transition-all duration-200 cursor-default">
               <div className="text-2xl xl:text-3xl font-black text-white">100+</div>
               <div className="text-[9px] font-bold text-[#9CA3AF] uppercase tracking-wider mt-1">

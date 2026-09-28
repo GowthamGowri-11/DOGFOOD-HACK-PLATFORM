@@ -60,13 +60,13 @@ async function seedTracksAndScorecards() {
   };
 
   const projectTechStacks: Record<string, string[]> = {
-    'Aura Systems': ['Python 3.11', 'FastAPI', 'PostgreSQL (pgvector)', 'Redis', 'LangChain', 'Docker', 'Next.js 14'],
+    'Aura Systems': ['Python 3.11', 'FastAPI', 'PostgreSQL (pgvector)', 'LangChain', 'Docker', 'Next.js 14'],
     'Synapse Labs': ['Go 1.22', 'eBPF', 'Kubernetes', 'gRPC', 'Prometheus', 'Zero-Trust MTLS', 'React'],
     'Apex Sentinel': ['Rust', 'K8s Operator SDK', 'OpenTelemetry', 'ClickHouse', 'TailwindCSS', 'TypeScript'],
     'Cognitive Flow': ['Python 3.11', 'Ray Distributed', 'Kafka', 'PostgreSQL', 'GraphQL', 'Next.js 14'],
     'Vanguard Core': ['Solidity', 'Rust', 'CosmWasm', 'PostgreSQL', 'Zero-Knowledge SNARKs', 'React'],
     'Polaris Intelligence': ['PyTorch 2.3', 'DICOM Tools', 'FastAPI', 'CUDA 12', 'WebRTC', 'Next.js 14'],
-    'Nova Protocol': ['TypeScript', 'Node.js', 'PostgreSQL', 'Redis', 'WebSockets', 'TailwindCSS'],
+    'Nova Protocol': ['TypeScript', 'Node.js', 'PostgreSQL', 'WebSockets', 'TailwindCSS'],
     'DeepMatrix': ['Python', 'TensorFlow', 'PostgreSQL', 'FastAPI', 'Docker', 'TailwindCSS'],
   };
 
@@ -159,7 +159,7 @@ async function seedTracksAndScorecards() {
         'Modular high-throughput RAG architecture with sub-25ms vector retrieval latency.',
         'Zero-trust token verification integrated across all microservice ingress points.',
         'Deterministic fallback caching prevents hallucinations and minimizes LLM API spikes.',
-        'Fully documented asynchronous job queues using Redis and pgvector indexing.',
+        'Fully documented asynchronous job queues and vector indexing.',
       ],
       cons: [
         'High memory footprint during initial vector index hydration.',
@@ -168,7 +168,7 @@ async function seedTracksAndScorecards() {
       ],
       improve: [
         'Implement hybrid sparse-dense reciprocal rank fusion for domain-specific queries.',
-        'Adopt Redis cache warmers to eliminate cold-start indexing overhead.',
+        'Adopt high-speed cache warmers to eliminate cold-start indexing overhead.',
         'Add OpenTelemetry traces for distributed agent reasoning execution.',
       ],
     },

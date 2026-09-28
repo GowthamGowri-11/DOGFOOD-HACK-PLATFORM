@@ -26,6 +26,10 @@ import {
   Check,
   Star,
   Users,
+  Eye,
+  Calendar,
+  MoreVertical,
+  Award,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -72,7 +76,7 @@ const FALLBACK_ASSIGNMENTS: AssignmentItem[] = [
   {
     id: 'asgn_1',
     status: 'ASSIGNED',
-    assignedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
+    assignedAt: '2026-09-28T12:00:00.000Z',
     judge: {
       id: 'jdg_1',
       hackathonId: 'hack_buildathon_2026',
@@ -101,9 +105,74 @@ const FALLBACK_ASSIGNMENTS: AssignmentItem[] = [
   },
   {
     id: 'asgn_2',
+    status: 'IN_PROGRESS',
+    assignedAt: '2026-09-28T10:00:00.000Z',
+    judge: {
+      id: 'jdg_1',
+      hackathonId: 'hack_buildathon_2026',
+      hackathon: {
+        id: 'hack_buildathon_2026',
+        title: 'Global Autonomous Systems Arena 2026',
+        slug: 'autonomous-systems-2026',
+        status: 'JUDGING',
+      },
+    },
+    project: {
+      id: 'proj_neurosync',
+      title: 'NeuroSync: Privacy-Preserving Federated Medical Graph',
+      slug: 'neurosync-graph',
+      tagline: 'Zero-knowledge cross-institutional healthcare model training at planetary scale.',
+      description: 'A decentralized federated graph neural network enabling multi-hospital cancer marker discovery without raw patient record exchange.',
+      repoUrl: 'https://github.com/dogfood/neurosync',
+      demoUrl: 'https://neurosync.health',
+      techStack: ['Python', 'PyTorch', 'PostgreSQL', 'Docker', 'FastAPI'],
+      track: { id: 'trk_2', title: 'Zero-Knowledge & Privacy', colorHex: '#06B6D4' },
+      problemStatement: { id: 'ps_2', title: 'Cross-Hospital Model Aggregation', code: 'ZK-01' },
+      team: { id: 'tm_2', name: 'ZeroKnowledge Guild' },
+      submissions: [{ versionNumber: 2 }],
+    },
+    evaluation: {
+      id: 'eval_2',
+      status: 'DRAFT',
+      rawScoreSum: 78.0,
+      weightedScore: 78.0,
+    },
+  },
+  {
+    id: 'asgn_3',
+    status: 'ASSIGNED',
+    assignedAt: '2026-09-28T09:00:00.000Z',
+    judge: {
+      id: 'jdg_1',
+      hackathonId: 'hack_buildathon_2026',
+      hackathon: {
+        id: 'hack_buildathon_2026',
+        title: 'Global Autonomous Systems Arena 2026',
+        slug: 'autonomous-systems-2026',
+        status: 'JUDGING',
+      },
+    },
+    project: {
+      id: 'proj_flowmesh',
+      title: 'FlowMesh: Distributed Agent Task Coordination Framework',
+      slug: 'flowmesh-engine',
+      tagline: 'Scalable multi-agent coordination for complex real-world workflows.',
+      description: 'Low-overhead DAG orchestrator coordinating high-concurrency micro-agents with Byzantine fault tolerance and verifiable consensus logs.',
+      repoUrl: 'https://github.com/dogfood/flowmesh',
+      demoUrl: 'https://flowmesh.app',
+      techStack: ['Go', 'TypeScript', 'gRPC', 'Redis', 'TailwindCSS'],
+      track: { id: 'trk_1', title: 'Autonomous AI Agents', colorHex: '#8B5CF6' },
+      problemStatement: { id: 'ps_3', title: 'High-Concurrency Task Pipeline', code: 'AI-03' },
+      team: { id: 'tm_3', name: 'Cognitive Flow' },
+      submissions: [{ versionNumber: 1 }],
+    },
+    evaluation: null,
+  },
+  {
+    id: 'asgn_4',
     status: 'COMPLETED',
-    assignedAt: new Date(Date.now() - 3600000 * 12).toISOString(),
-    completedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+    assignedAt: '2026-09-27T16:00:00.000Z',
+    completedAt: '2026-09-28T14:00:00.000Z',
     judge: {
       id: 'jdg_1',
       hackathonId: 'hack_buildathon_2026',
@@ -124,131 +193,129 @@ const FALLBACK_ASSIGNMENTS: AssignmentItem[] = [
       demoUrl: 'https://vericlinical.health',
       techStack: ['Python', 'FastAPI', 'React', 'Neon', 'OpenAI'],
       track: { id: 'trk_1', title: 'Autonomous AI Agents', colorHex: '#8B5CF6' },
-      problemStatement: { id: 'ps_2', title: 'Sub-Second Clinical Diagnostic Retrieval', code: 'AI-02' },
-      team: { id: 'tm_2', name: 'Team VeriClinical' },
+      problemStatement: { id: 'ps_4', title: 'Sub-Second Clinical Diagnostic Retrieval', code: 'AI-02' },
+      team: { id: 'tm_4', name: 'Team VeriClinical' },
       submissions: [{ versionNumber: 1 }],
     },
     evaluation: {
-      id: 'eval_2',
+      id: 'eval_4',
       status: 'SUBMITTED',
       rawScoreSum: 92.5,
       weightedScore: 92.5,
-      submittedAt: new Date(Date.now() - 3600000 * 4).toISOString(),
+      submittedAt: '2026-09-28T14:00:00.000Z',
     },
-  },
-  {
-    id: 'asgn_3',
-    status: 'IN_PROGRESS',
-    assignedAt: new Date(Date.now() - 3600000 * 6).toISOString(),
-    judge: {
-      id: 'jdg_1',
-      hackathonId: 'hack_buildathon_2026',
-      hackathon: {
-        id: 'hack_buildathon_2026',
-        title: 'Global Autonomous Systems Arena 2026',
-        slug: 'autonomous-systems-2026',
-        status: 'JUDGING',
-      },
-    },
-    project: {
-      id: 'proj_neurosync',
-      title: 'NeuroSync: Privacy-Preserving Federated Medical Graph',
-      slug: 'neurosync-privacy',
-      tagline: 'Zero-knowledge cross-institutional healthcare model training at planetary scale.',
-      description: 'Leveraging homomorphic encryption and federated graph learning to detect rare pathologies without sharing sensitive patient telemetry.',
-      repoUrl: 'https://github.com/dogfood/neurosync',
-      demoUrl: 'https://neurosync.app',
-      techStack: ['TypeScript', 'Rust', 'WebAssembly', 'Prisma', 'PyTorch'],
-      track: { id: 'trk_2', title: 'Zero-Knowledge & Privacy', colorHex: '#0EA5E9' },
-      problemStatement: { id: 'ps_3', title: 'Cross-Hospital Model Aggregation', code: 'ZK-01' },
-      team: { id: 'tm_3', name: 'ZeroKnowledge Guild' },
-      submissions: [{ versionNumber: 2 }],
-    },
-    evaluation: {
-      id: 'eval_3',
-      status: 'DRAFT',
-      rawScoreSum: 78.0,
-      weightedScore: 78.0,
-      submittedAt: null,
-    },
-  },
-  {
-    id: 'asgn_4',
-    status: 'ASSIGNED',
-    assignedAt: new Date(Date.now() - 3600000 * 18).toISOString(),
-    judge: {
-      id: 'jdg_1',
-      hackathonId: 'hack_buildathon_2026',
-      hackathon: {
-        id: 'hack_buildathon_2026',
-        title: 'Global Autonomous Systems Arena 2026',
-        slug: 'autonomous-systems-2026',
-        status: 'JUDGING',
-      },
-    },
-    project: {
-      id: 'proj_aegis_supply',
-      title: 'AegisChain: Autonomous Resilient Logistics Oracle',
-      slug: 'aegis-chain',
-      tagline: 'Algorithmic maritime shipping route re-allocation responding to climate volatility.',
-      description: 'Real-time multi-spectral satellite imagery processing paired with autonomous container re-routing smart contracts.',
-      repoUrl: 'https://github.com/dogfood/aegis-chain',
-      demoUrl: 'https://aegis-logistics.io',
-      techStack: ['Go', 'Solidity', 'React', 'PostgreSQL'],
-      track: { id: 'trk_3', title: 'Decentralized Infrastructure', colorHex: '#10B981' },
-      problemStatement: { id: 'ps_4', title: 'Climate-Adaptive Freight Dispatch', code: 'INFRA-03' },
-      team: { id: 'tm_4', name: 'Hydra Logistics' },
-      submissions: [{ versionNumber: 1 }],
-    },
-    evaluation: null,
   },
 ];
 
+// Project Glowing Thumbnail Graphic based on project ID / title
+function AssignmentThumbnail({
+  projectId,
+  title,
+  status,
+  score,
+}: {
+  projectId: string;
+  title: string;
+  status: 'COMPLETED' | 'DRAFT' | 'PENDING';
+  score?: number;
+}) {
+  const isSecurity = projectId.includes('sentinel') || title.toLowerCase().includes('shield');
+  const isBrain = projectId.includes('neuro') || title.toLowerCase().includes('neural') || title.toLowerCase().includes('graph');
+  const isCubes = projectId.includes('flow') || title.toLowerCase().includes('mesh');
+
+  return (
+    <div className="w-full xl:w-56 h-36 rounded-2xl bg-gradient-to-br from-[#0B0F19] via-[#0F172A] to-[#1E1B4B] border border-cyan-500/20 shadow-inner flex items-center justify-center relative overflow-hidden flex-shrink-0 group">
+      {/* Background radial ambient glow */}
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(6,182,212,0.25)_0%,transparent_70%)]" />
+
+      {/* Floating Status Pill on top of thumbnail */}
+      <div className="absolute top-2.5 left-2.5 z-20">
+        {status === 'COMPLETED' ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-950/80 text-emerald-300 border border-emerald-500/40 backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />
+            Evaluation Locked ({score} pts)
+          </span>
+        ) : status === 'DRAFT' ? (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40 backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse" />
+            Draft in Progress
+          </span>
+        ) : (
+          <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-950/80 text-amber-300 border border-amber-500/40 backdrop-blur-md">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
+            Pending Evaluation
+          </span>
+        )}
+      </div>
+
+      {/* Center Artwork */}
+      {isSecurity ? (
+        <svg className="w-16 h-16 text-cyan-400 drop-shadow-[0_0_12px_rgba(6,182,212,0.8)] z-10 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+          <path d="m9 12 2 2 4-4" stroke="#06B6D4" strokeWidth="2" />
+        </svg>
+      ) : isBrain ? (
+        <svg className="w-16 h-16 text-cyan-300 drop-shadow-[0_0_12px_rgba(6,182,212,0.8)] z-10 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 4a8 8 0 0 1 8 8" />
+          <circle cx="12" cy="12" r="3" fill="#06B6D4" fillOpacity="0.4" />
+          <path d="M8 12h8M12 8v8" />
+        </svg>
+      ) : isCubes ? (
+        <svg className="w-16 h-16 text-amber-400 drop-shadow-[0_0_12px_rgba(245,158,11,0.8)] z-10 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <path d="m21.12 6.4-6-3.87a3.06 3.06 0 0 0-3.24 0l-6 3.87a3.06 3.06 0 0 0-1.44 2.64v7.74a3.06 3.06 0 0 0 1.44 2.64l6 3.87a3.06 3.06 0 0 0 3.24 0l6-3.87a3.06 3.06 0 0 0 1.44-2.64V9.04a3.06 3.06 0 0 0-1.44-2.64Z" />
+          <path d="m3.5 7.5 8.5 5 8.5-5" />
+          <path d="M12 12.5V22" />
+        </svg>
+      ) : (
+        <svg className="w-16 h-16 text-indigo-400 drop-shadow-[0_0_12px_rgba(99,102,241,0.8)] z-10 transition-transform duration-300 group-hover:scale-105" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+          <circle cx="12" cy="12" r="10" />
+          <path d="m10 15 5-3-5-3v6Z" fill="#818CF8" />
+        </svg>
+      )}
+    </div>
+  );
+}
+
 function JudgeAssignmentsContent() {
   const searchParams = useSearchParams();
-  const initialStatusParam = searchParams.get('status')?.toUpperCase();
-  const initialStatus: 'ALL' | 'PENDING' | 'COMPLETED' =
-    initialStatusParam === 'PENDING'
-      ? 'PENDING'
-      : initialStatusParam === 'COMPLETED'
-      ? 'COMPLETED'
-      : 'ALL';
+  const initialHackathonId = searchParams.get('hackathonId') || 'ALL';
 
-  const [hackathonsList, setHackathonsList] = useState<any[]>([]);
   const [assignments, setAssignments] = useState<AssignmentItem[]>(FALLBACK_ASSIGNMENTS);
-  const [loading, setLoading] = useState(false);
+  const [hackathonsList, setHackathonsList] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+
+  // Filters
   const [searchQuery, setSearchQuery] = useState('');
-  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>(initialStatus);
-  const [trackFilter, setTrackFilter] = useState<string>('ALL');
-  const [hackathonFilter, setHackathonFilter] = useState<string>('ALL');
+  const [statusFilter, setStatusFilter] = useState<'ALL' | 'PENDING' | 'COMPLETED'>('ALL');
+  const [trackFilter, setTrackFilter] = useState('ALL');
+  const [hackathonFilter, setHackathonFilter] = useState(initialHackathonId);
   const [sortBy, setSortBy] = useState<'NEWEST' | 'NAME' | 'STATUS'>('NEWEST');
 
-  const fetchAssignments = async (targetHackathonId?: string, isManual = false) => {
+  const fetchAssignments = async (targetHackathonId: string = hackathonFilter, isManual = false) => {
     try {
       if (isManual) setRefreshing(true);
       else setLoading(true);
 
-      const activeHackathon = targetHackathonId !== undefined ? targetHackathonId : hackathonFilter;
-      const params = new URLSearchParams();
-      if (activeHackathon && activeHackathon !== 'ALL') {
-        params.append('hackathonId', activeHackathon);
-      }
+      const url =
+        targetHackathonId && targetHackathonId !== 'ALL'
+          ? `/api/v1/judge/assignments?hackathonId=${targetHackathonId}`
+          : `/api/v1/judge/assignments`;
 
-      const res = await fetch(`/api/v1/judge/assignments?${params.toString()}`);
-      const data = await res.json();
-
-      if (res.ok && data.data) {
-        if (data.data.hackathons && data.data.hackathons.length > 0) {
-          setHackathonsList(data.data.hackathons);
-        }
-        if (data.data.assignments && data.data.assignments.length > 0) {
-          setAssignments(data.data.assignments);
-        } else if (!activeHackathon || activeHackathon === 'ALL') {
-          setAssignments(FALLBACK_ASSIGNMENTS);
+      const res = await fetch(url);
+      if (res.ok) {
+        const json = await res.json();
+        if (json.data && json.data.assignments && json.data.assignments.length > 0) {
+          setAssignments(json.data.assignments);
+          if (json.data.hackathons) {
+            setHackathonsList(json.data.hackathons);
+          }
         } else {
-          setAssignments([]);
+          setAssignments(FALLBACK_ASSIGNMENTS);
         }
+      } else {
+        setAssignments(FALLBACK_ASSIGNMENTS);
       }
     } catch (e) {
       console.error('Failed to fetch assignments:', e);
@@ -269,22 +336,15 @@ function JudgeAssignmentsContent() {
     fetchAssignments(newHackathonId);
   };
 
-  // Compute available tracks and hackathons for dropdowns
   const availableTracks = useMemo(() => {
     const map = new Map<string, string>();
-    if (hackathonFilter !== 'ALL') {
-      const currentH = hackathonsList.find((h) => h.id === hackathonFilter);
-      if (currentH?.tracks) {
-        currentH.tracks.forEach((t: any) => map.set(t.id, t.title));
-      }
-    }
     assignments.forEach((a) => {
       if (a.project.track) {
         map.set(a.project.track.id, a.project.track.title);
       }
     });
     return Array.from(map.entries()).map(([id, title]) => ({ id, title }));
-  }, [assignments, hackathonFilter, hackathonsList]);
+  }, [assignments]);
 
   const availableHackathons = useMemo(() => {
     if (hackathonsList.length > 0) return hackathonsList;
@@ -308,7 +368,6 @@ function JudgeAssignmentsContent() {
   const filteredAssignments = useMemo(() => {
     return assignments
       .filter((a) => {
-        // Search query
         if (searchQuery.trim()) {
           const q = searchQuery.toLowerCase();
           const matchTitle = a.project.title.toLowerCase().includes(q);
@@ -321,17 +380,14 @@ function JudgeAssignmentsContent() {
           }
         }
 
-        // Status tab
         const isCompleted = a.evaluation?.status === 'SUBMITTED';
         if (statusFilter === 'COMPLETED' && !isCompleted) return false;
         if (statusFilter === 'PENDING' && isCompleted) return false;
 
-        // Track filter
         if (trackFilter !== 'ALL' && a.project.track?.id !== trackFilter) {
           return false;
         }
 
-        // Hackathon filter
         if (hackathonFilter !== 'ALL' && a.judge?.hackathon?.id !== hackathonFilter) {
           return false;
         }
@@ -347,46 +403,65 @@ function JudgeAssignmentsContent() {
           const bDone = b.evaluation?.status === 'SUBMITTED' ? 1 : 0;
           return aDone - bDone;
         }
-        // Default NEWEST
         return new Date(b.assignedAt).getTime() - new Date(a.assignedAt).getTime();
       });
   }, [assignments, searchQuery, statusFilter, trackFilter, hackathonFilter, sortBy]);
 
   return (
-    <div className="space-y-8 select-none pb-12">
-      {/* 1. Header: My Assignments & Progress */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#E2E8F0]">
+    <div className="space-y-6 select-none max-w-[1400px] mx-auto pb-12">
+      {/* 1. Header: My Evaluation Assignments & Action Controls */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
         <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-[#64748B] mb-1">
-            <span>Judge Evaluation Workspace</span>
-            <span>•</span>
-            <Badge variant="emerald" icon={<ShieldCheck className="w-3 h-3" />}>
+          <div className="flex items-center space-x-2 text-xs font-semibold mb-1.5">
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-orange-50 text-orange-600 border border-orange-200">
+              Jury Workspace
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center gap-1">
+              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600" />
               Strict Isolation Active
-            </Badge>
+            </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
             My Evaluation Assignments
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
+          <p className="text-xs sm:text-sm text-[#64748B] mt-1 font-normal">
             Review and score assigned project deliverables under strict blind judge isolation. Peer evaluations remain confidential.
           </p>
         </div>
 
-        <div className="flex items-center space-x-3">
-          <Button
-            variant="outline"
-            size="sm"
-            icon={<RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />}
+        {/* Right Toolbar Controls */}
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Event Dropdown Selector */}
+          <div className="flex items-center bg-white border border-[#E2E8F0] rounded-xl px-3 py-1.5 shadow-xs">
+            <span className="text-xs text-[#64748B] mr-2 font-medium">Event:</span>
+            <select
+              value={hackathonFilter}
+              onChange={(e) => handleHackathonChange(e.target.value)}
+              className="bg-transparent text-xs font-bold text-[#0F172A] focus:outline-none cursor-pointer pr-2"
+            >
+              <option value="ALL">🏆 All Hackathons ({totalAssigned} assigned)</option>
+              {availableHackathons.map((h) => (
+                <option key={h.id} value={h.id}>
+                  🏆 {h.title}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <button
             onClick={() => fetchAssignments(hackathonFilter, true)}
             disabled={refreshing || loading}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-white border border-[#E2E8F0] hover:bg-[#F8FAFC] text-xs font-bold text-[#334155] rounded-xl shadow-xs transition cursor-pointer"
           >
-            Refresh Queue
-          </Button>
+            <RefreshCw className={`w-3.5 h-3.5 text-orange-500 ${refreshing ? 'animate-spin' : ''}`} />
+            <span>Sync</span>
+          </button>
 
           <Link href="/judge/dashboard">
-            <Button variant="primary" size="sm" icon={<FolderKanban className="w-3.5 h-3.5" />}>
-              Judge Dashboard
-            </Button>
+            <button className="flex items-center gap-2 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-xs font-bold text-white rounded-xl shadow-md shadow-blue-500/20 transition cursor-pointer">
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span>Judge Dashboard</span>
+            </button>
           </Link>
         </div>
       </div>
@@ -394,17 +469,17 @@ function JudgeAssignmentsContent() {
       {/* 2. Top Metric Cards (4 KPIs) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* KPI 1: Total Assigned */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card hover:border-[#CBD5E1] transition-colors">
+        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 shadow-xs hover:border-[#CBD5E1] transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
               Total Assigned
             </span>
-            <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
-              <FolderKanban className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-full bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center">
+              <FileCheck className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-2xl sm:text-3xl font-black text-[#111827]">{totalAssigned}</span>
+            <span className="text-3xl font-black text-[#0F172A]">{totalAssigned}</span>
             <span className="text-xs font-semibold text-[#64748B]">projects</span>
           </div>
           <div className="mt-2 text-[11px] text-[#64748B]">
@@ -412,20 +487,20 @@ function JudgeAssignmentsContent() {
           </div>
         </div>
 
-        {/* KPI 2: Pending Reviews */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card hover:border-[#CBD5E1] transition-colors">
+        {/* KPI 2: Pending Review */}
+        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 shadow-xs hover:border-[#CBD5E1] transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
               Pending Review
             </span>
-            <div className="w-8 h-8 rounded-xl bg-[#FEF3C7] text-[#D97706] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#FFF7ED] text-[#EA580C] flex items-center justify-center">
               <Clock className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-2xl sm:text-3xl font-black text-[#D97706]">{pendingCount}</span>
+            <span className="text-3xl font-black text-[#EA580C]">{pendingCount}</span>
             {draftCount > 0 && (
-              <span className="text-xs font-semibold text-[#B45309]">
+              <span className="text-xs font-bold text-[#EA580C]">
                 ({draftCount} in draft)
               </span>
             )}
@@ -436,17 +511,17 @@ function JudgeAssignmentsContent() {
         </div>
 
         {/* KPI 3: Completed Reviews */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card hover:border-[#CBD5E1] transition-colors">
+        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 shadow-xs hover:border-[#CBD5E1] transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
               Completed Reviews
             </span>
-            <div className="w-8 h-8 rounded-xl bg-[#DCFCE7] text-[#16A34A] flex items-center justify-center">
+            <div className="w-8 h-8 rounded-full bg-[#ECFDF5] text-[#059669] flex items-center justify-center">
               <CheckCircle2 className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-2xl sm:text-3xl font-black text-[#16A34A]">{completedCount}</span>
+            <span className="text-3xl font-black text-[#059669]">{completedCount}</span>
             <span className="text-xs font-semibold text-[#64748B]">/ {totalAssigned}</span>
           </div>
           <div className="mt-2 text-[11px] text-[#64748B]">
@@ -455,31 +530,34 @@ function JudgeAssignmentsContent() {
         </div>
 
         {/* KPI 4: Completion Rate */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card hover:border-[#CBD5E1] transition-colors">
+        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-5 shadow-xs hover:border-[#CBD5E1] transition-colors">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+            <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider">
               Completion Rate
             </span>
-            <div className="w-8 h-8 rounded-xl bg-[#F3E8FF] text-[#9333EA] flex items-center justify-center">
-              <Scale className="w-4 h-4" />
+            <div className="w-8 h-8 rounded-full bg-[#FAF5FF] text-[#9333EA] flex items-center justify-center">
+              <Star className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-3 flex items-baseline space-x-2">
-            <span className="text-2xl sm:text-3xl font-black text-[#111827]">{completionRate}%</span>
+            <span className="text-3xl font-black text-[#0F172A]">{completionRate}%</span>
             <span className="text-xs font-semibold text-[#64748B]">evaluated</span>
           </div>
           <div className="mt-2.5 w-full bg-[#F1F5F9] rounded-full h-1.5 overflow-hidden">
             <div
-              className="bg-[#2563EB] h-1.5 rounded-full transition-all duration-300"
+              className="bg-[#EA580C] h-1.5 rounded-full transition-all duration-300"
               style={{ width: `${completionRate}%` }}
             />
+          </div>
+          <div className="mt-1.5 text-[10px] text-[#64748B]">
+            {completedCount} of {totalAssigned} completed
           </div>
         </div>
       </div>
 
       {/* 3. Search & Filter Bar */}
-      <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-4 shadow-card space-y-4">
-        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+      <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-4 shadow-xs space-y-3.5">
+        <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3">
           {/* Search Box */}
           <div className="relative flex-1">
             <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
@@ -488,7 +566,7 @@ function JudgeAssignmentsContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search by project name, team, track, or problem statement code..."
-              className="w-full pl-10 pr-4 py-2.5 bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:bg-white rounded-xl text-xs sm:text-sm text-[#111827] placeholder-[#94A3B8] focus:outline-none transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-[#F8FAFC] border border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] focus:bg-white rounded-xl text-xs text-[#0F172A] placeholder-[#94A3B8] focus:outline-none transition-all"
             />
             {searchQuery && (
               <button
@@ -500,13 +578,12 @@ function JudgeAssignmentsContent() {
             )}
           </div>
 
-          {/* Filters & Sort */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            {/* Hackathon Selector */}
+          {/* Dropdown Selectors */}
+          <div className="flex flex-wrap items-center gap-2">
             <select
               value={hackathonFilter}
               onChange={(e) => handleHackathonChange(e.target.value)}
-              className="px-3 py-2 bg-[#F8FAFC] border border-[#CBD5E1] rounded-xl text-xs font-bold text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+              className="px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#0F172A] focus:outline-none focus:border-[#2563EB] cursor-pointer"
             >
               <option value="ALL">All Hackathon Events</option>
               {availableHackathons.map((h) => (
@@ -516,27 +593,23 @@ function JudgeAssignmentsContent() {
               ))}
             </select>
 
-            {/* Track Selector */}
-            {availableTracks.length > 0 && (
-              <select
-                value={trackFilter}
-                onChange={(e) => setTrackFilter(e.target.value)}
-                className="px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#334155] focus:outline-none focus:border-[#2563EB]"
-              >
-                <option value="ALL">All Tracks</option>
-                {availableTracks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.title}
-                  </option>
-                ))}
-              </select>
-            )}
+            <select
+              value={trackFilter}
+              onChange={(e) => setTrackFilter(e.target.value)}
+              className="px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#334155] focus:outline-none focus:border-[#2563EB] cursor-pointer"
+            >
+              <option value="ALL">All Tracks</option>
+              {availableTracks.map((t) => (
+                <option key={t.id} value={t.id}>
+                  {t.title}
+                </option>
+              ))}
+            </select>
 
-            {/* Sort Selector */}
             <select
               value={sortBy}
               onChange={(e: any) => setSortBy(e.target.value)}
-              className="px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#334155] focus:outline-none focus:border-[#2563EB]"
+              className="px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl text-xs font-semibold text-[#334155] focus:outline-none focus:border-[#2563EB] cursor-pointer"
             >
               <option value="NEWEST">Newest Assigned</option>
               <option value="NAME">Project Title (A-Z)</option>
@@ -545,14 +618,14 @@ function JudgeAssignmentsContent() {
           </div>
         </div>
 
-        {/* Status Filter Tabs */}
+        {/* Quick Filter Pill Buttons */}
         <div className="flex items-center space-x-2 pt-2 border-t border-[#F1F5F9] overflow-x-auto">
           <button
             onClick={() => setStatusFilter('ALL')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
               statusFilter === 'ALL'
-                ? 'bg-[#2563EB] text-white shadow-sm'
-                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#111827]'
+                ? 'bg-[#EA580C] text-white shadow-xs'
+                : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
             }`}
           >
             <span>All Assignments</span>
@@ -565,10 +638,10 @@ function JudgeAssignmentsContent() {
 
           <button
             onClick={() => setStatusFilter('PENDING')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
               statusFilter === 'PENDING'
-                ? 'bg-[#D97706] text-white shadow-sm'
-                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#111827]'
+                ? 'bg-[#EA580C] text-white shadow-xs'
+                : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
             }`}
           >
             <span>Pending Evaluation</span>
@@ -581,10 +654,10 @@ function JudgeAssignmentsContent() {
 
           <button
             onClick={() => setStatusFilter('COMPLETED')}
-            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center space-x-1.5 ${
+            className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all flex items-center space-x-1.5 cursor-pointer ${
               statusFilter === 'COMPLETED'
-                ? 'bg-[#16A34A] text-white shadow-sm'
-                : 'bg-[#F8FAFC] text-[#64748B] hover:bg-[#F1F5F9] hover:text-[#111827]'
+                ? 'bg-[#EA580C] text-white shadow-xs'
+                : 'bg-[#F1F5F9] text-[#64748B] hover:bg-[#E2E8F0] hover:text-[#0F172A]'
             }`}
           >
             <span>Evaluations Completed</span>
@@ -603,7 +676,7 @@ function JudgeAssignmentsContent() {
                 setTrackFilter('ALL');
                 setHackathonFilter('ALL');
               }}
-              className="text-xs font-semibold text-[#2563EB] hover:underline px-2 ml-auto"
+              className="text-xs font-semibold text-[#2563EB] hover:underline px-2 ml-auto cursor-pointer"
             >
               Reset Filters
             </button>
@@ -611,135 +684,99 @@ function JudgeAssignmentsContent() {
         </div>
       </div>
 
-      {/* 4. Assignments Grid / List */}
+      {/* 4. Assigned Queue List */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[#111827]">
+          <h2 className="text-base font-extrabold text-[#0F172A]">
             Assigned Queue ({filteredAssignments.length})
           </h2>
-          <span className="text-xs text-[#64748B]">
+          <span className="text-xs font-bold text-[#EA580C]">
             Showing {filteredAssignments.length} of {totalAssigned} assignments
           </span>
         </div>
 
         {filteredAssignments.length === 0 ? (
-          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-12 text-center shadow-card space-y-4">
+          <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-12 text-center shadow-xs space-y-4">
             <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
               <Scale className="w-6 h-6" />
             </div>
             <div className="space-y-1">
-              <h3 className="text-base font-bold text-[#111827]">No assignments match your criteria</h3>
+              <h3 className="text-base font-bold text-[#0F172A]">No assignments match your criteria</h3>
               <p className="text-xs text-[#64748B] max-w-md mx-auto">
-                {searchQuery || statusFilter !== 'ALL'
-                  ? 'Try adjusting your search terms or clearing active filters to see all assigned deliverables.'
-                  : 'You do not have any active project evaluation assignments yet. Organizers assign submissions based on track expertise.'}
+                Try adjusting your search terms or clearing active filters to see all assigned deliverables.
               </p>
             </div>
-            {(searchQuery || statusFilter !== 'ALL' || trackFilter !== 'ALL') && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery('');
-                  setStatusFilter('ALL');
-                  setTrackFilter('ALL');
-                  setHackathonFilter('ALL');
-                }}
-              >
-                Clear All Filters
-              </Button>
-            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-4">
             {filteredAssignments.map((a) => {
               const isCompleted = a.evaluation?.status === 'SUBMITTED';
               const isDraft = a.evaluation?.status === 'DRAFT';
-              const trackColor = a.project.track?.colorHex || '#2563EB';
+              const status: 'COMPLETED' | 'DRAFT' | 'PENDING' = isCompleted
+                ? 'COMPLETED'
+                : isDraft
+                ? 'DRAFT'
+                : 'PENDING';
 
               return (
                 <div
                   key={a.id}
-                  className="bg-white border border-[#E2E8F0] hover:border-[#93C5FD] rounded-[18px] p-5 sm:p-6 shadow-card hover:shadow-card-hover transition-all duration-200 flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6"
+                  className="bg-white border border-[#E2E8F0] border-l-4 border-l-[#EA580C] hover:border-slate-300 rounded-[20px] p-5 sm:p-6 shadow-xs hover:shadow-md transition-all duration-200 flex flex-col xl:flex-row items-start xl:items-center justify-between gap-6"
                 >
-                  {/* Left Column: Project Details */}
-                  <div className="space-y-3 flex-1 min-w-0">
-                    {/* Top Badges */}
+                  {/* Left Column: Glowing Artwork Thumbnail */}
+                  <AssignmentThumbnail
+                    projectId={a.project.id}
+                    title={a.project.title}
+                    status={status}
+                    score={a.evaluation?.weightedScore}
+                  />
+
+                  {/* Middle Column: Metadata, Title, Description, Tech Stack */}
+                  <div className="space-y-2 flex-1 min-w-0">
+                    {/* Track & Problem Statement Badges */}
                     <div className="flex flex-wrap items-center gap-2">
                       {a.project.track && (
-                        <span
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold border"
-                          style={{
-                            backgroundColor: `${trackColor}15`,
-                            color: trackColor,
-                            borderColor: `${trackColor}30`,
-                          }}
-                        >
-                          <span
-                            className="w-1.5 h-1.5 rounded-full mr-1.5"
-                            style={{ backgroundColor: trackColor }}
-                          />
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#7C3AED] mr-1.5" />
                           {a.project.track.title}
                         </span>
                       )}
 
                       {a.project.problemStatement && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0]">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#F8FAFC] text-[#334155] border border-[#E2E8F0]">
                           <strong className="font-extrabold mr-1 text-[#0F172A]">
                             [{a.project.problemStatement.code}]
                           </strong>
-                          <span className="truncate max-w-[200px] sm:max-w-none">
+                          <span className="truncate max-w-[200px] sm:max-w-none text-xs">
                             {a.project.problemStatement.title}
                           </span>
                         </span>
                       )}
-
-                      {/* Status Badges */}
-                      {isCompleted ? (
-                        <Badge variant="emerald" icon={<CheckCircle2 className="w-3.5 h-3.5" />}>
-                          Evaluated: {a.evaluation?.weightedScore} / 100
-                        </Badge>
-                      ) : isDraft ? (
-                        <Badge variant="amber" icon={<Clock className="w-3.5 h-3.5" />}>
-                          Draft in Progress ({a.evaluation?.weightedScore || 0} pts)
-                        </Badge>
-                      ) : (
-                        <Badge variant="blue" icon={<Clock className="w-3.5 h-3.5" />}>
-                          Pending Evaluation
-                        </Badge>
-                      )}
                     </div>
 
-                    {/* Title & Tagline */}
+                    {/* Project Title */}
                     <div>
-                      <h3 className="text-lg font-bold text-[#111827] group-hover:text-[#2563EB] transition-colors leading-snug">
+                      <h3 className="text-base sm:text-lg font-extrabold text-[#0F172A] leading-snug">
                         {a.project.title}
                       </h3>
-                      {a.project.tagline && (
-                        <p className="text-xs text-[#475569] mt-1 line-clamp-2 leading-relaxed">
-                          {a.project.tagline}
-                        </p>
-                      )}
+                      <p className="text-xs text-[#64748B] mt-0.5 line-clamp-2 leading-relaxed">
+                        {a.project.tagline || a.project.description}
+                      </p>
                     </div>
 
-                    {/* Team & Meta Row */}
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-[#64748B]">
+                    {/* Team & Hackathon Meta Line */}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#64748B]">
                       {a.project.team && (
-                        <div className="flex items-center space-x-1.5">
-                          <Users className="w-3.5 h-3.5 text-[#94A3B8]" />
-                          <span className="font-semibold text-[#1E293B]">
-                            {a.project.team.name}
-                          </span>
+                        <div className="flex items-center space-x-1 font-semibold text-[#334155]">
+                          <Users className="w-3.5 h-3.5 text-[#64748B]" />
+                          <span>Team {a.project.team.name}</span>
                         </div>
                       )}
 
+                      <span>•</span>
+
                       {a.judge?.hackathon && (
-                        <div className="flex items-center space-x-1">
-                          <span>Event:</span>
-                          <span className="font-medium text-[#475569]">
-                            {a.judge.hackathon.title}
-                          </span>
-                        </div>
+                        <span>Event: {a.judge.hackathon.title}</span>
                       )}
 
                       {a.project.submissions && a.project.submissions.length > 0 && (
@@ -749,87 +786,99 @@ function JudgeAssignmentsContent() {
                       )}
                     </div>
 
-                    {/* Tech Stack Pills */}
-                    {a.project.techStack && a.project.techStack.length > 0 && (
-                      <div className="flex flex-wrap gap-1.5 pt-0.5">
-                        {a.project.techStack.slice(0, 5).map((tech) => (
-                          <span
-                            key={tech}
-                            className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F8FAFC] text-[#475569] border border-[#E2E8F0]"
-                          >
-                            {tech}
-                          </span>
-                        ))}
-                        {a.project.techStack.length > 5 && (
-                          <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold text-[#94A3B8] bg-[#F1F5F9]">
-                            +{a.project.techStack.length - 5}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                    {/* Tech Stack Pills & Action Links */}
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      {a.project.techStack?.map((tech, idx) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-md text-[11px] font-medium text-[#475569]"
+                        >
+                          {tech}
+                        </span>
+                      ))}
 
-                    {/* Deliverables quick links */}
-                    <div className="flex items-center space-x-4 pt-1 text-xs">
                       {a.project.repoUrl && (
                         <a
                           href={a.project.repoUrl}
                           target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center text-[#2563EB] hover:text-[#1D4ED8] hover:underline font-semibold transition-colors"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-xs font-semibold text-[#2563EB] hover:underline ml-2 gap-1"
                         >
-                          <Github className="w-3.5 h-3.5 mr-1" />
-                          Source Code
-                          <ExternalLink className="w-3 h-3 ml-1 opacity-70" />
+                          <Github className="w-3.5 h-3.5 text-[#2563EB]" />
+                          <span>Source Code</span>
                         </a>
                       )}
+
                       {a.project.demoUrl && (
                         <a
                           href={a.project.demoUrl}
                           target="_blank"
-                          rel="noreferrer"
-                          className="inline-flex items-center text-[#059669] hover:text-[#047857] hover:underline font-semibold transition-colors"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center text-xs font-semibold text-[#2563EB] hover:underline ml-2 gap-1"
                         >
-                          <ExternalLink className="w-3.5 h-3.5 mr-1" />
-                          Live Demo
-                          <ExternalLink className="w-3 h-3 ml-1 opacity-70" />
+                          <ExternalLink className="w-3.5 h-3.5 text-[#2563EB]" />
+                          <span>Live Demo</span>
                         </a>
                       )}
                     </div>
                   </div>
 
-                  {/* Right Column: CTA Button */}
-                  <div className="w-full lg:w-auto flex flex-row lg:flex-col items-center lg:items-end justify-between lg:justify-center gap-3 pt-4 lg:pt-0 border-t lg:border-t-0 border-[#F1F5F9] flex-shrink-0">
-                    <div className="text-left lg:text-right">
-                      <span className="block text-[11px] text-[#64748B]">
-                        Assigned on {new Date(a.assignedAt).toLocaleDateString()}
-                      </span>
-                      {isCompleted && a.evaluation?.submittedAt && (
-                        <span className="block text-[10px] text-[#16A34A] font-semibold">
-                          Submitted {new Date(a.evaluation.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </span>
-                      )}
+                  {/* Right Column: Deadlines & Action Buttons */}
+                  <div className="flex flex-col items-start xl:items-end justify-between space-y-4 w-full xl:w-auto flex-shrink-0 pt-2 xl:pt-0 border-t xl:border-t-0 border-[#F1F5F9]">
+                    <div className="flex items-center justify-between w-full xl:w-auto gap-4">
+                      <div className="flex items-center gap-1.5 text-xs text-[#64748B]">
+                        <Calendar className="w-3.5 h-3.5 text-[#94A3B8]" />
+                        <span>Assigned on Sep 28, 2026</span>
+                      </div>
+                      <button className="p-1 rounded text-[#94A3B8] hover:text-[#0F172A] transition cursor-pointer">
+                        <MoreVertical className="w-4 h-4" />
+                      </button>
                     </div>
 
-                    <Link href={`/judge/assignments/${a.id}`} className="w-full sm:w-auto">
-                      <Button
-                        variant={isCompleted ? 'outline' : isDraft ? 'secondary' : 'primary'}
-                        size="md"
-                        icon={
-                          isCompleted ? (
-                            <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
-                          ) : (
-                            <Scale className="w-4 h-4" />
-                          )
-                        }
-                        className="w-full sm:w-auto min-w-[170px] justify-center"
-                      >
+                    <div className="flex items-center gap-1.5 text-xs text-[#EA580C] font-semibold">
+                      <Clock className="w-3.5 h-3.5 text-[#EA580C]" />
+                      <span>
                         {isCompleted
-                          ? 'Review Evaluation'
+                          ? 'Review Submitted & Verified'
                           : isDraft
-                          ? 'Resume Draft'
-                          : 'Start Evaluation'}
-                      </Button>
-                    </Link>
+                          ? 'Review Deadline Oct 04, 2026 (6 days left)'
+                          : 'Review Deadline Oct 05, 2026 (7 days left)'}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 w-full xl:w-auto">
+                      <Link
+                        href={`/judge/evaluations/${a.project.id}`}
+                        className="flex-1 xl:flex-none"
+                      >
+                        <button
+                          className={`w-full xl:w-auto flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white shadow-md transition cursor-pointer ${
+                            isCompleted
+                              ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-600/20'
+                              : 'bg-[#EA580C] hover:bg-[#C2410C] shadow-orange-500/20'
+                          }`}
+                        >
+                          <Scale className="w-4 h-4" />
+                          <span>
+                            {isCompleted
+                              ? 'View Evaluation'
+                              : isDraft
+                              ? 'Resume Draft'
+                              : 'Start Evaluation'}
+                          </span>
+                          <ArrowRight className="w-3.5 h-3.5" />
+                        </button>
+                      </Link>
+
+                      <Link href={`/judge/evaluations/${a.project.id}`}>
+                        <button
+                          className="p-2.5 rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC] text-[#64748B] hover:text-[#0F172A] transition cursor-pointer"
+                          title="Quick View"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
+                      </Link>
+                    </div>
                   </div>
                 </div>
               );
@@ -845,19 +894,9 @@ export default function JudgeAssignmentsPage() {
   return (
     <Suspense
       fallback={
-        <div className="space-y-8 select-none pb-12 animate-pulse">
-          <div className="h-14 bg-slate-100 rounded-2xl w-1/3" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-28 bg-slate-100 rounded-[16px]" />
-            ))}
-          </div>
-          <div className="h-24 bg-slate-100 rounded-[16px]" />
-          <div className="space-y-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="h-44 bg-slate-100 rounded-[18px]" />
-            ))}
-          </div>
+        <div className="p-12 text-center text-xs text-[#64748B]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto mb-3" />
+          Loading assignments workspace...
         </div>
       }
     >
