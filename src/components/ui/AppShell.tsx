@@ -25,16 +25,10 @@ export const AppShell: React.FC<AppShellProps> = ({
   pageSubtitle,
   headerAction,
 }) => {
-<<<<<<< HEAD
-  const [currentRole, setCurrentRole] = useState<UserRole>(userRole);
-  const [userName, setUserName] = useState('Loading...');
-  const [userEmail, setUserEmail] = useState('');
-=======
   const pathname = usePathname();
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
   const [currentRole, setCurrentRole] = useState<UserRole>(userRole || 'PARTICIPANT');
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -101,9 +95,14 @@ export const AppShell: React.FC<AppShellProps> = ({
     setCurrentRole('PARTICIPANT');
   };
 
-  const applySessionUser = (u: { name?: string; fullName?: string; email?: string; role?: string }) => {
-    setUserName(u.name || u.fullName || u.email || 'User');
-    setUserEmail(u.email || '');
+  const applySessionUser = (u: { id?: string; name?: string; fullName?: string; email?: string; role?: string; avatarUrl?: string | null }) => {
+    setCurrentUser({
+      id: u.id || 'usr_open_access',
+      name: u.name || u.fullName || u.email || 'User',
+      email: u.email || '',
+      role: (u.role as UserRole) || 'PARTICIPANT',
+      avatarUrl: u.avatarUrl || null,
+    });
     if (u.role) setCurrentRole(u.role as UserRole);
   };
 
@@ -133,13 +132,11 @@ export const AppShell: React.FC<AppShellProps> = ({
         if (json.success && json.data?.user) {
           applySessionUser(json.data.user);
         } else {
-          setUserName('Guest');
-          setUserEmail('');
+          setCurrentUser(null);
         }
       } catch {
         if (!cancelled) {
-          setUserName('Guest');
-          setUserEmail('');
+          setCurrentUser(null);
         }
       }
     })();
@@ -178,14 +175,9 @@ export const AppShell: React.FC<AppShellProps> = ({
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         isMobileOpen={mobileMenuOpen}
         onCloseMobile={() => setMobileMenuOpen(false)}
-<<<<<<< HEAD
-        userName={userName}
-        userEmail={userEmail}
-=======
         userName={currentUser?.name}
         userEmail={currentUser?.email}
         userAvatarUrl={currentUser?.avatarUrl}
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
       />
 
       {/* Main Application Area (offset by 270px sidebar width on desktop) */}
@@ -198,14 +190,10 @@ export const AppShell: React.FC<AppShellProps> = ({
         <TopNavbar
           onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           userRole={currentRole}
-<<<<<<< HEAD
-          userName={userName}
-=======
           userName={currentUser?.name}
           currentUser={currentUser}
           authLoading={authLoading}
           onLogout={handleLogout}
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
         />
 
         {/* APPLICATION AREA: Center the primary content inside this application area */}

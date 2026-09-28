@@ -1,10 +1,17 @@
 import prisma from '@/lib/prisma';
+import { AuditService } from '../services/audit.service';
 
 export class JudgeRepository {
   /**
    * STRICT ISOLATION: Finds assigned projects for a specific judge only.
+   * Scoped to Hackathon, Round, and Sub-round.
    */
-  public static async findAssignedProjects(judgeUserId: string, hackathonId: string) {
+  public static async findAssignedProjects(
+    judgeUserId: string,
+    hackathonId: string,
+    roundId?: string,
+    subRoundId?: string
+  ) {
     try {
       const judge = await prisma.judge.findUnique({
         where: {
@@ -17,10 +24,15 @@ export class JudgeRepository {
 
       if (!judge) return [];
 
+      const whereClause: any = {
+        judgeId: judge.id,
+      };
+
+      if (roundId) whereClause.roundId = roundId;
+      if (subRoundId) whereClause.subRoundId = subRoundId;
+
       return await prisma.judgeAssignment.findMany({
-        where: {
-          judgeId: judge.id,
-        },
+        where: whereClause,
         include: {
           project: {
             include: {
@@ -43,6 +55,9 @@ export class JudgeRepository {
           evaluation: {
             include: {
               scores: true,
+              editRequests: {
+                orderBy: { createdAt: 'desc' },
+              },
             },
           },
         },
@@ -54,23 +69,78 @@ export class JudgeRepository {
   }
 
   /**
-   * STRICT ISOLATION: Verifies if a judge has an active assignment for a given project before allowing scoring.
+   * STRICT ISOLATION: Verifies if a judge has an active assignment for a given project
+   * within the exact Hackathon, Round, and Sub-Round context before allowing scoring or viewing.
    */
-  public static async verifyJudgeAssignment(judgeUserId: string, projectId: string) {
+  public static async verifyJudgeAssignment(
+    judgeUserId: string,
+    projectId: string,
+    roundId?: string,
+    subRoundId?: string
+  ) {
     try {
-      return await prisma.judgeAssignment.findFirst({
-        where: {
-          projectId,
+      const whereClause: any = {
+        projectId,
+        judge: {
+          userId: judgeUserId,
+          isActive: true,
+        },
+      };
+
+      if (roundId) whereClause.roundId = roundId;
+      if (subRoundId) whereClause.subRoundId = subRoundId;
+
+      const assignment = await prisma.judgeAssignment.findFirst({
+        where: whereClause,
+        include: {
           judge: {
-            userId: judgeUserId,
-            isActive: true,
+            include: {
+              user: {
+                select: {
+                  id: true,
+                  fullName: true,
+                  email: true,
+                },
+              },
+            },
+          },
+          project: {
+            include: {
+              team: true,
+            },
           },
         },
-        include: {
-          judge: true,
-          project: true,
-        },
       });
+
+      if (!assignment) {
+        // Log unauthorized attempt for security auditing
+        try {
+          const project = await prisma.project.findUnique({
+            where: { id: projectId },
+            select: { hackathonId: true, teamId: true },
+          });
+
+          await AuditService.log({
+            userId: judgeUserId,
+            hackathonId: project?.hackathonId,
+            action: 'UNAUTHORIZED_EVALUATION_ACCESS',
+            entityType: 'Project',
+            entityId: projectId,
+            afterState: {
+              result: 'DENIED',
+              targetTeamId: project?.teamId,
+              roundId: roundId || null,
+              subRoundId: subRoundId || null,
+              reason: 'Judge is not assigned to this team/project for this evaluation round.',
+            },
+          });
+        } catch {
+          // Non-blocking audit log
+        }
+        return null;
+      }
+
+      return assignment;
     } catch (error) {
       console.error('[JudgeRepository.verifyJudgeAssignment] DB query failed:', error);
       return null;
@@ -80,16 +150,26 @@ export class JudgeRepository {
   /**
    * Finds a specific assignment by ID and verifies judge ownership.
    */
-  public static async findAssignmentForJudge(assignmentId: string, judgeUserId: string) {
+  public static async findAssignmentForJudge(
+    assignmentId: string,
+    judgeUserId: string,
+    roundId?: string,
+    subRoundId?: string
+  ) {
     try {
-      return await prisma.judgeAssignment.findFirst({
-        where: {
-          id: assignmentId,
-          judge: {
-            userId: judgeUserId,
-            isActive: true,
-          },
+      const whereClause: any = {
+        id: assignmentId,
+        judge: {
+          userId: judgeUserId,
+          isActive: true,
         },
+      };
+
+      if (roundId) whereClause.roundId = roundId;
+      if (subRoundId) whereClause.subRoundId = subRoundId;
+
+      return await prisma.judgeAssignment.findFirst({
+        where: whereClause,
         include: {
           judge: true,
           project: {
@@ -113,6 +193,9 @@ export class JudgeRepository {
           evaluation: {
             include: {
               scores: true,
+              editRequests: {
+                orderBy: { createdAt: 'desc' },
+              },
             },
           },
         },
@@ -178,4 +261,3 @@ export class JudgeRepository {
     }
   }
 }
-

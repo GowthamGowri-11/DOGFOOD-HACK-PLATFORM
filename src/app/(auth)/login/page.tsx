@@ -3,9 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-<<<<<<< HEAD
-import { LogIn, AlertCircle } from 'lucide-react';
-=======
 import {
   Shield,
   Layers,
@@ -67,7 +64,6 @@ const DEMO_ROLES: DemoRole[] = [
     route: '/participant/dashboard',
   },
 ];
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 
 export default function LoginPage() {
   const router = useRouter();

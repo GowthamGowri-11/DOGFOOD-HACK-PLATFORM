@@ -39,14 +39,10 @@ export interface TopNavbarProps {
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleSidebar,
   userRole = 'PARTICIPANT',
-<<<<<<< HEAD
-  userName = 'User',
-=======
   userName,
   currentUser: propUser,
   authLoading: propLoading,
   onLogout,
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -498,86 +494,9 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                   </button>
                 </div>
               </div>
-<<<<<<< HEAD
-            </div>
-          )}
-        </div>
-
-        {/* User Profile Dropdown */}
-        <div className="relative">
-          <button
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center space-x-2 p-1.5 rounded-full hover:bg-[#F8FAFC] border border-transparent hover:border-[#E2E8F0] transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center">
-              {userName.charAt(0)}
-            </div>
-            <span className="hidden md:inline text-xs font-semibold text-[#111827] max-w-[100px] truncate">
-              {userName}
-            </span>
-          </button>
-
-          {/* Profile Dropdown Menu */}
-          {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-white rounded-2xl border border-[#E2E8F0] shadow-elevated py-2 z-50 text-xs animate-in fade-in duration-100">
-              <div className="px-4 py-2 border-b border-[#F1F5F9]">
-                <p className="font-bold text-[#111827] truncate">{userName}</p>
-                <p className="text-[11px] text-[#64748B] uppercase tracking-wider font-semibold">
-                  Role: {userRole}
-                </p>
-              </div>
-
-              <div className="py-1">
-                <Link
-                  href="/participant/dashboard"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#334155] hover:bg-[#F8FAFC] hover:text-[#2563EB]"
-                >
-                  <User className="w-4 h-4 mr-2.5 text-[#64748B]" />
-                  <span>My Workspace</span>
-                </Link>
-                <Link
-                  href="/leaderboard"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#334155] hover:bg-[#F8FAFC] hover:text-[#2563EB]"
-                >
-                  <Trophy className="w-4 h-4 mr-2.5 text-[#64748B]" />
-                  <span>Leaderboard</span>
-                </Link>
-                <Link
-                  href="/participant/settings"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#334155] hover:bg-[#F8FAFC] hover:text-[#2563EB]"
-                >
-                  <Sliders className="w-4 h-4 mr-2.5 text-[#64748B]" />
-                  <span>Account Settings</span>
-                </Link>
-              </div>
-
-              <div className="border-t border-[#F1F5F9] pt-1">
-                {process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true' ? (
-                  <div className="px-4 py-2 text-[11px] text-[#64748B]">
-                    Auth disabled — open access mode
-                  </div>
-                ) : (
-                  <Link
-                    href="/login"
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2]"
-                  >
-                    <LogOut className="w-4 h-4 mr-2.5" />
-                    <span>Sign Out</span>
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-        </div>
-=======
             )}
           </div>
         )}
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
       </div>
     </header>
   );

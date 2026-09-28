@@ -1,9 +1,4 @@
-<<<<<<< HEAD
-import { requireAuth } from '@/server/permissions/guards';
-import { isAuthDisabled } from '@/server/auth/session';
-=======
-import { getSession } from '@/server/auth/session';
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
+import { getSession, isAuthDisabled } from '@/server/auth/session';
 import { UserRepository } from '@/server/repositories/user.repository';
 import { successResponse, errorResponse } from '@/lib/api/response';
 
@@ -22,7 +17,6 @@ export async function GET() {
     // Verify user still exists and remains active in database
     const user = await UserRepository.findById(session.id);
     if (!user || !user.isActive) {
-<<<<<<< HEAD
       if (isAuthDisabled()) {
         return successResponse({
           user: {
@@ -36,13 +30,10 @@ export async function GET() {
           },
         });
       }
-      return errorResponse('Session is invalid or account is inactive', 'UNAUTHORIZED', 401);
-=======
       return Response.json(
         { success: false, data: null, authenticated: false },
         { status: 200 }
       );
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
     }
 
     return successResponse({

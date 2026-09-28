@@ -3,9 +3,6 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-<<<<<<< HEAD
-import { UserPlus, AlertCircle } from 'lucide-react';
-=======
 import {
   Shield,
   Layers,
@@ -62,7 +59,6 @@ const DEMO_PILLS: DemoRole[] = [
     pillClasses: 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100',
   },
 ];
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 
 export default function RegisterPage() {
   const router = useRouter();

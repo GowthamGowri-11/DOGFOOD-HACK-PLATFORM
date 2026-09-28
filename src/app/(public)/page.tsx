@@ -55,20 +55,10 @@ export default function HomePage() {
           eventMode: 'Online',
           tracks: h.tracks?.map((t: any) => ({ id: t.id, title: t.title, colorHex: t.colorHex })) || [],
           prizes: h.prizes?.map((p: any) => ({ amount: Number(p.amount), currency: p.currency, title: p.title })) || [],
-<<<<<<< HEAD
-          deadlineDate: h.subEndTime
-            ? new Date(h.subEndTime)
-            : h.regEndTime
-              ? new Date(h.regEndTime)
-              : undefined,
-          registeredCount: h._count?.registrations ?? 0,
-          featured: Boolean(h.isFeatured),
-=======
           deadlineDate: h.subEndTime ? new Date(h.subEndTime) : (h.regEndTime ? new Date(h.regEndTime) : new Date(Date.now() + 86400000 * 5)),
-          registeredCount: h._count?.registrations || 48,
-          featured: h.isFeatured || false,
+          registeredCount: h._count?.registrations || 0,
+          featured: Boolean(h.isFeatured),
           rulesAndGuidelines: h.rulesAndGuidelines,
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
         }));
         setHackathons(formatted);
       } else {
@@ -137,13 +127,9 @@ export default function HomePage() {
 
   return (
     <AppShell
-<<<<<<< HEAD
       userRole="PARTICIPANT"
       showFeaturedRail={true}
       featuredItems={featuredItems}
-=======
-      showFeaturedRail={false}
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
       pageTitle="Discover & Compete"
       pageSubtitle="The enterprise platform for student, developer and AI competitions with calibrated judging."
     >

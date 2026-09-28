@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { requireRole } from '@/server/permissions/guards';
 import { JudgeRepository } from '@/server/repositories/judge.repository';
 import { ScoringEngine } from '@/server/services/scoring.engine';
+import { EncryptionService } from '@/server/security/encryption.service';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
@@ -12,18 +13,22 @@ import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 const submitEvaluationSchema = z.object({
   projectId: z.string().min(1),
   rubricId: z.string().min(1),
+  roundId: z.string().optional(),
+  subRoundId: z.string().optional(),
   status: z.enum(['DRAFT', 'SUBMITTED']).default('SUBMITTED'),
   prosComment: z.string().optional(),
   consComment: z.string().optional(),
   suggestions: z.string().optional(),
   privateNotes: z.string().optional(),
-  scores: z.array(
-    z.object({
-      criterionId: z.string().min(1),
-      rawScore: z.number().min(0),
-      feedback: z.string().optional(),
-    })
-  ).min(1),
+  scores: z
+    .array(
+      z.object({
+        criterionId: z.string().min(1),
+        rawScore: z.number().min(0),
+        feedback: z.string().optional(),
+      })
+    )
+    .min(1),
 });
 
 export async function GET(req: NextRequest) {
@@ -31,20 +36,27 @@ export async function GET(req: NextRequest) {
     const session = await requireRole(['JUDGE', 'ORGANIZER', 'ADMIN']);
     const { searchParams } = new URL(req.url);
     const hackathonId = searchParams.get('hackathonId');
+    const roundId = searchParams.get('roundId') || undefined;
+    const subRoundId = searchParams.get('subRoundId') || undefined;
 
     if (!hackathonId) {
       return errorResponse('Missing hackathonId query parameter', 'VALIDATION_ERROR', 400);
     }
 
     // STRICT JUDGE ISOLATION: A judge can ONLY view their own assigned projects & evaluations
+    // Server guarantees NO other judge marks/evaluations are ever exposed.
     if (session.role === 'JUDGE') {
-      const assigned = await JudgeRepository.findAssignedProjects(session.id, hackathonId);
+      const assigned = await JudgeRepository.findAssignedProjects(session.id, hackathonId, roundId, subRoundId);
       return successResponse({ assignedProjects: assigned });
     }
 
     // ORGANIZER / ADMIN can view platform evaluations aggregated
+    const whereClause: any = { project: { hackathonId } };
+    if (roundId) whereClause.roundId = roundId;
+    if (subRoundId) whereClause.subRoundId = subRoundId;
+
     const evaluations = await prisma.evaluation.findMany({
-      where: { project: { hackathonId } },
+      where: whereClause,
       include: {
         judge: { include: { user: { select: { fullName: true, email: true } } } },
         project: { select: { title: true, slug: true } },
@@ -70,15 +82,44 @@ export async function POST(req: NextRequest) {
       return errorResponse('Invalid evaluation payload', 'VALIDATION_ERROR', 422, parsed.error.format());
     }
 
-    const { projectId, rubricId, status, prosComment, consComment, suggestions, privateNotes, scores } = parsed.data;
+    const {
+      projectId,
+      rubricId,
+      roundId,
+      subRoundId,
+      status,
+      prosComment,
+      consComment,
+      suggestions,
+      privateNotes,
+      scores,
+    } = parsed.data;
 
     // STRICT ISOLATION GUARD: Verify that this judge is actively assigned to this project
-    const assignment = await JudgeRepository.verifyJudgeAssignment(session.id, projectId);
+    const assignment = await JudgeRepository.verifyJudgeAssignment(session.id, projectId, roundId, subRoundId);
     if (!assignment) {
       return errorResponse(
-        'Unauthorized: You are not assigned to evaluate this project.',
+        'Unauthorized: You are not assigned to evaluate this project for this round.',
         'UNAUTHORIZED_EVALUATION_ACCESS',
         403
+      );
+    }
+
+    // Check if evaluation already exists and is locked (SUBMITTED)
+    const existingEval = await prisma.evaluation.findUnique({
+      where: {
+        judgeId_projectId: {
+          judgeId: assignment.judgeId,
+          projectId,
+        },
+      },
+    });
+
+    if (existingEval && existingEval.status === 'SUBMITTED') {
+      return errorResponse(
+        'Evaluation is locked and submitted. To modify marks, please use the "Request Mark Edit" feature with a valid explanation.',
+        'EVALUATION_LOCKED',
+        409
       );
     }
 
@@ -100,6 +141,16 @@ export async function POST(req: NextRequest) {
 
     const computed = ScoringEngine.calculateEvaluationScore(scoreInputs);
 
+    // Encrypt sensitive evaluation data at rest (AES-256-GCM)
+    const encryptedPayload = EncryptionService.encrypt({
+      scores,
+      prosComment,
+      consComment,
+      suggestions,
+      privateNotes,
+      computed,
+    });
+
     // Persist evaluation
     const evaluation = await prisma.evaluation.upsert({
       where: {
@@ -110,8 +161,11 @@ export async function POST(req: NextRequest) {
       },
       update: {
         status,
+        roundId: roundId || assignment.roundId,
+        subRoundId: subRoundId || assignment.subRoundId,
         rawScoreSum: computed.rawScoreSum,
         weightedScore: computed.weightedScore,
+        encryptedPayload,
         prosComment,
         consComment,
         suggestions,
@@ -124,9 +178,12 @@ export async function POST(req: NextRequest) {
         judgeUserId: session.id,
         projectId,
         rubricId,
+        roundId: roundId || assignment.roundId,
+        subRoundId: subRoundId || assignment.subRoundId,
         status,
         rawScoreSum: computed.rawScoreSum,
         weightedScore: computed.weightedScore,
+        encryptedPayload,
         prosComment,
         consComment,
         suggestions,
@@ -135,7 +192,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    // Save individual criterion score records
+    // Save individual criterion score records (recording originalScore on creation)
     for (const s of scores) {
       await prisma.evaluationScore.upsert({
         where: {
@@ -152,6 +209,7 @@ export async function POST(req: NextRequest) {
           evaluationId: evaluation.id,
           criterionId: s.criterionId,
           rawScore: s.rawScore,
+          originalScore: s.rawScore,
           feedback: s.feedback,
         },
       });
@@ -169,7 +227,7 @@ export async function POST(req: NextRequest) {
       action: status === 'SUBMITTED' ? 'EVALUATION_SUBMIT' : 'EVALUATION_DRAFT_SAVE',
       entityType: 'Evaluation',
       entityId: evaluation.id,
-      afterState: { weightedScore: computed.weightedScore, status },
+      afterState: { weightedScore: computed.weightedScore, status, roundId, subRoundId },
     });
 
     // Fetch hackathonId for scoped room delivery

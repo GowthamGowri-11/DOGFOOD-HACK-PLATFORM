@@ -47,10 +47,7 @@ export interface SidebarProps {
   onCloseMobile?: () => void;
   userName?: string;
   userEmail?: string;
-<<<<<<< HEAD
-=======
   userAvatarUrl?: string | null;
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 }
 
 const PARTICIPANT_ITEMS: NavItem[] = [
@@ -114,14 +111,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   isMobileOpen = false,
   onCloseMobile,
-<<<<<<< HEAD
-  userName = 'User',
-  userEmail = '',
-=======
   userName,
   userEmail,
   userAvatarUrl,
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 }) => {
   const pathname = usePathname();
 
@@ -141,58 +133,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = getNavItems();
 
-<<<<<<< HEAD
-  const handleRoleSelect = async (role: UserRole) => {
-    setRoleDropdownOpen(false);
-    if (onRoleChange) {
-      await Promise.resolve(onRoleChange(role));
-    }
-    // Navigate to role workspace, then refresh RSC data for the new identity
-    switch (role) {
-      case 'ORGANIZER':
-        router.push('/organizer/dashboard');
-        break;
-      case 'JUDGE':
-        router.push('/judge/dashboard');
-        break;
-      case 'ADMIN':
-        router.push('/admin/dashboard');
-        break;
-      default:
-        router.push('/participant/dashboard');
-        break;
-    }
-    router.refresh();
-  };
 
-  const roleMeta: Record<UserRole, { label: string; icon: string; ctaLabel: string; ctaHref: string }> = {
-    PARTICIPANT: {
-      label: 'Participant',
-      icon: '👤',
-      ctaLabel: '+ Create / Join Team',
-      ctaHref: '/participant/teams',
-    },
-    ORGANIZER: {
-      label: 'Organizer',
-      icon: '🏛️',
-      ctaLabel: '+ Create Hackathon',
-      ctaHref: '/organizer/hackathons/create',
-    },
-    JUDGE: {
-      label: 'Judge',
-      icon: '⚖️',
-      ctaLabel: '⚖ Open Evaluation',
-      ctaHref: '/judge/dashboard',
-    },
-    ADMIN: {
-      label: 'Administrator',
-      icon: '🛡️',
-      ctaLabel: '⚙ System Actions',
-      ctaHref: '/admin/dashboard',
-    },
-  };
-=======
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 
   return (
     <>
@@ -287,14 +228,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed ? (
             <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E2E8F0]">
               <div className="flex items-center space-x-2.5 truncate">
-<<<<<<< HEAD
-                <div className="w-[32px] h-[32px] rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
-                  {(userName || 'U').charAt(0).toUpperCase()}
-                </div>
-                <div className="truncate">
-                  <div className="font-semibold text-xs text-[#111827] truncate">{userName || 'User'}</div>
-                  <div className="text-[10px] text-[#64748B] truncate">{userEmail || currentRole}</div>
-=======
                 {userAvatarUrl ? (
                   <img
                     src={userAvatarUrl}
@@ -313,7 +246,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   <div className="text-[10px] text-[#64748B] truncate">
                     {userEmail || (userName ? 'Active Session' : 'Sign in to compete')}
                   </div>
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
                 </div>
               </div>
               <Link
@@ -336,11 +268,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <div className="w-8 h-8 mx-auto rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-xs flex items-center justify-center">
-<<<<<<< HEAD
-              {(userName || 'U').charAt(0).toUpperCase()}
-=======
               {userName ? userName.charAt(0).toUpperCase() : 'G'}
->>>>>>> 955df85a1823fdc70d72489433820b8abade5940
             </div>
           )}
         </div>
