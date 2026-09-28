@@ -4,12 +4,14 @@
 
 :root {
   --foreground-rgb: 17, 24, 39;
-  --background: #FFFFFF;
+  --background: #FAF8F5;
+  --brand-orange: #FA541C;
+  --brand-orange-hover: #EA4812;
 }
 
 body {
   color: #111827;
-  background-color: #FFFFFF;
+  background-color: #FAF8F5;
   min-height: 100vh;
   font-family: 'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
 }
@@ -29,3 +31,35 @@ body {
 ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
+
+/* Micro-animations and utility effects */
+@keyframes pulseSubtle {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.92; transform: scale(1.02); }
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+.animate-pulse-subtle {
+  animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+.hover-lift {
+  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s cubic-bezier(0.2, 0, 0, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+}
+
+.hover-lift-sm {
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.hover-lift-sm:hover {
+  transform: translateY(-1.5px);
+  box-shadow: 0 8px 16px -6px rgba(0, 0, 0, 0.06);
+}
+

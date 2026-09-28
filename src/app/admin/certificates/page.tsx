@@ -12,11 +12,16 @@ import {
   ChevronRight,
   Plus,
   AlertCircle,
+  AlertTriangle,
   CheckCircle2,
   Trash2,
+  Copy,
+  Check,
+  X,
+  RefreshCw,
+  Shield,
+  FileCheck,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 
 interface CertificateItem {
   id: string;
@@ -62,6 +67,52 @@ export default function AdminCertificatesPage() {
   const [selectedCert, setSelectedCert] = useState<CertificateItem | null>(null);
   const [revokeReason, setRevokeReason] = useState('Code plagiarism or rules violation');
   const [revoking, setRevoking] = useState(false);
+
+  // Copy feedback
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
+
+  // Toast feedback
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+
+  const showToast = (message: string, type: 'success' | 'error' = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(null);
+    }, 3500);
+  };
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    setCopiedCode(text);
+    showToast(`Verification code copied!`);
+    setTimeout(() => setCopiedCode(null), 2000);
+  };
+
+  // Initials badge color styling
+  const getInitialsBadgeStyle = (name: string) => {
+    const styles = [
+      'bg-orange-100/80 text-orange-700 border-orange-200',
+      'bg-blue-50 text-blue-600 border-blue-200',
+      'bg-purple-50 text-purple-600 border-purple-200',
+      'bg-emerald-50 text-emerald-700 border-emerald-200',
+      'bg-amber-50 text-amber-700 border-amber-200',
+      'bg-rose-50 text-rose-600 border-rose-200',
+    ];
+    let hash = 0;
+    for (let i = 0; i < name.length; i++) hash += name.charCodeAt(i);
+    return styles[hash % styles.length];
+  };
+
+  // Format date as M/D/YYYY
+  const formatDate = (dateStr: string) => {
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return '—';
+      return `${d.getMonth() + 1}/${d.getDate()}/${d.getFullYear()}`;
+    } catch {
+      return '—';
+    }
+  };
 
   const fetchCertificates = useCallback(async () => {
     setLoading(true);
@@ -122,7 +173,8 @@ export default function AdminCertificatesPage() {
       });
       const data = await res.json();
       if (data.success) {
-        setIssueMessage(data.message || 'Certificates successfully generated');
+        showToast(data.message || 'Certificates successfully generated!');
+        setIssueModalOpen(false);
         fetchCertificates();
       } else {
         setIssueError(data.error?.message || 'Failed to issue certificates');
@@ -145,161 +197,303 @@ export default function AdminCertificatesPage() {
       });
       const data = await res.json();
       if (data.success) {
+        showToast(`Certificate ${selectedCert.verificationCode} revoked.`);
         setRevokeModalOpen(false);
         setSelectedCert(null);
         fetchCertificates();
+      } else {
+        showToast(data.error?.message || 'Failed to revoke certificate', 'error');
       }
     } catch (err) {
       console.error('Failed to revoke certificate:', err);
+      showToast('Network error while revoking certificate', 'error');
     } finally {
       setRevoking(false);
     }
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E2E8F0] gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20 select-none font-sans">
+      {/* Toast Feedback */}
+      {toast && (
+        <div className="fixed top-6 right-6 z-50 animate-in fade-in slide-in-from-top-3 duration-200">
+          <div
+            className={`px-4 py-3 rounded-2xl shadow-xl flex items-center space-x-2 text-xs font-semibold ${
+              toast.type === 'success'
+                ? 'bg-zinc-900 text-white border border-zinc-700'
+                : 'bg-rose-600 text-white'
+            }`}
+          >
+            {toast.type === 'success' ? (
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+            ) : (
+              <AlertTriangle className="w-4 h-4 text-white" />
+            )}
+            <span>{toast.message}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Breadcrumb Navigation */}
+      <nav className="flex items-center space-x-2 text-xs text-zinc-400 font-medium">
+        <Link href="/" className="hover:text-orange-600 transition-colors">
+          Home
+        </Link>
+        <span>&rsaquo;</span>
+        <Link href="/admin/dashboard" className="hover:text-orange-600 transition-colors">
+          Admin
+        </Link>
+        <span>&rsaquo;</span>
+        <span className="text-zinc-800 font-semibold">Certificates</span>
+      </nav>
+
+      {/* Header - Matching Image Reference */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-2 gap-4 border-b border-zinc-100">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold text-[#DC2626] bg-[#FEF2F2] px-2.5 py-0.5 rounded-full border border-[#FECACA]">
+          {/* Top Badges */}
+          <div className="flex items-center space-x-2.5 mb-1.5">
+            <span className="text-[11px] font-bold text-orange-700 bg-orange-50 px-2.5 py-0.5 rounded-full border border-orange-200">
               Global Platform Control
             </span>
-            <span className="text-[11px] font-semibold text-[#64748B]">
+            <span className="text-xs font-semibold text-zinc-500">
               Total Issued: {totalCount}
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mt-1 tracking-tight">
-            Digital Certificate Governance
-          </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5">
-            Cryptographically signed credentials, public verification endpoints, and administrative revocation.
-          </p>
+
+          <div className="flex items-center gap-3">
+            <div className="w-11 h-11 rounded-2xl bg-orange-50 border border-orange-200 text-[#FA541C] flex items-center justify-center flex-shrink-0 shadow-2xs">
+              <ShieldCheck className="w-5 h-5 stroke-[2.3]" />
+            </div>
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
+                Digital Certificate Governance
+              </h1>
+              <p className="text-xs text-zinc-500 mt-0.5 font-normal">
+                Cryptographically signed credentials, public verification endpoints, and administrative revocation.
+              </p>
+            </div>
+          </div>
         </div>
 
-        <Button onClick={openIssueModal} size="sm" className="self-start sm:self-center">
-          <Plus className="w-3.5 h-3.5 mr-1.5" />
-          Bulk Issue Certificates
-        </Button>
+        {/* Action Button: Bulk Issue Certificates */}
+        <div className="flex items-center self-start sm:self-center">
+          <button
+            onClick={openIssueModal}
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#E03A00] hover:to-[#C83200] rounded-xl shadow-md shadow-orange-500/20 transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer"
+          >
+            <Plus className="w-4 h-4 stroke-[2.5]" />
+            <span>Bulk Issue Certificates</span>
+          </button>
+        </div>
       </div>
 
-      {/* Search & Filter */}
-      <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-4 shadow-card">
-        <div className="flex flex-col md:flex-row gap-3">
-          <div className="relative flex-1">
-            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[#94A3B8]" />
-            <input
-              type="text"
-              placeholder="Search by recipient, verification code (ATLYX-...), email, or hackathon..."
-              value={search}
-              onChange={(e) => {
-                setSearch(e.target.value);
+      {/* Search Bar & Filter Tabs (Exact match to screenshot) */}
+      <div className="bg-white border border-zinc-200/90 rounded-2xl p-2.5 sm:p-3 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+          <Search className="w-4 h-4 text-zinc-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder="Search by recipient, verification code (ATLYX-...), email, or hackathon..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="w-full pl-10 pr-9 py-2 text-xs bg-transparent border-0 focus:outline-none text-zinc-900 placeholder:text-zinc-400 font-medium"
+          />
+          {search && (
+            <button
+              onClick={() => {
+                setSearch('');
                 setPage(1);
               }}
-              className="w-full pl-10 pr-4 py-2 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] focus:outline-none focus:border-[#2563EB] focus:ring-1 focus:ring-[#2563EB] transition-all placeholder:text-[#94A3B8]"
-            />
-          </div>
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-700 p-0.5 rounded-full transition-colors cursor-pointer"
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
+          )}
+        </div>
 
-          <div className="flex items-center gap-2">
-            {['', 'ISSUED', 'REVOKED'].map((st) => (
+        {/* Status Filter Tabs */}
+        <div className="flex items-center gap-2 self-end sm:self-auto border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-100">
+          {[
+            { key: '', label: 'All' },
+            { key: 'ISSUED', label: 'ISSUED' },
+            { key: 'REVOKED', label: 'REVOKED' },
+          ].map((tab) => {
+            const active = statusFilter === tab.key;
+            return (
               <button
-                key={st || 'ALL'}
+                key={tab.key || 'ALL'}
                 onClick={() => {
-                  setStatusFilter(st);
+                  setStatusFilter(tab.key);
                   setPage(1);
                 }}
-                className={`px-3 py-1.5 text-xs rounded-full border transition-all ${
-                  statusFilter === st
-                    ? 'bg-[#002B49] text-white border-[#002B49] font-semibold'
-                    : 'bg-[#F8FAFC] text-[#64748B] border-[#E2E8F0] hover:bg-[#F1F5F9]'
+                className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all duration-200 cursor-pointer flex items-center justify-center hover:scale-105 active:scale-95 ${
+                  active
+                    ? 'bg-gradient-to-r from-[#FA541C] to-[#E03A00] text-white shadow-md shadow-orange-500/20'
+                    : 'bg-white text-zinc-600 border border-zinc-200/90 hover:border-zinc-300 hover:bg-zinc-50 hover:text-zinc-900'
                 }`}
               >
-                {st || 'All'}
+                {tab.label}
               </button>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Table */}
-      <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] overflow-hidden shadow-card">
+      {/* Certificates Table */}
+      <div className="bg-white border border-zinc-200/90 rounded-2xl shadow-xs overflow-hidden">
         {loading ? (
-          <div className="p-12 text-center text-xs text-[#64748B]">
-            Loading certificates from PostgreSQL...
+          <div className="py-20 text-center text-xs text-zinc-500 flex flex-col items-center justify-center space-y-3">
+            <RefreshCw className="w-7 h-7 animate-spin text-[#FA541C]" />
+            <p className="font-bold text-zinc-900 text-sm">Loading certificate registry...</p>
+            <p className="text-xs text-zinc-400">Verifying cryptographic signatures and credentials</p>
           </div>
         ) : certificates.length === 0 ? (
-          <div className="p-12 text-center">
-            <Award className="w-8 h-8 text-[#CBD5E1] mx-auto mb-2" />
-            <p className="text-sm font-semibold text-[#111827]">No certificates found</p>
-            <p className="text-xs text-[#64748B] mt-0.5">Use the bulk issue button to generate credentials.</p>
+          <div className="py-16 text-center space-y-3 px-4">
+            <div className="w-12 h-12 rounded-2xl bg-zinc-50 border border-zinc-200 flex items-center justify-center mx-auto text-zinc-400">
+              <Award className="w-6 h-6 stroke-[1.8]" />
+            </div>
+            <p className="text-sm font-bold text-zinc-900">No certificates found</p>
+            <p className="text-xs text-zinc-500 max-w-md mx-auto">
+              {search || statusFilter
+                ? `No certificates match your search query or filter. Try clearing filters.`
+                : 'No certificates have been issued yet. Click "Bulk Issue Certificates" to generate credentials.'}
+            </p>
+            <div className="pt-2">
+              <button
+                onClick={openIssueModal}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#E03A00] hover:to-[#C83200] rounded-xl shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>Issue First Certificate</span>
+              </button>
+            </div>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[#F8FAFC] text-[#64748B] font-bold uppercase tracking-wider border-b border-[#E2E8F0]">
-                  <th className="py-3 px-5">Recipient & User</th>
-                  <th className="py-3 px-5">Hackathon Arena</th>
-                  <th className="py-3 px-5">Verification Code</th>
-                  <th className="py-3 px-5">Issued Date</th>
-                  <th className="py-3 px-5">Status</th>
-                  <th className="py-3 px-5 text-right">Actions</th>
+                <tr className="border-b border-zinc-100 text-[11px] font-bold text-zinc-400 uppercase tracking-wider bg-zinc-50/70">
+                  <th className="py-4 px-6">RECIPIENT &amp; USER</th>
+                  <th className="py-4 px-6">HACKATHON ARENA</th>
+                  <th className="py-4 px-6">VERIFICATION CODE</th>
+                  <th className="py-4 px-6">ISSUED DATE</th>
+                  <th className="py-4 px-6">STATUS</th>
+                  <th className="py-4 px-6 text-right">ACTIONS</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
-                {certificates.map((cert) => (
-                  <tr key={cert.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-3.5 px-5">
-                      <div className="font-semibold text-[#111827] text-sm">{cert.recipientName}</div>
-                      <div className="text-[11px] text-[#64748B] font-mono mt-0.5">{cert.user.email}</div>
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <div className="font-medium text-[#111827]">{cert.hackathon.title}</div>
-                      <span className="text-[10px] text-[#64748B] font-mono">/{cert.hackathon.slug}</span>
-                    </td>
-                    <td className="py-3.5 px-5">
-                      <span className="font-mono font-bold text-[#002B49] bg-[#F1F5F9] px-2 py-0.5 rounded border border-[#E2E8F0]">
-                        {cert.verificationCode}
-                      </span>
-                    </td>
-                    <td className="py-3.5 px-5 text-[#64748B] font-mono">
-                      {new Date(cert.issuedAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-3.5 px-5">
-                      {cert.status === 'ISSUED' ? (
-                        <span className="inline-flex items-center text-[10px] font-bold text-[#059669] bg-[#ECFDF5] px-2 py-0.5 rounded-full border border-[#A7F3D0]">
-                          <CheckCircle2 className="w-3 h-3 mr-1" /> VALID
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center text-[10px] font-bold text-[#DC2626] bg-[#FEF2F2] px-2 py-0.5 rounded-full border border-[#FECACA]">
-                          <ShieldAlert className="w-3 h-3 mr-1" /> REVOKED
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-3.5 px-5 text-right">
-                      <div className="flex items-center justify-end space-x-2">
-                        <Link
-                          href={`/verify/${cert.verificationCode}`}
-                          target="_blank"
-                          className="px-2.5 py-1 text-[11px] font-semibold text-[#002B49] bg-[#F1F5F9] hover:bg-[#E2E8F0] rounded-[7px] transition-colors inline-flex items-center"
-                        >
-                          <ExternalLink className="w-3 h-3 mr-1" /> Verify
-                        </Link>
-                        {cert.status === 'ISSUED' && (
-                          <button
-                            onClick={() => {
-                              setSelectedCert(cert);
-                              setRevokeModalOpen(true);
-                            }}
-                            className="px-2.5 py-1 text-[11px] font-semibold text-[#DC2626] bg-[#FEF2F2] hover:bg-[#FEE2E2] rounded-[7px] border border-[#FECACA] transition-colors"
+              <tbody className="divide-y divide-zinc-100">
+                {certificates.map((cert) => {
+                  const initialsStyle = getInitialsBadgeStyle(cert.recipientName || cert.user.fullName);
+
+                  return (
+                    <tr
+                      key={cert.id}
+                      className="hover:bg-orange-50/20 transition-all duration-200 group"
+                    >
+                      {/* RECIPIENT & USER */}
+                      <td className="py-4 px-6 align-middle">
+                        <div className="flex items-center gap-3.5">
+                          <div
+                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-xs border flex-shrink-0 shadow-2xs group-hover:scale-105 transition-transform duration-200 ${initialsStyle}`}
                           >
-                            Revoke
-                          </button>
+                            {(cert.recipientName || cert.user.fullName)
+                              .split(' ')
+                              .map((n) => n[0])
+                              .join('')
+                              .slice(0, 2)
+                              .toUpperCase()}
+                          </div>
+                          <div>
+                            <div className="font-bold text-zinc-900 text-sm tracking-tight group-hover:text-[#FA541C] transition-colors">
+                              {cert.recipientName || cert.user.fullName}
+                            </div>
+                            <div className="text-[11px] text-zinc-500 font-mono mt-0.5">
+                              {cert.user.email}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* HACKATHON ARENA */}
+                      <td className="py-4 px-6 align-middle">
+                        <div className="font-bold text-zinc-900 text-xs tracking-tight">
+                          {cert.hackathon.title}
+                        </div>
+                        <span className="text-[10px] text-zinc-400 font-mono block mt-0.5">
+                          /{cert.hackathon.slug}
+                        </span>
+                      </td>
+
+                      {/* VERIFICATION CODE */}
+                      <td className="py-4 px-6 align-middle whitespace-nowrap">
+                        <button
+                          type="button"
+                          onClick={() => copyToClipboard(cert.verificationCode)}
+                          title="Click to copy verification code"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-mono font-bold text-zinc-700 bg-zinc-100 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 border border-zinc-200/90 shadow-2xs transition-all cursor-pointer"
+                        >
+                          <span>{cert.verificationCode}</span>
+                          {copiedCode === cert.verificationCode ? (
+                            <Check className="w-3 h-3 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3 h-3 text-zinc-400" />
+                          )}
+                        </button>
+                      </td>
+
+                      {/* ISSUED DATE */}
+                      <td className="py-4 px-6 align-middle whitespace-nowrap text-zinc-600 font-mono text-xs">
+                        {formatDate(cert.issuedAt)}
+                      </td>
+
+                      {/* STATUS */}
+                      <td className="py-4 px-6 align-middle whitespace-nowrap">
+                        {cert.status === 'ISSUED' ? (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                            <span>VALID</span>
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold text-rose-700 bg-rose-50 border border-rose-200 shadow-2xs">
+                            <span className="w-1.5 h-1.5 rounded-full bg-rose-500" />
+                            <span>REVOKED</span>
+                          </span>
                         )}
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+
+                      {/* ACTIONS */}
+                      <td className="py-4 px-6 align-middle text-right whitespace-nowrap">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/verify/${cert.verificationCode}`}
+                            target="_blank"
+                            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-200 rounded-xl shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                            <span>Verify</span>
+                          </Link>
+
+                          {cert.status === 'ISSUED' && (
+                            <button
+                              onClick={() => {
+                                setSelectedCert(cert);
+                                setRevokeModalOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 bg-white border border-rose-200 hover:bg-rose-50 rounded-xl shadow-2xs transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                              <span>Revoke</span>
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -307,52 +501,67 @@ export default function AdminCertificatesPage() {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="p-4 border-t border-[#E2E8F0] flex items-center justify-between">
-            <span className="text-xs text-[#64748B]">
-              Page {page} of {totalPages} ({totalCount} total)
+          <div className="p-4 border-t border-zinc-100 flex items-center justify-between text-xs bg-zinc-50/50">
+            <span className="text-zinc-500">
+              Page <span className="font-bold text-zinc-900">{page}</span> of{' '}
+              <span className="font-bold text-zinc-900">{totalPages}</span> ({totalCount} total)
             </span>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
+              <button
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page <= 1}
+                className="inline-flex items-center gap-1 px-3 py-1.5 font-bold text-zinc-700 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all shadow-xs"
               >
-                <ChevronLeft className="w-4 h-4 mr-1" /> Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
+                <ChevronLeft className="w-4 h-4" />
+                <span>Previous</span>
+              </button>
+              <button
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page >= totalPages}
+                className="inline-flex items-center gap-1 px-3 py-1.5 font-bold text-zinc-700 bg-white border border-zinc-200 rounded-xl hover:bg-zinc-50 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer transition-all shadow-xs"
               >
-                Next <ChevronRight className="w-4 h-4 ml-1" />
-              </Button>
+                <span>Next</span>
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
           </div>
         )}
       </div>
 
-      {/* Bulk Issue Modal */}
+      {/* ======================================================== */}
+      {/* BULK ISSUE MODAL */}
+      {/* ======================================================== */}
       {issueModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[#FFFFFF] rounded-[20px] max-w-md w-full p-6 shadow-2xl border border-[#E2E8F0] space-y-4">
-            <div className="flex items-center space-x-2">
-              <Award className="w-5 h-5 text-[#2563EB]" />
-              <h3 className="text-base font-bold text-[#111827]">
-                Bulk Issue Digital Certificates
-              </h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-zinc-200 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#FA541C] flex items-center justify-center border border-orange-200">
+                  <Award className="w-4 h-4 stroke-[2.5]" />
+                </div>
+                <div>
+                  <h3 className="text-base font-bold text-zinc-900">Bulk Issue Digital Certificates</h3>
+                  <p className="text-[11px] text-zinc-500">Cryptographic credentials for participants</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setIssueModalOpen(false)}
+                className="p-1.5 text-zinc-400 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
             </div>
-            <p className="text-xs text-[#64748B]">
+
+            <p className="text-xs text-zinc-500 leading-relaxed">
               Generates cryptographic certificates with unique verification codes for all approved participants in the selected arena.
             </p>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#334155]">Select Target Hackathon:</label>
+            <div className="space-y-1.5 text-xs">
+              <label className="font-bold text-zinc-700">Select Target Hackathon Arena:</label>
               <select
                 value={selectedHackathonId}
                 onChange={(e) => setSelectedHackathonId(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] focus:outline-none focus:border-[#2563EB]"
+                className="w-full px-3.5 py-2.5 bg-zinc-50 border border-zinc-200 rounded-xl text-xs font-bold text-zinc-900 focus:outline-none focus:ring-2 focus:ring-orange-500/15 cursor-pointer shadow-xs"
               >
                 {hackathons.map((h) => (
                   <option key={h.id} value={h.id}>
@@ -363,74 +572,91 @@ export default function AdminCertificatesPage() {
             </div>
 
             {issueMessage && (
-              <div className="p-3 bg-[#ECFDF5] border border-[#A7F3D0] rounded-[11px] text-xs text-[#065F46] flex items-center space-x-2">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0" />
+              <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-xl text-xs text-emerald-800 flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
                 <span>{issueMessage}</span>
               </div>
             )}
 
             {issueError && (
-              <div className="p-3 bg-[#FEF2F2] border border-[#FECACA] rounded-[11px] text-xs text-[#DC2626] flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-800 flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 flex-shrink-0 text-rose-600" />
                 <span>{issueError}</span>
               </div>
             )}
 
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-100">
+              <button
+                type="button"
                 onClick={() => setIssueModalOpen(false)}
                 disabled={issuing}
+                className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-xl transition-colors cursor-pointer"
               >
-                Close
-              </Button>
-              <Button
-                size="sm"
+                Cancel
+              </button>
+              <button
+                type="button"
                 onClick={handleIssueCertificates}
                 disabled={issuing}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#E03A00] hover:to-[#C83200] rounded-xl shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-60"
               >
-                {issuing ? 'Generating...' : 'Issue All Certificates'}
-              </Button>
+                {issuing ? (
+                  <>
+                    <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                    <span>Generating...</span>
+                  </>
+                ) : (
+                  <span>Issue All Certificates</span>
+                )}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Revocation Modal */}
+      {/* ======================================================== */}
+      {/* REVOCATION MODAL */}
+      {/* ======================================================== */}
       {revokeModalOpen && selectedCert && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
-          <div className="bg-[#FFFFFF] rounded-[20px] max-w-md w-full p-6 shadow-2xl border border-[#FECACA] space-y-4">
-            <h3 className="text-base font-bold text-[#DC2626]">
-              Revoke Digital Certificate
-            </h3>
-            <p className="text-xs text-[#64748B]">
-              Revoking invalidates verification code <span className="font-mono font-bold text-[#111827]">{selectedCert.verificationCode}</span> permanently. The public verification page will display it as revoked.
-            </p>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-rose-200 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
+              <Trash2 className="w-6 h-6 stroke-[2.2]" />
+            </div>
 
-            <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-[#334155]">Revocation Reason:</label>
+            <div className="text-center space-y-1">
+              <h3 className="text-lg font-bold text-zinc-900">Revoke Digital Certificate</h3>
+              <p className="text-xs text-zinc-500">
+                Revoking invalidates verification code{' '}
+                <span className="font-mono font-bold text-zinc-900">{selectedCert.verificationCode}</span> permanently.
+              </p>
+            </div>
+
+            <div className="space-y-1.5 text-xs">
+              <label className="font-bold text-zinc-700">Revocation Reason:</label>
               <input
                 type="text"
                 value={revokeReason}
                 onChange={(e) => setRevokeReason(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] focus:outline-none focus:border-[#DC2626]"
+                placeholder="e.g. Code plagiarism or rules violation"
+                className="w-full px-3.5 py-2 text-xs bg-zinc-50 border border-zinc-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-rose-500/15"
               />
             </div>
 
-            <div className="flex justify-end space-x-2 pt-2">
-              <Button
-                variant="outline"
-                size="sm"
+            <div className="flex justify-end space-x-2 pt-2 border-t border-zinc-100">
+              <button
+                type="button"
                 onClick={() => setRevokeModalOpen(false)}
                 disabled={revoking}
+                className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-xl transition-colors cursor-pointer"
               >
                 Cancel
-              </Button>
+              </button>
               <button
+                type="button"
                 onClick={handleRevokeCertificate}
                 disabled={revoking}
-                className="px-4 py-2 text-xs font-semibold text-white bg-[#DC2626] hover:bg-[#B91C1C] rounded-[11px] transition-colors"
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl shadow-xs transition-all hover:scale-105 active:scale-95 cursor-pointer disabled:opacity-60"
               >
                 {revoking ? 'Revoking...' : 'Confirm Revocation'}
               </button>

@@ -25,6 +25,7 @@ import {
 import { AppShell } from '@/components/ui/AppShell';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { useAuth } from '@/context/AuthContext';
 
 export interface HackathonDetailProps {
   hackathon: {
@@ -59,6 +60,7 @@ export interface HackathonDetailProps {
 }
 
 export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon }) => {
+  const { currentUser, isAuthenticated, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'tracks' | 'prizes' | 'timeline' | 'rules' | 'projects'>('overview');
   const [registered, setRegistered] = useState(false);
   const [registering, setRegistering] = useState(false);
@@ -107,8 +109,10 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
         // Silently ignore if unauthenticated or network error
       }
     }
-    checkRegistration();
-  }, [hackathon.id]);
+    if (isAuthenticated) {
+      checkRegistration();
+    }
+  }, [hackathon.id, isAuthenticated]);
 
   const totalPrizeAmount = hackathon.prizes.reduce(
     (sum: number, p: any) => sum + Number(p.amount || 0),
@@ -117,6 +121,17 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
   const currency = hackathon.prizes[0]?.currency || 'USD';
 
   const handleRegister = async () => {
+    // If not logged in: pop up login to register!
+    if (!isAuthenticated || !currentUser) {
+      openAuthModal({
+        actionType: 'register',
+        title: `Sign In to Register for ${hackathon.title}`,
+        reason: 'You need an active account to register for this competition arena and collaborate with a team.',
+        redirectUrl: window.location.pathname,
+      });
+      return;
+    }
+
     if (registered) {
       window.location.href = '/participant/teams';
       return;
@@ -153,7 +168,6 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
 
   return (
     <AppShell
-      userRole="PARTICIPANT"
       showFeaturedRail={false}
       pageTitle={hackathon.title}
       pageSubtitle={hackathon.tagline || hackathon.description.slice(0, 120)}

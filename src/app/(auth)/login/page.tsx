@@ -69,54 +69,57 @@ const DEMO_ROLES: DemoRole[] = [
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('bg6951872@gmail.com');
-  const [password, setPassword] = useState('Password123!');
-  const [rememberMe, setRememberMe] = useState(true);
+
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [activePill, setActivePill] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [successInfo, setSuccessInfo] = useState<string | null>(null);
 
-  // Authenticate helper
-  const performLogin = async (targetEmail: string, targetPass: string, fallbackRole?: string) => {
+  const performLogin = async (loginEmail: string, loginPass: string, roleHint?: string) => {
     setError(null);
+    setSuccessInfo(null);
+
     try {
       const res = await fetch('/api/v1/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: targetEmail, password: targetPass }),
+        body: JSON.stringify({ email: loginEmail, password: loginPass }),
       });
 
       const data = await res.json();
-      if (!data.success) {
-        throw new Error(data.error?.message || 'Login failed. Please check your credentials.');
+
+      if (!res.ok) {
+        throw new Error(data.error?.message || data.error || 'Authentication failed');
       }
 
-      const userRole = data.data?.user?.role || fallbackRole;
-      setSuccessInfo(`Authenticated as ${userRole}. Redirecting...`);
+      setSuccessInfo(`Welcome back, ${data.user?.fullName || data.user?.role || 'Hacker'}!`);
 
-      if (userRole === 'ORGANIZER') {
-        router.push('/organizer/dashboard');
-      } else if (userRole === 'JUDGE') {
-        router.push('/judge/dashboard');
-      } else if (userRole === 'ADMIN') {
-        router.push('/admin/dashboard');
-      } else {
-        router.push('/participant/dashboard');
-      }
-      router.refresh();
+      // Determine redirect URL
+      const userRole = data.user?.role || roleHint || 'PARTICIPANT';
+      let dest = '/participant/dashboard';
+      if (userRole === 'ADMIN') dest = '/admin/dashboard';
+      else if (userRole === 'ORGANIZER') dest = '/organizer/dashboard';
+      else if (userRole === 'JUDGE') dest = '/judge/dashboard';
+
+      setTimeout(() => {
+        router.push(dest);
+        router.refresh();
+      }, 350);
     } catch (err: any) {
-      setError(err.message || 'Authentication error');
+      setError(err.message || 'Unable to sign in. Check your credentials.');
       throw err;
     }
   };
 
-  // Submit standard form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
-      setError('Please enter your email and password.');
+      setError('Please enter your username and password.');
       return;
     }
     setLoading(true);
@@ -129,7 +132,6 @@ export default function LoginPage() {
     }
   };
 
-  // 1-Click Demo Pill Login
   const handlePillClick = async (demo: DemoRole) => {
     setActivePill(demo.role);
     setEmail(demo.email);
@@ -137,18 +139,6 @@ export default function LoginPage() {
 
     try {
       await performLogin(demo.email, demo.password, demo.role);
-    } catch {
-      setActivePill(null);
-    }
-  };
-
-  // Google Sign In (Simulated one-click OAuth login as verified participant)
-  const handleGoogleSignIn = async () => {
-    setActivePill('GOOGLE');
-    setEmail('alice.hacker@hackathon.dev');
-    setPassword('Password123!');
-    try {
-      await performLogin('alice.hacker@hackathon.dev', 'Password123!', 'PARTICIPANT');
     } catch {
       setActivePill(null);
     }
@@ -203,7 +193,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          {/* Error Message */}
+          {/* Feedback Messages */}
           {error && (
             <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl flex items-center gap-2">
               <AlertCircle className="w-4 h-4 flex-shrink-0 text-red-600" />
@@ -211,7 +201,6 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* Success Message */}
           {successInfo && (
             <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs rounded-xl flex items-center gap-2">
               <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
@@ -282,7 +271,7 @@ export default function LoginPage() {
                   setEmail('alice.hacker@hackathon.dev');
                   setPassword('Password123!');
                 }}
-                className="font-bold text-[#FF5500] hover:underline transition-colors"
+                className="font-bold text-[#FF5500] hover:underline transition-colors cursor-pointer"
               >
                 Forgot Password ?
               </button>
@@ -305,55 +294,14 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Divider */}
-          <div className="my-5 flex items-center gap-3">
-            <div className="flex-1 h-[1px] bg-[#E5E1D8]" />
-            <span className="text-[9.5px] font-extrabold text-[#94A3B8] uppercase tracking-[0.2em]">
-              OR CONTINUE WITH
-            </span>
-            <div className="flex-1 h-[1px] bg-[#E5E1D8]" />
-          </div>
-
-          {/* Sign In with Google */}
-          <button
-            type="button"
-            disabled={loading || activePill !== null}
-            onClick={handleGoogleSignIn}
-            className="w-full h-11 bg-white hover:bg-[#FAF9F5] border border-[#E2DDD3] rounded-xl text-xs font-bold text-[#0F172A] shadow-2xs flex items-center justify-center gap-2.5 transition-all active:scale-[0.99] disabled:opacity-50 cursor-pointer"
-          >
-            {activePill === 'GOOGLE' ? (
-              <div className="w-4 h-4 border-2 border-[#FF5500] border-t-transparent rounded-full animate-spin" />
-            ) : (
-              <svg className="w-4 h-4 flex-shrink-0" viewBox="0 0 24 24">
-                <path
-                  fill="#4285F4"
-                  d="M23.745 12.27c0-.7-.06-1.4-.19-2.07H12v4.51h6.6c-.29 1.52-1.14 2.8-2.4 3.66v3.05h3.88c2.27-2.09 3.66-5.17 3.66-9.15z"
-                />
-                <path
-                  fill="#34A853"
-                  d="M12 24c3.24 0 5.95-1.08 7.93-2.91l-3.88-3.05c-1.08.72-2.45 1.16-4.05 1.16-3.12 0-5.77-2.1-6.72-4.93H1.27v3.15C3.25 21.3 7.31 24 12 24z"
-                />
-                <path
-                  fill="#FBBC05"
-                  d="M5.28 14.27c-.25-.72-.38-1.49-.38-2.27s.13-1.55.38-2.27V6.58H1.27C.46 8.2 0 10.04 0 12s.46 3.8 1.27 5.42l4.01-3.15z"
-                />
-                <path
-                  fill="#EA4335"
-                  d="M12 4.75c1.77 0 3.35.61 4.6 1.8l3.42-3.42C17.95 1.19 15.24 0 12 0 7.31 0 3.25 2.7 1.27 6.58l4.01 3.15c.95-2.83 3.6-4.98 6.72-4.98z"
-                />
-              </svg>
-            )}
-            <span>Sign in with Google</span>
-          </button>
-
-          {/* 1-Click Demo Login Pills */}
-          <div className="mt-5 pt-4 border-t border-[#E5E1D8]">
-            <div className="flex items-center justify-between mb-2.5">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#EA580C] flex items-center gap-1.5">
-                <Zap className="w-3 h-3 text-[#EA580C] fill-[#EA580C]" />
-                <span>1-CLICK DEMO LOGIN PILLS</span>
+          {/* Quick Login Section */}
+          <div className="mt-8 pt-6 border-t border-[#E5E1D8]/80">
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-[10px] font-extrabold text-[#64748B] uppercase tracking-[0.2em] flex items-center gap-1.5">
+                <Zap className="w-3.5 h-3.5 text-[#FF5500] fill-[#FF5500]" />
+                QUICK LOGIN (DEMO)
               </span>
-              <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider font-mono">
+              <span className="text-[9px] font-bold text-[#94A3B8] uppercase tracking-wider">
                 INSTANT ACCESS
               </span>
             </div>

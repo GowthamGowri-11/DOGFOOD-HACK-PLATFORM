@@ -6,7 +6,11 @@ import { usePathname } from 'next/navigation';
 import {
   Trophy,
   Compass,
+  Home,
+  Upload,
+  Image as ImageIcon,
   LayoutDashboard,
+  Calendar,
   Users,
   FolderKanban,
   FileCheck,
@@ -27,6 +31,8 @@ import {
   Settings,
   Server,
   PieChart,
+  HelpCircle,
+  MessageSquare,
 } from 'lucide-react';
 
 export type UserRole = 'PARTICIPANT' | 'ORGANIZER' | 'JUDGE' | 'ADMIN';
@@ -40,7 +46,7 @@ export interface NavItem {
 
 export interface SidebarProps {
   currentRole: UserRole;
-  onRoleChange?: (role: UserRole) => void;
+  onRoleChange: (role: UserRole) => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   isMobileOpen?: boolean;
@@ -48,22 +54,35 @@ export interface SidebarProps {
   userName?: string;
   userEmail?: string;
   userAvatarUrl?: string | null;
+  isAuthenticated?: boolean;
+  onOpenLoginModal?: () => void;
 }
 
+// Constant 3 Pages displayed to all unauthenticated/guest users across all roles
+const GUEST_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/', icon: Home },
+  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
+  { label: 'Help Center', href: '/help', icon: HelpCircle },
+];
+
 const PARTICIPANT_ITEMS: NavItem[] = [
-  { label: 'Home', href: '/', icon: Compass },
+  { label: 'Home', href: '/', icon: Home },
   { label: 'Explore Hackathons', href: '/hackathons', icon: Trophy },
-  { label: 'My Hackathons', href: '/participant/dashboard', icon: FolderKanban },
+  { label: 'My Hackathons', href: '/participant/dashboard', icon: Calendar },
   { label: 'My Teams', href: '/participant/teams', icon: Users },
   { label: 'My Projects', href: '/participant/projects', icon: FileText },
-  { label: 'My Submissions', href: '/participant/submissions', icon: FileCheck },
+  { label: 'My Submissions', href: '/participant/submissions', icon: Upload },
   { label: 'Leaderboard', href: '/leaderboard', icon: BarChart3 },
   { label: 'Project Gallery', href: '/projects', icon: Layers },
   { label: 'Certificates', href: '/participant/certificates', icon: Award },
   { label: 'My Activity', href: '/participant/activity', icon: Activity },
+  { label: 'My Profile', href: '/participant/settings', icon: UserCheck2 },
+  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
+  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const ORGANIZER_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/', icon: Home },
   { label: 'Dashboard', href: '/organizer/dashboard', icon: LayoutDashboard },
   { label: 'Hackathons', href: '/organizer/hackathons', icon: Trophy },
   { label: 'Registrations', href: '/organizer/registrations', icon: Users },
@@ -80,18 +99,24 @@ const ORGANIZER_ITEMS: NavItem[] = [
   { label: 'Analytics', href: '/organizer/analytics', icon: PieChart },
   { label: 'Community', href: '/organizer/community', icon: Layers },
   { label: 'Audit Logs', href: '/organizer/audit', icon: History },
+  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
+  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const JUDGE_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/', icon: Home },
   { label: 'Dashboard', href: '/judge/dashboard', icon: LayoutDashboard },
   { label: 'My Assignments', href: '/judge/assignments', icon: Scale },
   { label: 'Pending Evaluations', href: '/judge/evaluations', icon: FileCheck },
   { label: 'Completed Evaluations', href: '/judge/completed', icon: ShieldCheck },
   { label: 'Leaderboard', href: '/leaderboard', icon: Award },
   { label: 'Profile', href: '/judge/profile', icon: UserCheck2 },
+  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
+  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [
+  { label: 'Home', href: '/', icon: Home },
   { label: 'Overview', href: '/admin/dashboard', icon: Activity },
   { label: 'Users', href: '/admin/users', icon: Users },
   { label: 'Hackathons', href: '/admin/hackathons', icon: Trophy },
@@ -101,7 +126,8 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'Results & Leaderboard', href: '/admin/results', icon: Award },
   { label: 'Certificates', href: '/admin/certificates', icon: ShieldCheck },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: History },
-  { label: 'System Health', href: '/admin/system', icon: Server },
+  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
+  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -114,10 +140,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   userName,
   userEmail,
   userAvatarUrl,
+  isAuthenticated = false,
+  onOpenLoginModal,
 }) => {
   const pathname = usePathname();
 
   const getNavItems = () => {
+    if (!isAuthenticated) {
+      return GUEST_ITEMS;
+    }
+
     switch (currentRole) {
       case 'ORGANIZER':
         return ORGANIZER_ITEMS;
@@ -183,8 +215,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
-                pathname === item.href ||
-                (item.href !== '/' && item.href !== '/hackathons' && pathname.startsWith(item.href));
+                item.href === '/'
+                  ? pathname === '/'
+                  : pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/');
 
               return (
                 <Link

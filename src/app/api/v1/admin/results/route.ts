@@ -25,6 +25,7 @@ export async function GET(req: NextRequest) {
         slug: true,
         status: true,
         resultsPublishedAt: true,
+        rulesAndGuidelines: true,
         organizer: { select: { id: true, fullName: true, email: true } },
         tracks: {
           select: {
