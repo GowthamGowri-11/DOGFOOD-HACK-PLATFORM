@@ -309,7 +309,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                 <div className="py-2.5 space-y-1">
                   <p className="font-medium text-[#111827]">Judging Phase Commenced</p>
                   <p className="text-[11px] text-[#64748B]">
-                    Apex AI Global Hackathon 2026 has initiated jury evaluations.
+                    ATLYX AI Global Hackathon 2026 has initiated jury evaluations.
                   </p>
                   <span className="text-[10px] text-[#94A3B8]">10 mins ago</span>
                 </div>

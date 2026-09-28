@@ -4,6 +4,8 @@ import { RegistrationRepository } from '@/server/repositories/registration.repos
 import { TeamInviteRepository } from '@/server/repositories/team-invite.repository';
 import { HackathonRepository } from '@/server/repositories/hackathon.repository';
 import { AuditService } from '@/server/services/audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export interface TeamReadinessStatus {
   isReady: boolean;
@@ -71,11 +73,11 @@ export class TeamService {
       throw { message: 'Hackathon not found.', code: 'NOT_FOUND', status: 404 };
     }
 
-    // 1. Participant must be registered and approved for this hackathon
+    // 1. Participant must be registered for this hackathon
     const registration = await RegistrationRepository.findByUserAndHackathon(data.userId, data.hackathonId);
-    if (!registration || registration.status !== 'APPROVED') {
+    if (!registration) {
       throw {
-        message: 'You must have an approved registration for this hackathon before creating a team.',
+        message: 'Registration required. Please register for this hackathon first.',
         code: 'REGISTRATION_REQUIRED',
         status: 403,
       };
@@ -130,6 +132,27 @@ export class TeamService {
       afterState: { id: team.id, name: team.name, leaderId: data.userId },
     });
 
+    // Announce the change via WebSocket (post-DB-commit)
+    await eventBus.publish({
+      type: 'TEAM_CREATED',
+      hackathonId: data.hackathonId,
+      teamId: team.id,
+      userId: data.userId,
+      actorId: data.userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(data.hackathonId),
+        RealtimeRoomBuilder.organizer(data.hackathonId),
+        RealtimeRoomBuilder.user(data.userId),
+      ],
+      payload: {
+        id: team.id,
+        name: team.name,
+        leaderId: data.userId,
+        memberCount: 1,
+        maxTeamSize: hackathon.maxTeamSize,
+      },
+    });
+
     return team;
   }
 
@@ -144,9 +167,9 @@ export class TeamService {
 
     // 1. Participant must be registered for this hackathon
     const registration = await RegistrationRepository.findByUserAndHackathon(userId, team.hackathonId);
-    if (!registration || registration.status !== 'APPROVED') {
+    if (!registration) {
       throw {
-        message: 'You must have an approved registration for this hackathon before joining a team.',
+        message: 'Registration required. Please register for this hackathon first.',
         code: 'REGISTRATION_REQUIRED',
         status: 403,
       };
@@ -181,6 +204,25 @@ export class TeamService {
       entityType: 'Team',
       entityId: team.id,
       afterState: { teamId: team.id, userId },
+    });
+
+    // Announce the member addition via WebSocket
+    await eventBus.publish({
+      type: 'TEAM_MEMBER_ADDED',
+      hackathonId: team.hackathonId,
+      teamId: team.id,
+      userId,
+      actorId: userId,
+      rooms: [
+        RealtimeRoomBuilder.team(team.id),
+        RealtimeRoomBuilder.hackathon(team.hackathonId),
+        RealtimeRoomBuilder.organizer(team.hackathonId),
+      ],
+      payload: {
+        teamId: team.id,
+        userId,
+        member,
+      },
     });
 
     return { team, member };
@@ -257,9 +299,9 @@ export class TeamService {
 
     // 1. Registration check
     const registration = await RegistrationRepository.findByUserAndHackathon(userId, hackathonId);
-    if (!registration || registration.status !== 'APPROVED') {
+    if (!registration) {
       throw {
-        message: 'You must have an approved registration for this hackathon before accepting a team invite.',
+        message: 'Registration required. Please register for this hackathon first.',
         code: 'REGISTRATION_REQUIRED',
         status: 403,
       };
@@ -285,7 +327,7 @@ export class TeamService {
       };
     }
 
-    await TeamRepository.addMember(invite.teamId, userId, false);
+    const member = await TeamRepository.addMember(invite.teamId, userId, false);
     await TeamInviteRepository.updateStatus(invite.id, 'ACCEPTED');
 
     await AuditService.log({
@@ -295,6 +337,25 @@ export class TeamService {
       entityType: 'Team',
       entityId: invite.teamId,
       afterState: { teamId: invite.teamId, userId },
+    });
+
+    // Announce the member addition via WebSocket
+    await eventBus.publish({
+      type: 'TEAM_MEMBER_ADDED',
+      hackathonId,
+      teamId: invite.teamId,
+      userId,
+      actorId: userId,
+      rooms: [
+        RealtimeRoomBuilder.team(invite.teamId),
+        RealtimeRoomBuilder.hackathon(hackathonId),
+        RealtimeRoomBuilder.organizer(hackathonId),
+      ],
+      payload: {
+        teamId: invite.teamId,
+        userId,
+        member,
+      },
     });
 
     return invite.team;
@@ -338,6 +399,25 @@ export class TeamService {
         entityType: 'Team',
         entityId: team.id,
       });
+
+      await eventBus.publish({
+        type: 'TEAM_MEMBER_REMOVED',
+        hackathonId: team.hackathon.id,
+        teamId: team.id,
+        userId: data.targetUserId,
+        actorId: data.actorUserId,
+        rooms: [
+          RealtimeRoomBuilder.team(team.id),
+          RealtimeRoomBuilder.hackathon(team.hackathon.id),
+          RealtimeRoomBuilder.organizer(team.hackathon.id),
+        ],
+        payload: {
+          teamId: team.id,
+          targetUserId: data.targetUserId,
+          disbanded: true,
+        },
+      });
+
       return { disbanded: true };
     }
 
@@ -358,6 +438,24 @@ export class TeamService {
       entityType: 'Team',
       entityId: team.id,
       beforeState: { removedUserId: data.targetUserId },
+    });
+
+    await eventBus.publish({
+      type: 'TEAM_MEMBER_REMOVED',
+      hackathonId: team.hackathon.id,
+      teamId: team.id,
+      userId: data.targetUserId,
+      actorId: data.actorUserId,
+      rooms: [
+        RealtimeRoomBuilder.team(team.id),
+        RealtimeRoomBuilder.hackathon(team.hackathon.id),
+        RealtimeRoomBuilder.organizer(team.hackathon.id),
+      ],
+      payload: {
+        teamId: team.id,
+        targetUserId: data.targetUserId,
+        disbanded: false,
+      },
     });
 
     return { disbanded: false };

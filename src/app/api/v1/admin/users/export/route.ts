@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         'Content-Type': 'text/csv; charset=utf-8',
-        'Content-Disposition': `attachment; filename="apex_hack_users_${dateStr}.csv"`,
+        'Content-Disposition': `attachment; filename="atlyx_users_${dateStr}.csv"`,
       },
     });
   } catch (error: any) {

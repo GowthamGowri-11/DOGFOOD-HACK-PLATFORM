@@ -58,14 +58,14 @@ const createHackathonSchema = z.object({
   ]).default('DRAFT'),
   minTeamSize: z.number().int().min(1).default(1),
   maxTeamSize: z.number().int().max(10).default(4),
-  regStartTime: z.string().datetime().or(z.string()),
-  regEndTime: z.string().datetime().or(z.string()),
-  eventStartTime: z.string().datetime().or(z.string()),
-  eventEndTime: z.string().datetime().or(z.string()),
-  subStartTime: z.string().datetime().or(z.string()),
-  subEndTime: z.string().datetime().or(z.string()),
-  judgingStartTime: z.string().datetime().or(z.string()),
-  judgingEndTime: z.string().datetime().or(z.string()),
+  regStartTime: z.string().optional(),
+  regEndTime: z.string().optional(),
+  eventStartTime: z.string().optional(),
+  eventEndTime: z.string().optional(),
+  subStartTime: z.string().optional(),
+  subEndTime: z.string().optional(),
+  judgingStartTime: z.string().optional(),
+  judgingEndTime: z.string().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
   // Flexible for uploaded assets + prize fields from both branches
@@ -90,17 +90,14 @@ export async function GET(req: NextRequest) {
     if (mine) {
       // Auth-specific — never cache
       const session = await requireAuth();
-      const hackathons = await HackathonRepository.listByOrganizer(session.id);
-      return successResponse({
-        hackathons,
-        pagination: {
-          total: hackathons.length,
-          page: 1,
-          pageSize: hackathons.length || 1,
-          totalPages: 1,
-          hasMore: false,
-        },
+      const result = await HackathonRepository.listAdminPaginated({
+        search,
+        status,
+        organizerId: session.id,
+        page,
+        pageSize,
       });
+      return successResponse(result);
     }
 
     // Build deterministic cache key from all public query params.
@@ -145,7 +142,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await requireRole(['ORGANIZER', 'ADMIN']);
+    const session = await requireRole(['ADMIN', 'ORGANIZER']);
     const body = await req.json();
     const parsed = createHackathonSchema.safeParse(body);
 

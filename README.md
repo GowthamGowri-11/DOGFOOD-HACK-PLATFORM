@@ -1,4 +1,4 @@
-# Ultra Pro Max Hackathon Platform
+# ATLYX — Competition Arena (Ultra Pro Max Platform)
 
 An enterprise-grade hackathon management, competition, judging, and AI-assisted evaluation platform designed with a clean **Modular Monolith** architecture on **Next.js (App Router)**, **Prisma ORM**, and **Neon PostgreSQL**.
 

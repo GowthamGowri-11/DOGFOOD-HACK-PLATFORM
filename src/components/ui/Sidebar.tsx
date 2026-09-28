@@ -170,7 +170,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       label: 'Organizer',
       icon: '🏛️',
       ctaLabel: '+ Create Hackathon',
-      ctaHref: '/organizer/hackathons',
+      ctaHref: '/organizer/hackathons/create',
     },
     JUDGE: {
       label: 'Judge',
@@ -205,15 +205,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* TOP: Brand Wordmark & Collapse Icon */}
         <div className="h-[72px] px-5 border-b border-[#E2E8F0] flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2.5 overflow-hidden">
-            <div className="w-[34px] h-[34px] rounded-xl bg-[#2563EB] flex items-center justify-center text-white font-black shadow-sm flex-shrink-0">
-              <Trophy className="w-4 h-4 text-white" />
+            <div className="w-[36px] h-[36px] rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
+              <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain" />
             </div>
             {!collapsed && (
               <div className="truncate">
-                <span className="font-bold text-[17px] tracking-tight text-[#111827]">
-                  Apex<span className="text-[#2563EB]">Hack</span>
+                <span className="font-extrabold text-[18px] tracking-tight text-[#111827]">
+                  ATLYX
                 </span>
-                <span className="block text-[10px] font-medium text-[#64748B] uppercase tracking-wider -mt-0.5">
+                <span className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wider -mt-0.5">
                   Competition Arena
                 </span>
               </div>

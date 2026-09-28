@@ -2,6 +2,8 @@ import prisma from '@/lib/prisma';
 import { NormalizationEngine } from './normalization.engine';
 import { ResultEngine, RankedProjectResult } from './result.engine';
 import { AuditService } from './audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export interface ResultGenerationOptions {
   method?: 'Z_SCORE' | 'MIN_MAX';
@@ -165,6 +167,20 @@ export class ResultService {
       afterState: { version: nextVersion, method, rankedCount: rankedResults.length },
     });
 
+    await eventBus.publish({
+      type: 'RESULTS_GENERATED',
+      hackathonId,
+      actorId: userId,
+      rooms: [
+        RealtimeRoomBuilder.organizer(hackathonId),
+      ],
+      payload: {
+        hackathonId,
+        version: nextVersion,
+        rankedCount: rankedResults.length,
+      },
+    });
+
     return {
       results: rankedResults,
       normalizationId: normRun.id,
@@ -286,6 +302,21 @@ export class ResultService {
       entityType: 'Hackathon',
       entityId: hackathonId,
       afterState: { status: 'RESULTS_PUBLISHED', publishedResultsCount: verification.rankedProjectsCount },
+    });
+
+    await eventBus.publish({
+      type: 'RESULTS_PUBLISHED',
+      hackathonId,
+      actorId: userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(hackathonId),
+        RealtimeRoomBuilder.organizer(hackathonId),
+      ],
+      payload: {
+        hackathonId,
+        status: 'RESULTS_PUBLISHED',
+        publishedCount: verification.rankedProjectsCount,
+      },
     });
 
     return {

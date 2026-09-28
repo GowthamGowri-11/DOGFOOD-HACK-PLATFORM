@@ -5,6 +5,8 @@ import { ProblemStatementRepository } from '@/server/repositories/problem-statem
 import { HackathonRepository } from '@/server/repositories/hackathon.repository';
 import { SubmissionRepository } from '@/server/repositories/submission.repository';
 import { AuditService } from '@/server/services/audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export class ProjectService {
   /**
@@ -119,6 +121,28 @@ export class ProjectService {
       afterState: { id: project.id, title: project.title, teamId: data.teamId },
     });
 
+    await eventBus.publish({
+      type: 'PROJECT_CREATED',
+      hackathonId: data.hackathonId,
+      teamId: data.teamId,
+      projectId: project.id,
+      userId: data.userId,
+      actorId: data.userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(data.hackathonId),
+        RealtimeRoomBuilder.team(data.teamId),
+        RealtimeRoomBuilder.project(project.id),
+        RealtimeRoomBuilder.organizer(data.hackathonId),
+      ],
+      payload: {
+        id: project.id,
+        title: project.title,
+        slug: project.slug,
+        teamId: data.teamId,
+        trackId: data.trackId,
+      },
+    });
+
     return project;
   }
 
@@ -197,6 +221,26 @@ export class ProjectService {
       entityId: project.id,
       beforeState: { title: project.title },
       afterState: { title: updated.title },
+    });
+
+    await eventBus.publish({
+      type: 'PROJECT_UPDATED',
+      hackathonId: project.hackathonId,
+      teamId: project.teamId,
+      projectId: project.id,
+      userId: data.userId,
+      actorId: data.userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(project.hackathonId),
+        RealtimeRoomBuilder.team(project.teamId),
+        RealtimeRoomBuilder.project(project.id),
+        RealtimeRoomBuilder.organizer(project.hackathonId),
+      ],
+      payload: {
+        id: updated.id,
+        title: updated.title,
+        slug: updated.slug,
+      },
     });
 
     return updated;

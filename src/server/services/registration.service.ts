@@ -4,6 +4,8 @@ import { HackathonRepository } from '@/server/repositories/hackathon.repository'
 import { TeamRepository } from '@/server/repositories/team.repository';
 import { AuditService } from '@/server/services/audit.service';
 import { RegistrationStatus } from '@prisma/client';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export class RegistrationService {
   /**
@@ -73,6 +75,25 @@ export class RegistrationService {
       afterState: { id: registration.id, status: registration.status },
     });
 
+    // Announce registration change via WebSocket
+    await eventBus.publish({
+      type: 'REGISTRATION_CREATED',
+      hackathonId: data.hackathonId,
+      userId: data.userId,
+      actorId: data.userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(data.hackathonId),
+        RealtimeRoomBuilder.organizer(data.hackathonId),
+        RealtimeRoomBuilder.user(data.userId),
+      ],
+      payload: {
+        registrationId: registration.id,
+        hackathonId: data.hackathonId,
+        userId: data.userId,
+        status: registration.status,
+      },
+    });
+
     return registration;
   }
 
@@ -104,6 +125,22 @@ export class RegistrationService {
       entityType: 'Registration',
       entityId: registration.id,
       beforeState: { id: registration.id, status: registration.status },
+    });
+
+    await eventBus.publish({
+      type: 'REGISTRATION_CANCELLED',
+      hackathonId,
+      userId,
+      actorId: userId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(hackathonId),
+        RealtimeRoomBuilder.organizer(hackathonId),
+        RealtimeRoomBuilder.user(userId),
+      ],
+      payload: {
+        hackathonId,
+        userId,
+      },
     });
 
     return true;

@@ -1,10 +1,15 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { RealtimeProvider } from '@/lib/realtime/RealtimeContext';
 
 export const metadata: Metadata = {
-  title: 'ApexHack — Ultra Pro Max Enterprise Hackathon Platform',
+  title: 'ATLYX — Competition Arena',
   description:
-    'Professional hackathon discovery, team collaboration, balanced judge assignment, autonomous AI jury, and verifiable certificate ecosystem.',
+    'Professional hackathon discovery, team collaboration, balanced judge assignment, autonomous AI jury, and verifiable certificate ecosystem on ATLYX.',
+  icons: {
+    icon: '/atlyx-logo.png',
+    apple: '/atlyx-logo.png',
+  },
 };
 
 export default function RootLayout({
@@ -15,7 +20,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen text-[#111827] bg-[#FFFFFF] antialiased">
-        {children}
+        <RealtimeProvider>
+          {children}
+        </RealtimeProvider>
       </body>
     </html>
   );

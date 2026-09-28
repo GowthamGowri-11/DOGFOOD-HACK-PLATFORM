@@ -5,6 +5,8 @@ import { getCurrentUser } from '@/server/auth/session';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 const createCommentSchema = z.object({
   content: z
@@ -125,6 +127,21 @@ export async function POST(
       entityType: 'Comment',
       entityId: comment.id,
       afterState: { projectId, length: sanitizedContent.length },
+    });
+
+    await eventBus.publish({
+      type: 'COMMENT_CREATED',
+      hackathonId: project.hackathonId,
+      projectId,
+      userId: session.id,
+      actorId: session.id,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(project.hackathonId),
+        RealtimeRoomBuilder.project(projectId),
+      ],
+      payload: {
+        comment,
+      },
     });
 
     return successResponse({ comment }, 'Comment posted successfully', 201);

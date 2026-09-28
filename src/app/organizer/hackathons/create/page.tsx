@@ -354,7 +354,8 @@ export default function OrganizerCreateHackathonPage() {
   };
 
   // Form Submit Handler
-  const handleSave = async (publishStatus: 'DRAFT' | 'REGISTRATION_OPEN' = 'DRAFT') => {
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError(null);
 
     // Validation
@@ -421,9 +422,8 @@ export default function OrganizerCreateHackathonPage() {
         slug: (slug || title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         tagline: tagline.trim() || undefined,
         description: description.trim(),
-        organizationName: organizationName.trim() || 'Apex Frontier Systems',
+        organizationName: organizationName.trim() || 'ATLYX Enterprise Platform',
         bannerUrl: bannerUrl.trim() || null,
-        status: publishStatus,
         minTeamSize: Number(minTeamSize),
         maxTeamSize: Number(maxTeamSize),
         regStartTime: regStart.toISOString(),
@@ -449,7 +449,7 @@ export default function OrganizerCreateHackathonPage() {
       if (data.success) {
         router.push('/organizer/hackathons');
       } else {
-        setError(data.error?.message || data.message || 'Failed to create hackathon');
+        setError(data.error?.message || 'Failed to create hackathon');
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch {
@@ -462,7 +462,7 @@ export default function OrganizerCreateHackathonPage() {
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-16 select-none">
-      {/* Breadcrumb Bar */}
+      {/* Breadcrumb Bar Matching Site UI */}
       <nav className="flex items-center space-x-2 text-xs text-[#64748b] font-medium">
         <Link href="/" className="hover:text-[#2563eb] transition-colors">
           Home
@@ -479,7 +479,7 @@ export default function OrganizerCreateHackathonPage() {
         <span className="text-[#0f172a] font-semibold">Create Hackathon</span>
       </nav>
 
-      {/* Top Header */}
+      {/* Top Header Matching Site UI */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
         <div>
           <Link
@@ -487,7 +487,7 @@ export default function OrganizerCreateHackathonPage() {
             className="inline-flex items-center text-xs font-semibold text-[#64748b] hover:text-[#2563eb] mb-2 transition-colors"
           >
             <ArrowLeft className="w-3.5 h-3.5 mr-1" />
-            Back to My Hackathons
+            Back to Hackathon Management
           </Link>
           <div className="flex items-start gap-3">
             <div className="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] flex-shrink-0 mt-0.5 border border-[#dbeafe]">
@@ -512,7 +512,7 @@ export default function OrganizerCreateHackathonPage() {
         </div>
       )}
 
-      <form onSubmit={(e) => { e.preventDefault(); handleSave('DRAFT'); }} className="space-y-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
         {/* ======================================================== */}
         {/* SECTION 1: EVENT DETAILS */}
         {/* ======================================================== */}
@@ -531,7 +531,7 @@ export default function OrganizerCreateHackathonPage() {
               required
               value={title}
               onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="e.g. Apex Global AI Hackathon 2026"
+              placeholder="e.g. ATLYX Global AI Hackathon 2026"
               className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] font-medium transition-all placeholder:text-[#94a3b8]"
             />
           </div>
@@ -626,7 +626,7 @@ export default function OrganizerCreateHackathonPage() {
                       type="text"
                       value={org.contact}
                       onChange={(e) => updateOrganizer(idx, 'contact', e.target.value)}
-                      placeholder="e.g. +1 555-0199 or alex@apex.edu"
+                      placeholder="e.g. +1 555-0199 or alex@atlyx.edu"
                       className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
                     />
                   </div>
@@ -701,205 +701,98 @@ export default function OrganizerCreateHackathonPage() {
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <div className="w-10 h-10 mx-auto rounded-full bg-[#dbeafe] text-[#2563eb] flex items-center justify-center">
-                    <Trophy className="w-5 h-5" />
-                  </div>
-                  <p className="text-xs font-bold text-[#0f172a]">Hackathon Arena Branding</p>
-                  <p className="text-[11px] text-[#64748b]">High-resolution vector or landscape cover graphics</p>
+                  <h3 className="text-2xl sm:text-3xl font-black text-[#1e40af] tracking-tight uppercase font-sans">
+                    {title || 'HACKATHON TITLE'}
+                  </h3>
+                  <p className="text-xs text-[#2563eb] font-mono font-semibold">
+                    {tagline || 'Tagline will appear here'}
+                  </p>
                 </div>
               )}
             </div>
-            <input
-              type="url"
-              value={bannerUrl}
-              onChange={(e) => setBannerUrl(e.target.value)}
-              placeholder="https://images.unsplash.com/... (optional banner cover URL)"
-              className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] placeholder:text-[#94a3b8]"
-            />
-          </div>
 
-          {/* Departments */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[#f1f5f9]">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">
-                Primary Host Department*
-              </label>
-              <select
-                value={primaryDept}
-                onChange={(e) => setPrimaryDept(e.target.value)}
-                className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-medium"
-              >
-                {DEPARTMENTS.map((dept) => (
-                  <option key={dept} value={dept}>
-                    {dept}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">
-                Organization / Arena Host
-              </label>
+            <div className="space-y-1">
+              <span className="text-[11px] font-semibold text-[#64748b]">Banner Image URL (Optional)</span>
               <input
-                type="text"
-                value={organizationName}
-                onChange={(e) => setOrganizationName(e.target.value)}
-                placeholder="e.g. Apex Frontier Systems"
-                className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-medium placeholder:text-[#94a3b8]"
+                type="url"
+                value={bannerUrl}
+                onChange={(e) => setBannerUrl(e.target.value)}
+                placeholder="https://images.unsplash.com/... or /banners/banner.png"
+                className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
               />
             </div>
           </div>
 
-          {/* Collaborating Departments Dynamic Section */}
-          <div className="space-y-2 pt-2">
+          {/* Organization Name */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#334155]">Organization Name</label>
+            <input
+              type="text"
+              value={organizationName}
+              onChange={(e) => setOrganizationName(e.target.value)}
+              placeholder="e.g. ATLYX Enterprise Institute"
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
+            />
+          </div>
+
+          {/* Primary Department */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-[#334155]">
+              Primary Department*
+            </label>
+            <select
+              value={primaryDept}
+              onChange={(e) => setPrimaryDept(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-semibold"
+            >
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>
+                  {dept}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Collaborating Departments */}
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
               <label className="text-xs font-bold text-[#334155]">
-                Collaborating Departments (Optional)
+                Collaborating Departments
               </label>
               <button
                 type="button"
                 onClick={addCollabDept}
                 className="inline-flex items-center gap-1 text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8]"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>Add Department</span>
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Add Collab</span>
               </button>
             </div>
 
-            {collabDepts.length > 0 && (
-              <div className="space-y-2">
-                {collabDepts.map((d, idx) => (
-                  <div key={idx} className="flex items-center space-x-2">
-                    <select
-                      value={d}
-                      onChange={(e) => updateCollabDept(idx, e.target.value)}
-                      className="flex-1 px-3 py-1.5 text-xs bg-[#f8fafc] border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                    >
-                      {DEPARTMENTS.map((dept) => (
-                        <option key={dept} value={dept}>
-                          {dept}
-                        </option>
-                      ))}
-                    </select>
-                    <button
-                      type="button"
-                      onClick={() => removeCollabDept(idx)}
-                      className="p-1.5 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* SECTION 2: TEAM SETTINGS & RULES */}
-        {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="border-b border-[#f1f5f9] pb-3">
-            <h2 className="text-base font-extrabold text-[#0f172a]">Team Settings & Rules</h2>
-            <p className="text-xs text-[#64748b]">Composition requirements and academic participation matrix.</p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">
-                Min Team Size*
-              </label>
-              <input
-                type="number"
-                min="1"
-                max={maxTeamSize}
-                value={minTeamSize}
-                onChange={(e) => setMinTeamSize(Number(e.target.value))}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-bold"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">
-                Max Team Size*
-              </label>
-              <input
-                type="number"
-                min={minTeamSize}
-                max="10"
-                value={maxTeamSize}
-                onChange={(e) => setMaxTeamSize(Number(e.target.value))}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-bold"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">
-                Max Teams Allowed
-              </label>
-              <input
-                type="number"
-                min="1"
-                value={maxTeamsAllowed}
-                onChange={(e) => setMaxTeamsAllowed(e.target.value)}
-                placeholder="Unlimited (default)"
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-bold placeholder:text-[#94a3b8]"
-              />
-            </div>
-          </div>
-
-          {/* Year Criteria Matrix */}
-          <div className="space-y-2 pt-2 border-t border-[#f1f5f9]">
-            <div className="flex items-center space-x-2">
-              <Users className="w-4 h-4 text-[#2563eb]" />
-              <label className="text-xs font-bold text-[#0f172a]">Year Eligibility & Member Distribution</label>
-            </div>
-            <p className="text-[11px] text-[#64748b]">Configure acceptable student levels per squad.</p>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-1">
-              {[
-                { label: '1st Year', key: 'year1' as const },
-                { label: '2nd Year', key: 'year2' as const },
-                { label: '3rd Year', key: 'year3' as const },
-                { label: '4th Year', key: 'year4' as const },
-              ].map(({ label, key }) => (
-                <div key={key} className="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-2">
-                  <span className="text-xs font-bold text-[#0f172a] block">{label}</span>
-                  <div className="grid grid-cols-2 gap-2 text-[10px]">
-                    <div>
-                      <span className="text-[#64748b] block mb-0.5">Min</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="4"
-                        value={yearCriteria[key].min}
-                        onChange={(e) =>
-                          setYearCriteria({
-                            ...yearCriteria,
-                            [key]: { ...yearCriteria[key], min: Number(e.target.value) },
-                          })
-                        }
-                        className="w-full p-1 bg-white border border-[#e2e8f0] rounded text-center font-bold"
-                      />
-                    </div>
-                    <div>
-                      <span className="text-[#64748b] block mb-0.5">Max</span>
-                      <input
-                        type="number"
-                        min="0"
-                        max="4"
-                        value={yearCriteria[key].max}
-                        onChange={(e) =>
-                          setYearCriteria({
-                            ...yearCriteria,
-                            [key]: { ...yearCriteria[key], max: Number(e.target.value) },
-                          })
-                        }
-                        className="w-full p-1 bg-white border border-[#e2e8f0] rounded text-center font-bold"
-                      />
-                    </div>
-                  </div>
+            <div className="space-y-2">
+              {collabDepts.map((collab, idx) => (
+                <div
+                  key={idx}
+                  className="flex items-center space-x-2 p-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl"
+                >
+                  <select
+                    value={collab}
+                    onChange={(e) => updateCollabDept(idx, e.target.value)}
+                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none text-[#0f172a] font-medium"
+                  >
+                    {DEPARTMENTS.map((d) => (
+                      <option key={d} value={d}>
+                        {d}
+                      </option>
+                    ))}
+                  </select>
+                  <button
+                    type="button"
+                    onClick={() => removeCollabDept(idx)}
+                    className="p-1.5 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               ))}
             </div>
@@ -907,30 +800,137 @@ export default function OrganizerCreateHackathonPage() {
         </div>
 
         {/* ======================================================== */}
-        {/* SECTION 3: IMPORTANT DETAILS / DEADLINES */}
+        {/* SECTION 2: TEAM SETTINGS & RULES */}
         {/* ======================================================== */}
         <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="border-b border-[#f1f5f9] pb-3">
-            <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
-            <p className="text-xs text-[#64748b]">Registration timeline and deadline configuration.</p>
+          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
+            <Users className="w-4 h-4 text-[#2563eb]" />
+            <h2 className="text-base font-extrabold text-[#0f172a]">Team Settings & Rules</h2>
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-[#334155] flex items-center space-x-1">
-              <Calendar className="w-3.5 h-3.5 text-[#2563eb]" />
-              <span>Registration Deadline*</span>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#334155]">Min Team Size</label>
+              <input
+                type="number"
+                min="1"
+                max={maxTeamSize}
+                value={minTeamSize}
+                onChange={(e) => {
+                  const val = Number(e.target.value);
+                  setMinTeamSize(val);
+                  if (val > maxTeamSize) setMaxTeamSize(val);
+                }}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#334155]">Max Team Size</label>
+              <input
+                type="number"
+                min={minTeamSize}
+                max="20"
+                value={maxTeamSize}
+                onChange={(e) => setMaxTeamSize(Number(e.target.value))}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#334155]">Max Teams Allowed (Overall)</label>
+              <input
+                type="text"
+                value={maxTeamsAllowed}
+                onChange={(e) => setMaxTeamsAllowed(e.target.value)}
+                placeholder="e.g. 100 (Blank = Unlimited)"
+                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-3 pt-2">
+            <label className="text-xs font-bold text-[#334155] block">
+              Team Member Criteria (Year-wise Restrictions)
             </label>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {(['year1', 'year2', 'year3', 'year4'] as const).map((yr, idx) => {
+                const yearLabel = `Year ${idx + 1}`;
+                return (
+                  <div
+                    key={yr}
+                    className="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-2"
+                  >
+                    <div className="flex items-center justify-between pb-1 border-b border-[#e2e8f0]">
+                      <span className="text-xs font-bold text-[#0f172a]">{yearLabel}</span>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-bold text-[#64748b] uppercase">AT LEAST (MIN)</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={yearCriteria[yr].min}
+                        onChange={(e) =>
+                          setYearCriteria({
+                            ...yearCriteria,
+                            [yr]: { ...yearCriteria[yr], min: Number(e.target.value) },
+                          })
+                        }
+                        className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[9px] font-bold text-[#64748b] uppercase">AT MOST (MAX)</span>
+                      <input
+                        type="number"
+                        min="0"
+                        value={yearCriteria[yr].max}
+                        onChange={(e) =>
+                          setYearCriteria({
+                            ...yearCriteria,
+                            [yr]: { ...yearCriteria[yr], max: Number(e.target.value) },
+                          })
+                        }
+                        className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
+                      />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* ======================================================== */}
+        {/* SECTION 3: IMPORTANT DETAILS */}
+        {/* ======================================================== */}
+        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-[#2563eb]" />
+            <div>
+              <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
+              <p className="text-xs text-[#64748b]">
+                Set the overall registration and hackathon submission deadlines, and team criteria.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5 max-w-md">
+            <label className="text-xs font-bold text-[#334155]">Registration Deadline*</label>
             <input
               type="datetime-local"
               required
               value={registrationDeadline}
               onChange={(e) => setRegistrationDeadline(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-medium"
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
             />
             {registrationDeadline && (
-              <p className="text-xs font-semibold text-[#2563eb] bg-[#eff6ff] px-3 py-1.5 rounded-lg border border-[#bfdbfe] inline-block">
+              <span className="text-[11px] font-medium text-[#2563eb] block pt-0.5">
                 {formatDateDisplay(registrationDeadline)}
-              </p>
+              </span>
             )}
           </div>
         </div>
@@ -939,15 +939,21 @@ export default function OrganizerCreateHackathonPage() {
         {/* SECTION 4: EVALUATION ROUNDS */}
         {/* ======================================================== */}
         <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-6">
-          <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
-            <div>
-              <h2 className="text-base font-extrabold text-[#0f172a]">Evaluation Rounds</h2>
-              <p className="text-xs text-[#64748b]">Multi-stage competition phases, rubrics, and automated AI gates.</p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#f1f5f9] gap-2">
+            <div className="flex items-center space-x-2">
+              <Layers className="w-4 h-4 text-[#2563eb]" />
+              <div>
+                <h2 className="text-base font-extrabold text-[#0f172a]">Evaluation Rounds</h2>
+                <p className="text-xs text-[#64748b]">
+                  Define the sequence of evaluation rounds and their specific problem statements.
+                </p>
+              </div>
             </div>
+
             <button
               type="button"
               onClick={addRound}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#eff6ff] hover:bg-[#dbeafe] text-[#2563eb] font-bold text-xs rounded-xl border border-[#bfdbfe] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#2563eb] bg-[#eff6ff] border border-[#dbeafe] hover:bg-[#dbeafe]/50 rounded-xl shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Add Round</span>
@@ -955,213 +961,282 @@ export default function OrganizerCreateHackathonPage() {
           </div>
 
           <div className="space-y-6">
-            {rounds.map((round, rIdx) => (
-              <div
-                key={rIdx}
-                className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-4 relative"
-              >
-                <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
-                  <div className="flex items-center space-x-2">
-                    <span className="w-6 h-6 rounded-full bg-[#2563eb] text-white text-xs font-bold flex items-center justify-center">
-                      {rIdx + 1}
-                    </span>
-                    <h3 className="text-sm font-extrabold text-[#0f172a]">{round.name || `Round ${rIdx + 1}`}</h3>
-                    {round.isFinal && (
-                      <span className="text-[10px] bg-[#fef3c7] text-[#92400e] border border-[#fde68a] px-2 py-0.5 rounded-full font-extrabold">
-                        FINAL ROUND
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <label className="flex items-center space-x-1.5 text-xs text-[#475569] font-semibold cursor-pointer">
-                      <input
-                        type="checkbox"
-                        checked={round.isFinal}
-                        onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
-                        className="rounded text-[#2563eb]"
-                      />
-                      <span>Final Round</span>
-                    </label>
-                    {rounds.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={() => removeRound(rIdx)}
-                        className="p-1.5 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors ml-2"
-                        title="Delete Round"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    )}
-                  </div>
-                </div>
+            {rounds.map((round, rIdx) => {
+              const totalMarks = round.criteria.reduce((sum, c) => sum + Number(c.maxMarks || 0), 0);
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#334155]">Round Name*</label>
-                    <input
-                      type="text"
-                      required
-                      value={round.name}
-                      onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
-                      placeholder="e.g. The Qualifiers"
-                      className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] font-semibold"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-xs font-bold text-[#334155]">Round Type</label>
-                    <select
-                      value={round.roundType}
-                      onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
-                      className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-                    >
-                      <option value="Mock Hackathon">Mock Hackathon</option>
-                      <option value="Hackathon">Hackathon</option>
-                      <option value="Ideation / Pitch">Ideation / Pitch</option>
-                      <option value="Prototype Demo">Prototype Demo</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Deadlines for this Round */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#64748b]">Start Date</label>
-                    <input
-                      type="datetime-local"
-                      value={round.startDate}
-                      onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-[#e2e8f0] rounded-lg font-medium"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#64748b]">End Date</label>
-                    <input
-                      type="datetime-local"
-                      value={round.endDate}
-                      onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-[#e2e8f0] rounded-lg font-medium"
-                    />
-                  </div>
-
-                  <div className="space-y-1">
-                    <label className="text-[11px] font-bold text-[#64748b]">Submission Deadline</label>
-                    <input
-                      type="datetime-local"
-                      value={round.submissionDeadline}
-                      onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
-                      className="w-full p-2 text-xs bg-white border border-[#e2e8f0] rounded-lg font-medium"
-                    />
-                  </div>
-                </div>
-
-                {/* Required Submissions Checkboxes */}
-                <div className="space-y-1.5 pt-2">
-                  <label className="text-xs font-bold text-[#334155]">Required Submissions for this Round</label>
-                  <div className="flex flex-wrap gap-4 pt-1">
-                    {[
-                      { key: 'github', label: 'GitHub Repo URL' },
-                      { key: 'ppt', label: 'Presentation (PPT/PDF)' },
-                      { key: 'video', label: 'Video Demo Link' },
-                      { key: 'document', label: 'Architecture Document' },
-                      { key: 'techStack', label: 'Tech Stack Tags' },
-                    ].map(({ key, label }) => (
-                      <label key={key} className="flex items-center space-x-1.5 text-xs text-[#334155] cursor-pointer">
-                        <input
-                          type="checkbox"
-                          checked={(round.requiredSubmissions as any)[key]}
-                          onChange={(e) =>
-                            updateRound(rIdx, 'requiredSubmissions', {
-                              ...round.requiredSubmissions,
-                              [key]: e.target.checked,
-                            })
-                          }
-                          className="rounded text-[#2563eb]"
-                        />
-                        <span>{label}</span>
-                      </label>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Terms and Conditions / AI Auto-Disqualification Rules */}
-                <div className="space-y-1.5 pt-2">
-                  <label className="text-xs font-bold text-[#334155]">
-                    Terms & Auto-Evaluation Rules (AI Jury & Disqualification Policies)
-                  </label>
-                  <textarea
-                    rows={2}
-                    value={round.termsAndConditions}
-                    onChange={(e) => updateRound(rIdx, 'termsAndConditions', e.target.value)}
-                    className="w-full p-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl font-mono text-[#334155]"
-                    placeholder="Enter automated validation and jury review instructions..."
-                  />
-                </div>
-
-                {/* Round Scoring Criteria */}
-                <div className="space-y-3 pt-2 border-t border-[#e2e8f0]">
+              return (
+                <div
+                  key={rIdx}
+                  className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-5 relative shadow-2xs"
+                >
                   <div className="flex items-center justify-between">
-                    <label className="text-xs font-bold text-[#0f172a] flex items-center space-x-1">
-                      <Award className="w-3.5 h-3.5 text-[#2563eb]" />
-                      <span>Round Scoring Criteria</span>
-                    </label>
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-2.5 py-0.5 rounded-full border border-[#dbeafe]">
+                        Round {rIdx + 1}
+                      </span>
+                      {round.isFinal && (
+                        <span className="text-[10px] font-bold text-[#d97706] bg-[#fef3c7] px-2.5 py-0.5 rounded-full border border-[#fde68a]">
+                          FINALE
+                        </span>
+                      )}
+                    </div>
+
                     <button
                       type="button"
-                      onClick={() => addCriterion(rIdx)}
-                      className="text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8] inline-flex items-center gap-1"
+                      onClick={() => removeRound(rIdx)}
+                      disabled={rounds.length <= 1}
+                      className="p-1.5 text-[#dc2626] hover:bg-[#fee2e2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                      title="Delete Round"
                     >
-                      <Plus className="w-3 h-3" />
-                      <span>Add Criterion</span>
+                      <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="space-y-2">
-                    {round.criteria.map((crit, cIdx) => (
-                      <div
-                        key={cIdx}
-                        className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-2.5 bg-white border border-[#e2e8f0] rounded-xl"
-                      >
-                        <input
-                          type="text"
-                          required
-                          placeholder="Criterion Name (e.g. Technical Implementation)"
-                          value={crit.name}
-                          onChange={(e) => updateCriterion(rIdx, cIdx, 'name', e.target.value)}
-                          className="flex-1 px-2.5 py-1 text-xs border border-[#e2e8f0] rounded-lg font-medium"
-                        />
-                        <div className="flex items-center space-x-1 w-28">
-                          <span className="text-[10px] text-[#64748b]">Max Marks:</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND NAME</span>
+                        <label className="flex items-center space-x-1.5 cursor-pointer">
+                          <span className="text-[10px] font-bold text-[#64748b] uppercase">FINAL ROUND</span>
                           <input
-                            type="number"
-                            min="1"
-                            max="100"
-                            value={crit.maxMarks}
-                            onChange={(e) => updateCriterion(rIdx, cIdx, 'maxMarks', Number(e.target.value))}
-                            className="w-12 p-1 text-xs border border-[#e2e8f0] rounded-lg text-center font-bold"
+                            type="checkbox"
+                            checked={round.isFinal}
+                            onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
+                            className="rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
                           />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Short description/rubric guideline"
-                          value={crit.description}
-                          onChange={(e) => updateCriterion(rIdx, cIdx, 'description', e.target.value)}
-                          className="flex-1 px-2.5 py-1 text-xs border border-[#e2e8f0] rounded-lg text-[#64748b]"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removeCriterion(rIdx, cIdx)}
-                          disabled={round.criteria.length <= 1}
-                          className="p-1 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg disabled:opacity-30"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
+                        </label>
                       </div>
-                    ))}
+                      <input
+                        type="text"
+                        value={round.name}
+                        onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
+                        placeholder="e.g. The Qualifiers"
+                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#2563eb]"
+                      />
+                    </div>
+
+                    <div className="sm:col-span-2 space-y-1">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND TYPE</span>
+                      <select
+                        value={round.roundType}
+                        onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-semibold"
+                      >
+                        <option value="Mock Hackathon">Mock Hackathon</option>
+                        <option value="Hackathon">Hackathon</option>
+                        <option value="Ideation">Ideation</option>
+                        <option value="Presentation">Presentation</option>
+                        <option value="Coding Challenge">Coding Challenge</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Start Date & End Date with formatted date display */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase">START DATE & TIME</span>
+                      <input
+                        type="datetime-local"
+                        value={round.startDate}
+                        onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                      />
+                      {round.startDate && (
+                        <span className="text-[10px] text-[#64748b] block">
+                          {formatDateDisplay(round.startDate)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase">END DATE & TIME</span>
+                      <input
+                        type="datetime-local"
+                        value={round.endDate}
+                        onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                      />
+                      {round.endDate && (
+                        <span className="text-[10px] text-[#64748b] block">
+                          {formatDateDisplay(round.endDate)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase">SUBMISSION DEADLINE</span>
+                      <input
+                        type="datetime-local"
+                        value={round.submissionDeadline}
+                        onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
+                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                      />
+                      {round.submissionDeadline && (
+                        <span className="text-[10px] text-[#64748b] block">
+                          {formatDateDisplay(round.submissionDeadline)}
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase">MAX TEAMS ALLOWED</span>
+                      <input
+                        type="number"
+                        min="1"
+                        value={round.maxTeamsAllowed}
+                        onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
+                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-2">
+                    <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider block">
+                      WHAT TO EVALUATE (REQUIRED SUBMISSIONS)
+                    </span>
+                    <p className="text-[11px] text-[#64748b]">
+                      Tick what teams must upload for {round.name}. Project title and description are always required.
+                    </p>
+                    <div className="flex flex-wrap gap-2 pt-1">
+                      {[
+                        { key: 'github', label: 'GitHub link' },
+                        { key: 'ppt', label: 'PPT link' },
+                        { key: 'video', label: 'Video link' },
+                        { key: 'document', label: 'Document link' },
+                        { key: 'techStack', label: 'Tech stack' },
+                      ].map((item) => {
+                        const checked = (round.requiredSubmissions as any)[item.key];
+                        return (
+                          <button
+                            key={item.key}
+                            type="button"
+                            onClick={() => {
+                              const updatedReqs = {
+                                ...round.requiredSubmissions,
+                                [item.key]: !checked,
+                              };
+                              updateRound(rIdx, 'requiredSubmissions', updatedReqs);
+                            }}
+                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center space-x-1.5 transition-all cursor-pointer ${
+                              checked
+                                ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-xs'
+                                : 'bg-white text-[#64748b] border-[#e2e8f0] hover:bg-[#f8fafc]'
+                            }`}
+                          >
+                            <span>{checked ? '✓' : '+'}</span>
+                            <span>{item.label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-1.5">
+                    <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider block">
+                      TERMS & CONDITIONS
+                    </span>
+                    <p className="text-[11px] text-[#64748b]">
+                      Shown to teams before they lock their problem statement. Each line becomes one bullet point. Leave empty to use the platform default rules.
+                    </p>
+                    <textarea
+                      rows={3}
+                      value={round.termsAndConditions}
+                      onChange={(e) => updateRound(rIdx, 'termsAndConditions', e.target.value)}
+                      placeholder="Specify terms, rules, and automatic disqualification criteria..."
+                      className="w-full p-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a]"
+                    />
+                  </div>
+
+                  {/* Marking Criteria */}
+                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-3">
+                    <div className="flex items-center justify-between pb-1 border-b border-[#f1f5f9]">
+                      <div>
+                        <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider flex items-center space-x-1">
+                          <Award className="w-3.5 h-3.5 mr-1" />
+                          JURY EVALUATION MARKING CRITERIA
+                        </span>
+                        <p className="text-[11px] text-[#64748b]">
+                          Configure evaluation criteria names, descriptions, and max marks for {round.name}.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => addCriterion(rIdx)}
+                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-xl shadow-xs transition-colors cursor-pointer"
+                      >
+                        <Plus className="w-3 h-3 stroke-[2.5]" />
+                        <span>Add Criterion</span>
+                      </button>
+                    </div>
+
+                    <div className="space-y-3">
+                      {round.criteria.map((crit, cIdx) => (
+                        <div
+                          key={cIdx}
+                          className="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-2 relative"
+                        >
+                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                            <div className="sm:col-span-3 space-y-1">
+                              <span className="text-[9px] font-bold text-[#64748b] uppercase">CRITERION NAME</span>
+                              <input
+                                type="text"
+                                value={crit.name}
+                                onChange={(e) => updateCriterion(rIdx, cIdx, 'name', e.target.value)}
+                                placeholder="e.g. Technical Implementation"
+                                className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <span className="text-[9px] font-bold text-[#64748b] uppercase">MAX MARKS</span>
+                              <input
+                                type="number"
+                                min="1"
+                                value={crit.maxMarks}
+                                onChange={(e) => updateCriterion(rIdx, cIdx, 'maxMarks', Number(e.target.value))}
+                                className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg font-bold text-[#2563eb] focus:outline-none focus:border-[#2563eb]"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <span className="text-[9px] font-bold text-[#64748b] uppercase">DESCRIPTION / GUIDE FOR JURY</span>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="text"
+                                value={crit.description}
+                                onChange={(e) => updateCriterion(rIdx, cIdx, 'description', e.target.value)}
+                                placeholder="Guidelines for evaluators and AI scoring..."
+                                className="flex-1 px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeCriterion(rIdx, cIdx)}
+                                disabled={round.criteria.length <= 1}
+                                className="p-1 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="p-3 bg-[#eff6ff] border border-[#dbeafe] rounded-xl flex items-center justify-between">
+                      <span className="text-xs font-bold text-[#2563eb] uppercase tracking-wider">
+                        TOTAL ROUND EVALUATION MARKS:
+                      </span>
+                      <span className="px-3 py-1 bg-white border border-[#bfdbfe] rounded-full text-xs font-bold text-[#2563eb] shadow-xs">
+                        {totalMarks} Marks
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
@@ -1169,15 +1244,19 @@ export default function OrganizerCreateHackathonPage() {
         {/* SECTION 5: PROBLEM STATEMENTS */}
         {/* ======================================================== */}
         <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex items-center justify-between border-b border-[#f1f5f9] pb-3">
-            <div>
-              <h2 className="text-base font-extrabold text-[#0f172a]">Problem Statements</h2>
-              <p className="text-xs text-[#64748b]">Official problem statements across track challenges.</p>
+          <div className="flex items-center justify-between pb-3 border-b border-[#f1f5f9]">
+            <div className="flex items-center space-x-2">
+              <Lightbulb className="w-4 h-4 text-[#2563eb]" />
+              <div>
+                <h2 className="text-base font-extrabold text-[#0f172a]">Problem Statements</h2>
+                <p className="text-xs text-[#64748b]">Configure track challenges and technical statements for participating teams.</p>
+              </div>
             </div>
+
             <button
               type="button"
               onClick={addProblemStatement}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#eff6ff] hover:bg-[#dbeafe] text-[#2563eb] font-bold text-xs rounded-xl border border-[#bfdbfe] transition-colors"
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#2563eb] bg-[#eff6ff] border border-[#dbeafe] hover:bg-[#dbeafe]/50 rounded-xl shadow-xs transition-colors cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Add Problem Statement</span>
@@ -1188,68 +1267,66 @@ export default function OrganizerCreateHackathonPage() {
             {problemStatements.map((ps, pIdx) => (
               <div
                 key={pIdx}
-                className="p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl space-y-3 relative"
+                className="p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-3 relative"
               >
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Lightbulb className="w-4 h-4 text-[#eab308]" />
-                    <span className="text-xs font-bold text-[#0f172a]">Problem #{pIdx + 1}</span>
-                  </div>
-                  {problemStatements.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={() => removeProblemStatement(pIdx)}
-                      className="p-1 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  )}
+                  <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-2.5 py-0.5 rounded-full border border-[#dbeafe]">
+                    Challenge #{pIdx + 1}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeProblemStatement(pIdx)}
+                    disabled={problemStatements.length <= 1}
+                    className="p-1 text-[#dc2626] hover:bg-[#fee2e2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                    title="Remove Problem Statement"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div>
-                    <label className="text-[10px] font-bold text-[#64748b] uppercase block mb-1">Track</label>
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-[#64748b] uppercase">CODE / ID</span>
                     <input
                       type="text"
-                      required
+                      value={ps.code}
+                      onChange={(e) => updateProblemStatement(pIdx, 'code', e.target.value)}
+                      placeholder="e.g. PS-01"
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] font-semibold text-[#0f172a]"
+                    />
+                  </div>
+
+                  <div className="sm:col-span-2 space-y-1">
+                    <span className="text-[10px] font-bold text-[#64748b] uppercase">TRACK / CATEGORY</span>
+                    <input
+                      type="text"
                       value={ps.track}
                       onChange={(e) => updateProblemStatement(pIdx, 'track', e.target.value)}
-                      placeholder="e.g. Artificial Intelligence"
+                      placeholder="e.g. Artificial Intelligence & Agents"
                       className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#64748b] uppercase block mb-1">Code</label>
-                    <input
-                      type="text"
-                      required
-                      value={ps.code}
-                      onChange={(e) => updateProblemStatement(pIdx, 'code', e.target.value.toUpperCase())}
-                      placeholder="e.g. PS-01"
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] font-mono font-bold"
-                    />
-                  </div>
-                  <div>
-                    <label className="text-[10px] font-bold text-[#64748b] uppercase block mb-1">Title</label>
-                    <input
-                      type="text"
-                      required
-                      value={ps.title}
-                      onChange={(e) => updateProblemStatement(pIdx, 'title', e.target.value)}
-                      placeholder="Problem statement title..."
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] font-medium"
                     />
                   </div>
                 </div>
 
-                <div>
-                  <label className="text-[10px] font-bold text-[#64748b] uppercase block mb-1">Description & Expected Deliverable</label>
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-[#64748b] uppercase">CHALLENGE TITLE*</span>
+                  <input
+                    type="text"
+                    value={ps.title}
+                    onChange={(e) => updateProblemStatement(pIdx, 'title', e.target.value)}
+                    placeholder="e.g. Autonomous Multi-Agent Enterprise Automation"
+                    className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] font-medium text-[#0f172a]"
+                  />
+                </div>
+
+                <div className="space-y-1">
+                  <span className="text-[10px] font-bold text-[#64748b] uppercase">CHALLENGE DESCRIPTION</span>
                   <textarea
                     rows={2}
                     value={ps.description}
                     onChange={(e) => updateProblemStatement(pIdx, 'description', e.target.value)}
-                    placeholder="Provide details on constraints, requirements, and evaluation targets..."
-                    className="w-full p-2.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
+                    placeholder="Provide details on scope, expectations, and target deliverables..."
+                    className="w-full p-2.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] text-[#0f172a]"
                   />
                 </div>
               </div>
@@ -1257,40 +1334,29 @@ export default function OrganizerCreateHackathonPage() {
           </div>
         </div>
 
-        {/* ======================================================== */}
-        {/* BOTTOM ACTION BUTTONS */}
-        {/* ======================================================== */}
-        <div className="flex flex-col sm:flex-row items-center justify-end gap-3 pt-4 border-t border-[#e2e8f0]">
+        {/* Bottom Actions */}
+        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#e2e8f0]">
           <Link
             href="/organizer/hackathons"
-            className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-[#64748b] hover:text-[#0f172a] bg-white border border-[#e2e8f0] rounded-xl text-center transition-colors"
+            className="px-5 py-2.5 text-xs font-semibold text-[#334155] bg-white border border-[#e2e8f0] hover:bg-[#f8fafc] rounded-xl transition-all"
           >
             Cancel
           </Link>
+
           <button
-            type="button"
+            type="submit"
             disabled={saving}
-            onClick={() => handleSave('DRAFT')}
-            className="w-full sm:w-auto px-5 py-2.5 text-xs font-bold text-[#334155] bg-white border border-[#cbd5e1] hover:bg-[#f8fafc] rounded-xl transition-all shadow-xs disabled:opacity-50 inline-flex items-center justify-center gap-2"
-          >
-            {saving && <RefreshCw className="w-3.5 h-3.5 animate-spin" />}
-            <span>Save Draft</span>
-          </button>
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleSave('REGISTRATION_OPEN')}
-            className="w-full sm:w-auto px-6 py-2.5 text-xs font-extrabold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-xl transition-all shadow-sm hover:shadow-md disabled:opacity-50 inline-flex items-center justify-center gap-2"
+            className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-xl shadow-xs transition-all disabled:opacity-60 cursor-pointer"
           >
             {saving ? (
               <>
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Launching Arena...</span>
+                <span>Creating Hackathon...</span>
               </>
             ) : (
               <>
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Publish & Launch Arena</span>
+                <span>Create Hackathon</span>
               </>
             )}
           </button>

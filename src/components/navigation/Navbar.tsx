@@ -14,15 +14,15 @@ export function Navbar() {
           {/* Brand Logo */}
           <div className="flex items-center space-x-3">
             <Link href="/" className="flex items-center space-x-2.5">
-              <div className="w-9 h-9 rounded-xl bg-blue-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                <Trophy className="w-5 h-5" />
+              <div className="w-9 h-9 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain" />
               </div>
               <span className="font-extrabold text-xl tracking-tight text-slate-900">
-                Apex<span className="text-blue-600">Hack</span>
+                ATLYX
               </span>
             </Link>
             <span className="hidden sm:inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200/60">
-              Ultra Pro Max
+              Competition Arena
             </span>
           </div>
 
