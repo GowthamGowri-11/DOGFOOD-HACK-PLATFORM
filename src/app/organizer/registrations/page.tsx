@@ -316,92 +316,154 @@ export default function OrganizerRegistrationsPage() {
             </div>
           </div>
         ) : (
-          /* Registrations Data Table */
-          <div className="overflow-x-auto -mx-8 -my-8 p-8">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="bg-[#F8FAFC] text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200 text-[11px]">
-                  <th className="py-3.5 px-6">Participant</th>
-                  <th className="py-3.5 px-6">Email Address</th>
-                  <th className="py-3.5 px-6">Status</th>
-                  <th className="py-3.5 px-6">Check-in Status</th>
-                  <th className="py-3.5 px-6">Registered Date</th>
-                  <th className="py-3.5 px-6 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-4 px-6 font-bold text-slate-900">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FFEDD5] text-[#EA580C] font-bold text-xs flex items-center justify-center flex-shrink-0">
-                          {r.user.fullName.charAt(0).toUpperCase()}
-                        </div>
-                        <span className="text-xs sm:text-sm">{r.user.fullName}</span>
-                      </div>
-                    </td>
-                    <td className="py-4 px-6 text-slate-600 text-xs">{r.user.email}</td>
-                    <td className="py-4 px-6">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                          r.status.toUpperCase() === 'APPROVED'
-                            ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
-                            : r.status.toUpperCase() === 'PENDING'
-                            ? 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]'
-                            : r.status.toUpperCase() === 'REJECTED'
-                            ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
-                            : 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            r.status.toUpperCase() === 'APPROVED'
-                              ? 'bg-[#10B981]'
-                              : r.status.toUpperCase() === 'PENDING'
-                              ? 'bg-[#F59E0B]'
-                              : r.status.toUpperCase() === 'REJECTED'
-                              ? 'bg-[#EF4444]'
-                              : 'bg-[#2563EB]'
-                          }`}
-                        />
-                        <span>{r.status}</span>
-                      </span>
-                    </td>
-                    <td className="py-4 px-6">
-                      {r.checkedIn ? (
-                        <span className="inline-flex items-center text-[#059669] font-bold text-xs">
-                          <CheckCircle2 className="w-4 h-4 mr-1 text-[#059669]" /> Checked In
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 text-xs font-medium">Pending Check-in</span>
-                      )}
-                    </td>
-                    <td className="py-4 px-6 text-slate-500 text-xs font-medium">
-                      {new Date(r.registeredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
-                    </td>
-                    <td className="py-4 px-6 text-right space-x-2">
-                      {r.status.toUpperCase() !== 'APPROVED' && (
-                        <button
-                          onClick={() => handleUpdateStatus(r.id, 'APPROVED')}
-                          className="px-3 py-1.5 bg-[#ECFDF5] hover:bg-[#059669] text-[#059669] hover:text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
-                        >
-                          Approve
-                        </button>
-                      )}
-                      {r.status.toUpperCase() !== 'REJECTED' && (
-                        <button
-                          onClick={() => handleUpdateStatus(r.id, 'REJECTED')}
-                          className="px-3 py-1.5 bg-[#FEF2F2] hover:bg-[#DC2626] text-[#DC2626] hover:text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
-                        >
-                          Reject
-                        </button>
-                      )}
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto -mx-8 -my-8 p-8">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-[#F8FAFC] text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200 text-[11px]">
+                    <th className="py-3.5 px-6">Participant</th>
+                    <th className="py-3.5 px-6">Email Address</th>
+                    <th className="py-3.5 px-6">Status</th>
+                    <th className="py-3.5 px-6">Check-in Status</th>
+                    <th className="py-3.5 px-6">Registered Date</th>
+                    <th className="py-3.5 px-6 text-right">Actions</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {filtered.map((r) => (
+                    <tr key={r.id} className="hover:bg-slate-50/70 transition-colors">
+                      <td className="py-4 px-6 font-bold text-slate-900">
+                        <div className="flex items-center space-x-3">
+                          <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FFEDD5] text-[#EA580C] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                            {r.user.fullName.charAt(0).toUpperCase()}
+                          </div>
+                          <span className="text-xs sm:text-sm">{r.user.fullName}</span>
+                        </div>
+                      </td>
+                      <td className="py-4 px-6 text-slate-600 text-xs">{r.user.email}</td>
+                      <td className="py-4 px-6">
+                        <span
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
+                            r.status.toUpperCase() === 'APPROVED'
+                              ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+                              : r.status.toUpperCase() === 'PENDING'
+                              ? 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]'
+                              : r.status.toUpperCase() === 'REJECTED'
+                              ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
+                              : 'bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]'
+                          }`}
+                        >
+                          <span
+                            className={`w-1.5 h-1.5 rounded-full ${
+                              r.status.toUpperCase() === 'APPROVED'
+                                ? 'bg-[#10B981]'
+                                : r.status.toUpperCase() === 'PENDING'
+                                ? 'bg-[#F59E0B]'
+                                : r.status.toUpperCase() === 'REJECTED'
+                                ? 'bg-[#EF4444]'
+                                : 'bg-[#2563EB]'
+                            }`}
+                          />
+                          <span>{r.status}</span>
+                        </span>
+                      </td>
+                      <td className="py-4 px-6">
+                        {r.checkedIn ? (
+                          <span className="inline-flex items-center text-[#059669] font-bold text-xs">
+                            <CheckCircle2 className="w-4 h-4 mr-1 text-[#059669]" /> Checked In
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 text-xs font-medium">Pending Check-in</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 text-slate-500 text-xs font-medium">
+                        {new Date(r.registeredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
+                      </td>
+                      <td className="py-4 px-6 text-right space-x-2">
+                        {r.status.toUpperCase() !== 'APPROVED' && (
+                          <button
+                            onClick={() => handleUpdateStatus(r.id, 'APPROVED')}
+                            className="px-3 py-1.5 bg-[#ECFDF5] hover:bg-[#059669] text-[#059669] hover:text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
+                          >
+                            Approve
+                          </button>
+                        )}
+                        {r.status.toUpperCase() !== 'REJECTED' && (
+                          <button
+                            onClick={() => handleUpdateStatus(r.id, 'REJECTED')}
+                            className="px-3 py-1.5 bg-[#FEF2F2] hover:bg-[#DC2626] text-[#DC2626] hover:text-white rounded-lg text-xs font-bold transition-colors shadow-xs"
+                          >
+                            Reject
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile Card List View (< 768px) */}
+            <div className="block md:hidden divide-y divide-slate-100 -mx-4 -my-4">
+              {filtered.map((r) => (
+                <div key={r.id} className="p-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2.5">
+                      <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FFEDD5] text-[#EA580C] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                        {r.user.fullName.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900 text-xs sm:text-sm">{r.user.fullName}</div>
+                        <div className="text-[11px] text-slate-500">{r.user.email}</div>
+                      </div>
+                    </div>
+                    <span
+                      className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
+                        r.status.toUpperCase() === 'APPROVED'
+                          ? 'bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]'
+                          : r.status.toUpperCase() === 'PENDING'
+                          ? 'bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A]'
+                          : 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA]'
+                      }`}
+                    >
+                      {r.status}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 pt-1">
+                    <span>Date: {new Date(r.registeredAt).toLocaleDateString()}</span>
+                    {r.checkedIn ? (
+                      <span className="text-[#059669] font-bold flex items-center">
+                        <CheckCircle2 className="w-3.5 h-3.5 mr-1" /> Checked In
+                      </span>
+                    ) : (
+                      <span className="text-slate-400">Not Checked In</span>
+                    )}
+                  </div>
+
+                  <div className="flex items-center gap-2 pt-1">
+                    {r.status.toUpperCase() !== 'APPROVED' && (
+                      <button
+                        onClick={() => handleUpdateStatus(r.id, 'APPROVED')}
+                        className="flex-1 py-2 bg-[#ECFDF5] hover:bg-[#059669] text-[#059669] hover:text-white rounded-xl text-xs font-bold transition-colors text-center"
+                      >
+                        Approve
+                      </button>
+                    )}
+                    {r.status.toUpperCase() !== 'REJECTED' && (
+                      <button
+                        onClick={() => handleUpdateStatus(r.id, 'REJECTED')}
+                        className="flex-1 py-2 bg-[#FEF2F2] hover:bg-[#DC2626] text-[#DC2626] hover:text-white rounded-xl text-xs font-bold transition-colors text-center"
+                      >
+                        Reject
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </div>
     </div>

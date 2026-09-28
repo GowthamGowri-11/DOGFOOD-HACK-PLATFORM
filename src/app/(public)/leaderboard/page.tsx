@@ -452,7 +452,8 @@ export default function PublicLeaderboardPage() {
                 </div>
               </div>
 
-              <div className="overflow-x-auto">
+              {/* Desktop Table View */}
+              <div className="hidden md:block overflow-x-auto">
                 <table className="w-full text-left border-collapse text-xs">
                   <thead>
                     <tr className="bg-[#F8FAFC] text-[#64748B] font-bold uppercase tracking-wider border-b border-[#E2E8F0]">
@@ -524,6 +525,65 @@ export default function PublicLeaderboardPage() {
                     ))}
                   </tbody>
                 </table>
+              </div>
+
+              {/* Mobile Card List View (< 768px) */}
+              <div className="block md:hidden divide-y divide-[#F1F5F9]">
+                {filteredStandings.map((s) => (
+                  <div key={s.projectId} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <span className={`w-7 h-7 rounded-full inline-flex items-center justify-center text-xs font-black ${
+                          s.rank === 1 ? 'bg-amber-100 text-amber-800 border border-amber-300' :
+                          s.rank === 2 ? 'bg-slate-200 text-slate-800 border border-slate-300' :
+                          s.rank === 3 ? 'bg-orange-100 text-orange-800 border border-orange-300' :
+                          'bg-slate-100 text-slate-700 border border-slate-200'
+                        }`}>
+                          #{s.rank}
+                        </span>
+                        <Badge variant="blue" size="sm">
+                          {s.track}
+                        </Badge>
+                      </div>
+
+                      <div className="text-right">
+                        <span className="font-mono font-black text-base text-[#111827]">
+                          {s.finalScore.toFixed(1)}
+                        </span>
+                        <span className="text-[10px] text-[#64748B] ml-1">pts</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <h4
+                        onClick={() => openScorecard(s)}
+                        className="font-bold text-sm text-[#111827] hover:text-[#2563EB] cursor-pointer"
+                      >
+                        {s.projectTitle}
+                      </h4>
+                      <p className="text-xs text-[#64748B] mt-0.5">
+                        Team: <strong className="text-[#334155]">{s.teamName}</strong>
+                      </p>
+                    </div>
+
+                    {s.awardCategory && (
+                      <div className="inline-flex items-center text-[11px] font-bold px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#065F46] border border-[#A7F3D0]">
+                        <Award className="w-3 h-3 mr-1 text-[#059669]" />
+                        {s.awardCategory}
+                      </div>
+                    )}
+
+                    <div className="pt-1">
+                      <button
+                        onClick={() => openScorecard(s)}
+                        className="w-full py-2 bg-[#EFF6FF] hover:bg-[#DBEAFE] text-[#2563EB] rounded-xl font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>View Scorecard</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </>
