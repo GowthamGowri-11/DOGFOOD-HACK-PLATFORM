@@ -2,6 +2,7 @@ import { NextRequest } from 'next/server';
 import { getCurrentUser } from '@/server/auth/session';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
+import { getCache, setCache, CACHE_KEYS } from '@/lib/cache';
 
 export async function GET(
   req: NextRequest,
@@ -47,6 +48,17 @@ export async function GET(
         'LEADERBOARD_NOT_PUBLISHED',
         403
       );
+    }
+
+    // Check Redis cache for published leaderboard
+    const cacheKey = CACHE_KEYS.LEADERBOARD(hackathonId);
+    if (hackathon.status === 'RESULTS_PUBLISHED') {
+      const cached = await getCache<any>(cacheKey);
+      if (cached) {
+        const response = successResponse(cached);
+        response.headers.set('X-Cache', 'HIT');
+        return response;
+      }
     }
 
     const results = await prisma.result.findMany({
@@ -124,7 +136,7 @@ export async function GET(
       orderBy: { rank: 'asc' },
     });
 
-    return successResponse({
+    const payload = {
       hackathon: {
         id: hackathon.id,
         title: hackathon.title,
@@ -209,7 +221,15 @@ export async function GET(
           },
         };
       }),
-    });
+    };
+
+    if (hackathon.status === 'RESULTS_PUBLISHED') {
+      await setCache(cacheKey, payload, 300); // 5-minute cache
+    }
+
+    const response = successResponse(payload);
+    response.headers.set('X-Cache', 'MISS');
+    return response;
   } catch (error: any) {
     const status = error.status || 500;
     const code = error.code || 'INTERNAL_ERROR';

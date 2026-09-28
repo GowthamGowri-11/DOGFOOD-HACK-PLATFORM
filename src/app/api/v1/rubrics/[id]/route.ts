@@ -13,7 +13,7 @@ const updateRubricSchema = z.object({
   criteria: z
     .array(
       z.object({
-        id: z.string().uuid().optional(),
+        id: z.string().min(1).optional(),
         title: z.string().min(2).max(100),
         description: z.string().min(2).max(500),
         weightPercentage: z.number().min(1).max(100),

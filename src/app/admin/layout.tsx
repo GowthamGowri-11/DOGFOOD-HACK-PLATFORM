@@ -5,9 +5,5 @@ export default function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AppShell userRole="ADMIN">
-      {children}
-    </AppShell>
-  );
+  return <AppShell userRole="ADMIN">{children}</AppShell>;
 }

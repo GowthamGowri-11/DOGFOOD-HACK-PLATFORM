@@ -90,12 +90,16 @@ export default function AdminHackathonsPage() {
         pageSize: '50',
       });
       if (search.trim()) params.append('search', search.trim());
-      if (statusFilter) params.append('status', statusFilter);
+      // Only send real EventStatus values to the API (ACTIVE/EXPIRED are UI-only)
+      if (statusFilter === 'DRAFT') params.append('status', 'DRAFT');
 
       const res = await fetch(`/api/v1/admin/hackathons?${params.toString()}`);
       const json = await res.json();
       if (json.success && json.data) {
         setHackathons(json.data.hackathons || []);
+      } else {
+        setHackathons([]);
+        showToast(json.error?.message || 'Failed to load hackathons');
       }
     } catch (err) {
       console.error('Failed to fetch hackathons:', err);

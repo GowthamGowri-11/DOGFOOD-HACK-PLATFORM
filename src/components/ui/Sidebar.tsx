@@ -48,6 +48,8 @@ export interface SidebarProps {
   onToggleCollapse?: () => void;
   isMobileOpen?: boolean;
   onCloseMobile?: () => void;
+  userName?: string;
+  userEmail?: string;
 }
 
 const PARTICIPANT_ITEMS: NavItem[] = [
@@ -111,6 +113,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   isMobileOpen = false,
   onCloseMobile,
+  userName = 'User',
+  userEmail = '',
 }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -132,12 +136,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = getNavItems();
 
-  const handleRoleSelect = (role: UserRole) => {
+  const handleRoleSelect = async (role: UserRole) => {
     setRoleDropdownOpen(false);
     if (onRoleChange) {
-      onRoleChange(role);
+      await Promise.resolve(onRoleChange(role));
     }
-    // Navigate to role workspace
+    // Navigate to role workspace, then refresh RSC data for the new identity
     switch (role) {
       case 'ORGANIZER':
         router.push('/organizer/dashboard');
@@ -152,6 +156,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         router.push('/participant/dashboard');
         break;
     }
+    router.refresh();
   };
 
   const roleMeta: Record<UserRole, { label: string; icon: string; ctaLabel: string; ctaHref: string }> = {
@@ -326,11 +331,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
             <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E2E8F0]">
               <div className="flex items-center space-x-2.5 truncate">
                 <div className="w-[32px] h-[32px] rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
-                  A
+                  {(userName || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="truncate">
-                  <div className="font-semibold text-xs text-[#111827] truncate">Alice Hacker</div>
-                  <div className="text-[10px] text-[#64748B] truncate">alice.hacker@dev.io</div>
+                  <div className="font-semibold text-xs text-[#111827] truncate">{userName || 'User'}</div>
+                  <div className="text-[10px] text-[#64748B] truncate">{userEmail || currentRole}</div>
                 </div>
               </div>
               <Link
@@ -343,7 +348,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </div>
           ) : (
             <div className="w-8 h-8 mx-auto rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-xs flex items-center justify-center">
-              A
+              {(userName || 'U').charAt(0).toUpperCase()}
             </div>
           )}
         </div>

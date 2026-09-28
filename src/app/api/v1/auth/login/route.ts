@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
     // Rate limiting per IP + email
-    const rateCheck = RateLimiter.check(`login:${ip}:${normalizedEmail}`, 5, 15 * 60 * 1000);
+    const rateCheck = await RateLimiter.check(`login:${ip}:${normalizedEmail}`, 5, 15 * 60 * 1000);
     if (!rateCheck.allowed) {
       return errorResponse('Too many failed login attempts. Please try again in 15 minutes.', 'RATE_LIMITED', 429);
     }
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Reset rate limiter upon successful login
-    RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
+    await RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
 
     await setSessionCookie({
       id: user.id,

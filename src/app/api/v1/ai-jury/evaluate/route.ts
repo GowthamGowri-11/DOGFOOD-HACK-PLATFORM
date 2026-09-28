@@ -5,10 +5,14 @@ import { AIJuryService } from '@/server/services/ai-jury.service';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
+import { getCache, setCache, CACHE_KEYS } from '@/lib/cache';
+
+/** AI Jury result cache TTL: 1 hour. Evaluations are expensive + deterministic per input. */
+const AI_EVAL_TTL = 3600;
 
 const aiEvalSchema = z.object({
-  projectId: z.string().uuid(),
-  rubricId: z.string().uuid(),
+  projectId: z.string().min(1),
+  rubricId: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {
@@ -22,6 +26,25 @@ export async function POST(req: NextRequest) {
     }
 
     const { projectId, rubricId } = parsed.data;
+
+    // Build a deterministic cache key from both IDs
+    const evalCacheKey = CACHE_KEYS.AI_EVAL(`${projectId}:${rubricId}`);
+
+    // Return cached result immediately — AI evaluations are deterministic and expensive
+    const cached = await getCache<{
+      runId: string;
+      overallScore: number;
+      confidenceScore: number;
+      evidenceCount: number;
+      summaryFeedback: string;
+      fromCache: boolean;
+    }>(evalCacheKey);
+    if (cached !== null) {
+      return successResponse(
+        { ...cached, fromCache: true },
+        'AI Jury evaluation returned from cache'
+      );
+    }
 
     const project = await prisma.project.findUnique({
       where: { id: projectId },
@@ -137,14 +160,20 @@ export async function POST(req: NextRequest) {
       afterState: { overallScore: evalResult.overallScore, confidence: evalResult.confidenceScore },
     });
 
+    const responsePayload = {
+      runId: juryRun.id,
+      overallScore: evalResult.overallScore,
+      confidenceScore: evalResult.confidenceScore,
+      evidenceCount: evalResult.evidence.length,
+      summaryFeedback: evalResult.summaryFeedback,
+      fromCache: false,
+    };
+
+    // Cache the evaluation result for 1 hour — deterministic per project+rubric combo
+    await setCache(evalCacheKey, responsePayload, AI_EVAL_TTL);
+
     return successResponse(
-      {
-        runId: juryRun.id,
-        overallScore: evalResult.overallScore,
-        confidenceScore: evalResult.confidenceScore,
-        evidenceCount: evalResult.evidence.length,
-        summaryFeedback: evalResult.summaryFeedback,
-      },
+      responsePayload,
       'AI Jury evaluation completed successfully with verified evidence records'
     );
   } catch (error: any) {

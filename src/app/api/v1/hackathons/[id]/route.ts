@@ -10,6 +10,7 @@ import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { deleteCache, deleteCachePattern, CACHE_KEYS } from '@/lib/cache';
 
 const updateHackathonSchema = z.object({
   title: z.string().min(3).optional(),
@@ -229,6 +230,12 @@ export async function PATCH(
       // Ignore during test/static builds
     }
 
+    // Invalidate Redis caches: detail + all public list variants
+    await Promise.all([
+      deleteCache(CACHE_KEYS.HACKATHON(hackathonId)),
+      deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`),
+    ]);
+
     return successResponse({ hackathon: updated }, 'Hackathon updated successfully');
   } catch (error: any) {
     const status = error.status || 500;
@@ -284,6 +291,12 @@ export async function DELETE(
     } catch {
       // Ignore during test/static builds
     }
+
+    // Invalidate Redis caches
+    await Promise.all([
+      deleteCache(CACHE_KEYS.HACKATHON(hackathonId)),
+      deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`),
+    ]);
 
     return successResponse(null, 'Hackathon deleted successfully');
   } catch (error: any) {

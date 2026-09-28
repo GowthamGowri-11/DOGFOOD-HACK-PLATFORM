@@ -24,7 +24,7 @@ export interface TopNavbarProps {
 export const TopNavbar: React.FC<TopNavbarProps> = ({
   onToggleSidebar,
   userRole = 'PARTICIPANT',
-  userName = 'Alice Hacker',
+  userName = 'User',
 }) => {
   const pathname = usePathname();
   const router = useRouter();
@@ -375,14 +375,20 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
               </div>
 
               <div className="border-t border-[#F1F5F9] pt-1">
-                <Link
-                  href="/login"
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2]"
-                >
-                  <LogOut className="w-4 h-4 mr-2.5" />
-                  <span>Sign Out</span>
-                </Link>
+                {process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true' ? (
+                  <div className="px-4 py-2 text-[11px] text-[#64748B]">
+                    Auth disabled — open access mode
+                  </div>
+                ) : (
+                  <Link
+                    href="/login"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center px-4 py-2 text-[#DC2626] hover:bg-[#FEF2F2]"
+                  >
+                    <LogOut className="w-4 h-4 mr-2.5" />
+                    <span>Sign Out</span>
+                  </Link>
+                )}
               </div>
             </div>
           )}

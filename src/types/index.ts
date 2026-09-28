@@ -55,6 +55,7 @@ export interface UserSession {
   role: RoleType;
   status: UserStatus;
   avatarUrl?: string | null;
+  sessionId?: string;
 }
 
 export interface SafeUser {

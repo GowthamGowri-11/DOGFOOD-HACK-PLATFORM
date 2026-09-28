@@ -25,10 +25,21 @@ export async function POST(
 
     const { method, forceRegenerate } = parsed.data;
 
-    const resultData = await ResultService.generateResults(hackathonId, session.id, {
-      method,
-      forceRegenerate,
-    });
+    const { DistributedLock } = await import('@/lib/redis-lock');
+    const { deleteCache, CACHE_KEYS } = await import('@/lib/cache');
+
+    const resultData = await DistributedLock.withLock(
+      `lock:results:generate:${hackathonId}`,
+      async () => {
+        const res = await ResultService.generateResults(hackathonId, session.id, {
+          method,
+          forceRegenerate,
+        });
+        await deleteCache(CACHE_KEYS.LEADERBOARD(hackathonId));
+        return res;
+      },
+      45 // 45 seconds lock TTL
+    );
 
     return successResponse(
       resultData,

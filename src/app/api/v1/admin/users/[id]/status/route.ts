@@ -45,6 +45,12 @@ export async function PATCH(
 
     const updated = await UserRepository.updateStatus(targetUserId, parsed.data.isActive);
 
+    // If account was suspended, revoke all active sessions across all devices immediately
+    if (!parsed.data.isActive) {
+      const { SessionStore } = await import('@/server/auth/session-store');
+      await SessionStore.revokeAllUserSessions(targetUserId);
+    }
+
     await AuditService.log({
       userId: adminSession.id,
       action: parsed.data.isActive ? 'USER_ENABLED' : 'USER_SUSPENDED',

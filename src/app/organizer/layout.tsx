@@ -5,9 +5,5 @@ export default function OrganizerLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AppShell userRole="ORGANIZER">
-      {children}
-    </AppShell>
-  );
+  return <AppShell userRole="ORGANIZER">{children}</AppShell>;
 }

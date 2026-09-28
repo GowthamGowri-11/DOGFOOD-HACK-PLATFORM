@@ -16,7 +16,7 @@ const submitEvaluationSchema = z.object({
   privateNotes: z.string().optional(),
   scores: z.array(
     z.object({
-      criterionId: z.string().uuid(),
+      criterionId: z.string().min(1),
       rawScore: z.number().min(0),
       feedback: z.string().optional(),
     })

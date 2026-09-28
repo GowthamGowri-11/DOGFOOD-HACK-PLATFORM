@@ -275,19 +275,19 @@ export default function OrganizerAIJuryPage() {
         />
         <KPICard
           label="Consensus Agreement"
-          value={`${data?.metrics.agreementRate ?? 88.5}%`}
+          value={`${data?.metrics.agreementRate ?? 0}%`}
           subtext="Within ±10 pts of human panel"
           icon={<TrendingUp className="w-4 h-4" />}
         />
         <KPICard
           label="Mean Absolute Error"
-          value={`${data?.metrics.mae ?? 6.4} pts`}
+          value={`${data?.metrics.mae ?? 0} pts`}
           subtext="MAE human-AI score delta"
           icon={<Scale className="w-4 h-4" />}
         />
         <KPICard
           label="Pearson Correlation"
-          value={data?.metrics.correlation ? data.metrics.correlation.toFixed(2) : '0.88'}
+          value={data?.metrics.correlation != null ? data.metrics.correlation.toFixed(2) : '—'}
           subtext="Hold-out calibration index"
           icon={<BarChart3 className="w-4 h-4" />}
         />
@@ -496,7 +496,7 @@ export default function OrganizerAIJuryPage() {
               </p>
             </div>
             <div className="text-xs font-semibold text-[#059669] bg-[#ECFDF5] px-2.5 py-1 rounded-[8px] border border-[#A7F3D0]">
-              MAE: {data?.metrics.mae ?? 6.4} pts
+              MAE: {data?.metrics.mae ?? 0} pts
             </div>
           </div>
 

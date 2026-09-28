@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import {
   FileCheck,
   Lock,
@@ -25,7 +24,7 @@ export const dynamic = 'force-dynamic';
 export default async function ParticipantSubmissionsPage() {
   const session = await getSession();
   if (!session) {
-    redirect('/login?from=/participant/submissions');
+    return <div className="p-8 text-sm text-slate-500">Unable to load session.</div>;
   }
 
   const submissions = await SubmissionRepository.listByUser(session.id);

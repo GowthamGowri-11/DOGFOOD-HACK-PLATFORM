@@ -41,13 +41,13 @@ export default function HomePage() {
     try {
       const res = await fetch('/api/v1/hackathons?page=1&pageSize=10');
       const data = await res.json();
-      if (data.success && data.data?.hackathons?.length > 0) {
+      if (data.success && data.data?.hackathons) {
         const formatted: HackathonCardProps[] = data.data.hackathons.map((h: any) => ({
           id: h.id,
           slug: h.slug,
           title: h.title,
           tagline: h.tagline,
-          organizationName: h.organizationName || 'Apex Hackathon Network',
+          organizationName: h.organizationName || 'Hackathon Platform',
           logoUrl: h.logoUrl,
           bannerUrl: h.bannerUrl,
           status: h.status,
@@ -56,75 +56,21 @@ export default function HomePage() {
           eventMode: 'Online',
           tracks: h.tracks?.map((t: any) => ({ id: t.id, title: t.title, colorHex: t.colorHex })) || [],
           prizes: h.prizes?.map((p: any) => ({ amount: Number(p.amount), currency: p.currency, title: p.title })) || [],
-          deadlineDate: h.subEndTime ? new Date(h.subEndTime) : (h.regEndTime ? new Date(h.regEndTime) : new Date(Date.now() + 86400000 * 5)),
-          registeredCount: h._count?.registrations || 48,
-          featured: h.isFeatured || false,
+          deadlineDate: h.subEndTime
+            ? new Date(h.subEndTime)
+            : h.regEndTime
+              ? new Date(h.regEndTime)
+              : undefined,
+          registeredCount: h._count?.registrations ?? 0,
+          featured: Boolean(h.isFeatured),
         }));
         setHackathons(formatted);
       } else {
-        // Safe verified fallback events if database is newly initialized
-        setHackathons([
-          {
-            id: 'hack_apex_2026',
-            slug: 'apex-ai-global-hackathon-2026',
-            title: 'Apex AI Global Hackathon 2026',
-            tagline: 'Building Enterprise Intelligent Agents at Planetary Scale',
-            organizationName: 'Apex Frontier Systems',
-            status: 'REGISTRATION_OPEN',
-            minTeamSize: 1,
-            maxTeamSize: 4,
-            eventMode: 'Online',
-            tracks: [
-              { id: 'trk_1', title: 'Autonomous AI Agents', colorHex: '#2563EB' },
-              { id: 'trk_2', title: 'Resilient FinTech Infra', colorHex: '#7C3AED' },
-            ],
-            prizes: [{ amount: 35000, currency: 'USD', title: 'Grand Champion' }],
-            deadlineDate: new Date(Date.now() + 86400000 * 4),
-            registeredCount: 142,
-            featured: true,
-          },
-          {
-            id: 'hack_web3_cup',
-            slug: 'global-fintech-zero-knowledge-cup',
-            title: 'Global FinTech Zero-Knowledge Cup',
-            tagline: 'Decentralized Settlement & Zero-Knowledge Verification Challenge',
-            organizationName: 'Decentralized Rails Foundation',
-            status: 'SUBMISSION_OPEN',
-            minTeamSize: 2,
-            maxTeamSize: 5,
-            eventMode: 'Online',
-            tracks: [
-              { id: 'trk_3', title: 'Zero Knowledge Rollups', colorHex: '#059669' },
-              { id: 'trk_4', title: 'Cross-Chain DeFi', colorHex: '#D97706' },
-            ],
-            prizes: [{ amount: 20000, currency: 'USD', title: 'First Place' }],
-            deadlineDate: new Date(Date.now() + 86400000 * 12),
-            registeredCount: 88,
-            featured: false,
-          },
-          {
-            id: 'hack_clinical_ai',
-            slug: 'autonomous-clinical-diagnostic-challenge',
-            title: 'Autonomous Clinical Diagnostic Challenge',
-            tagline: 'Multi-Modal Diagnostic Agents with Deterministic Citations',
-            organizationName: 'BioVeritas Health',
-            status: 'REGISTRATION_OPEN',
-            minTeamSize: 1,
-            maxTeamSize: 3,
-            eventMode: 'Online',
-            tracks: [
-              { id: 'trk_5', title: 'Biomedical RAG', colorHex: '#0284C7' },
-              { id: 'trk_6', title: 'Clinical Reasoning', colorHex: '#E11D48' },
-            ],
-            prizes: [{ amount: 15000, currency: 'USD', title: 'Grand Prize' }],
-            deadlineDate: new Date(Date.now() + 86400000 * 18),
-            registeredCount: 64,
-            featured: false,
-          },
-        ]);
+        setHackathons([]);
       }
     } catch (err) {
       console.error('Failed to load hackathons on home page:', err);
+      setHackathons([]);
     } finally {
       setLoading(false);
     }
@@ -163,10 +109,31 @@ export default function HomePage() {
     return true;
   });
 
+  const featuredItems = filteredHackathons.slice(0, 3).map((h) => {
+    const topPrize = h.prizes?.[0];
+    const prizeLabel = topPrize
+      ? `${topPrize.currency === 'INR' ? '₹' : '$'}${Number(topPrize.amount).toLocaleString()}`
+      : undefined;
+    const deadline = h.deadlineDate
+      ? `Ends ${new Date(h.deadlineDate).toLocaleDateString()}`
+      : undefined;
+    return {
+      id: h.id,
+      title: h.title,
+      slug: h.slug,
+      category: h.tracks?.[0]?.title || h.organizationName || 'Hackathon',
+      prize: prizeLabel,
+      organization: h.organizationName || '',
+      logoUrl: h.logoUrl ?? undefined,
+      deadline,
+    };
+  });
+
   return (
     <AppShell
       userRole="PARTICIPANT"
       showFeaturedRail={true}
+      featuredItems={featuredItems}
       pageTitle="Discover & Compete"
       pageSubtitle="The enterprise platform for student, developer and AI competitions with calibrated judging."
     >
