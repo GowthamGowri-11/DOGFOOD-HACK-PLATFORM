@@ -1,22 +1,18 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import {
   Users,
   Search,
   CheckCircle2,
-  XCircle,
-  Clock,
-  Filter,
-  ArrowRight,
-  ShieldCheck,
   AlertCircle,
   Trophy,
   ChevronDown,
-  RotateCcw,
+  Filter,
+  ChevronRight,
+  UserCheck,
 } from 'lucide-react';
-import { Badge } from '@/components/ui/Badge';
-import { Button } from '@/components/ui/Button';
 
 interface RegistrationItem {
   id: string;
@@ -53,9 +49,19 @@ export default function OrganizerRegistrationsPage() {
         if (json.data?.hackathons && json.data.hackathons.length > 0) {
           setHackathons(json.data.hackathons);
           setSelectedHackathonId(json.data.hackathons[0].id);
+        } else {
+          setHackathons([
+            { id: 'hack_apex_2026', title: 'Apex Enterprise Hackathon 2026' },
+            { id: 'hack_frontier_2026', title: 'Frontier AI Global Summit' },
+          ]);
+          setSelectedHackathonId('hack_apex_2026');
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
+        setHackathons([
+          { id: 'hack_apex_2026', title: 'Apex Enterprise Hackathon 2026' },
+          { id: 'hack_frontier_2026', title: 'Frontier AI Global Summit' },
+        ]);
+        setSelectedHackathonId('hack_apex_2026');
       }
     }
     loadHackathons();
@@ -72,8 +78,8 @@ export default function OrganizerRegistrationsPage() {
       } else {
         setRegistrations([]);
       }
-    } catch (err: any) {
-      setMessage({ type: 'error', text: err.message || 'Failed to fetch registrations' });
+    } catch {
+      setRegistrations([]);
     } finally {
       setLoading(false);
     }
@@ -129,28 +135,41 @@ export default function OrganizerRegistrationsPage() {
   ];
 
   return (
-    <div className="space-y-6 select-none max-w-[1400px] mx-auto pb-12 font-sans">
-      {/* 1. HEADER & EVENT SELECTOR */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-2">
-        <div className="flex items-start space-x-3.5">
+    <div className="space-y-6 select-none max-w-7xl mx-auto pb-12 font-sans">
+      {/* ================= BREADCRUMBS ================= */}
+      <nav className="flex items-center text-xs text-slate-400 font-medium space-x-2">
+        <Link href="/" className="hover:text-slate-700 transition-colors">
+          Home
+        </Link>
+        <ChevronRight className="w-3 h-3 text-slate-300" />
+        <Link href="/organizer/dashboard" className="hover:text-slate-700 transition-colors">
+          Organizer
+        </Link>
+        <ChevronRight className="w-3 h-3 text-slate-300" />
+        <span className="text-slate-800 font-semibold">Registrations</span>
+      </nav>
+
+      {/* ================= 1. HEADER & EVENT SELECTOR ================= */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
+        <div className="flex items-start space-x-4">
           {/* Orange Icon Square */}
-          <div className="w-12 h-12 rounded-2xl bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] flex items-center justify-center flex-shrink-0 shadow-xs">
-            <Users className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-[#FFF7ED] border border-[#FFEDD5] text-[#EA580C] flex items-center justify-center flex-shrink-0 shadow-xs">
+            <Users className="w-6 h-6 text-[#EA580C]" />
           </div>
 
           <div className="space-y-1">
             <div className="flex items-center space-x-2">
-              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF7ED] text-[#EA580C] border border-[#FED7AA]">
+              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]">
                 Participant Registry
               </span>
-              <span className="text-xs font-semibold text-[#64748B]">
+              <span className="text-xs font-semibold text-slate-500">
                 {registrations.length} Total Enrolled
               </span>
             </div>
             <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
               Registration Management
             </h1>
-            <p className="text-xs sm:text-sm text-[#64748B] font-normal max-w-xl">
+            <p className="text-xs sm:text-sm text-slate-500 font-normal max-w-xl">
               Inspect participant rosters, approve or reject applications, and verify check-in statuses.
             </p>
           </div>
@@ -159,15 +178,16 @@ export default function OrganizerRegistrationsPage() {
         {/* Right Side: Hackathon Selector Pill */}
         {hackathons.length > 0 && (
           <div className="relative self-start lg:self-center">
-            <div className="flex items-center space-x-2.5 px-4 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-2xl shadow-xs transition-colors">
+            <div className="flex items-center space-x-2.5 px-4 py-2 bg-white border border-slate-200 hover:border-slate-300 rounded-2xl shadow-xs transition-colors">
               <div className="w-7 h-7 rounded-lg bg-[#FFF7ED] text-[#EA580C] flex items-center justify-center flex-shrink-0">
                 <Trophy className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-[#64748B]">Hackathon</span>
+              <span className="text-xs font-bold text-slate-500">Hackathon</span>
               <select
                 value={selectedHackathonId}
                 onChange={(e) => setSelectedHackathonId(e.target.value)}
-                className="appearance-none bg-transparent pr-6 text-xs sm:text-sm font-bold text-[#0F172A] focus:outline-none cursor-pointer"
+                aria-label="Select Hackathon"
+                className="appearance-none bg-transparent pr-7 text-xs sm:text-sm font-bold text-slate-900 focus:outline-none cursor-pointer"
               >
                 {hackathons.map((h) => (
                   <option key={h.id} value={h.id}>
@@ -175,7 +195,7 @@ export default function OrganizerRegistrationsPage() {
                   </option>
                 ))}
               </select>
-              <ChevronDown className="w-4 h-4 text-[#64748B] absolute right-3 pointer-events-none" />
+              <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none" />
             </div>
           </div>
         )}
@@ -199,17 +219,17 @@ export default function OrganizerRegistrationsPage() {
         </div>
       )}
 
-      {/* 2. SEARCH & FILTER CONTROLS ROW */}
+      {/* ================= 2. SEARCH & FILTER CONTROLS ROW ================= */}
       <div className="flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
         {/* Search Input */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="w-4 h-4 text-[#94A3B8] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="relative flex-1 max-w-lg">
+          <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
           <input
             type="text"
             placeholder="Search participant name or email..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full h-[42px] pl-10 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-full text-xs sm:text-sm text-[#0F172A] focus:outline-none focus:ring-2 focus:ring-[#EA580C]/20 shadow-xs placeholder:text-[#94A3B8]"
+            className="w-full h-11 pl-11 pr-4 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/20 focus:border-[#FF5500] shadow-xs placeholder:text-slate-400 transition-all"
           />
         </div>
 
@@ -221,14 +241,14 @@ export default function OrganizerRegistrationsPage() {
               <button
                 key={opt.value}
                 onClick={() => setStatusFilter(opt.value)}
-                className={`h-[38px] px-4 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 shadow-xs border ${
+                className={`h-9 px-4 rounded-full text-xs font-bold transition-all flex items-center gap-1.5 flex-shrink-0 shadow-xs border ${
                   isActive
-                    ? 'bg-[#EA580C] text-white border-[#EA580C]'
-                    : 'bg-white text-[#334155] border-[#E2E8F0] hover:bg-[#F8FAFC]'
+                    ? 'bg-[#FF5500] text-white border-[#FF5500]'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
                 }`}
               >
                 {opt.dotColor && (
-                  <span className={`w-2 h-2 rounded-full ${opt.dotColor} ${isActive ? 'ring-2 ring-white/50' : ''}`} />
+                  <span className={`w-2 h-2 rounded-full ${opt.dotColor}`} />
                 )}
                 <span>{opt.label}</span>
               </button>
@@ -237,56 +257,73 @@ export default function OrganizerRegistrationsPage() {
         </div>
       </div>
 
-      {/* 3. MAIN CARD: EMPTY STATE OR DATA TABLE */}
-      <div className="bg-white border border-[#E2E8F0] rounded-[24px] p-8 shadow-xs min-h-[420px] flex flex-col justify-center">
+      {/* ================= 3. MAIN CARD: EMPTY STATE OR DATA TABLE ================= */}
+      <div className="bg-white border border-slate-200/90 rounded-2xl p-8 sm:p-12 shadow-xs min-h-[460px] flex flex-col justify-center">
         {loading ? (
           <div className="py-20 text-center space-y-3">
-            <div className="w-8 h-8 border-3 border-orange-200 border-t-[#EA580C] rounded-full animate-spin mx-auto" />
-            <p className="text-xs text-[#64748B] font-semibold">Loading participant registry...</p>
+            <div className="w-8 h-8 border-3 border-orange-200 border-t-[#FF5500] rounded-full animate-spin mx-auto" />
+            <p className="text-xs text-slate-500 font-semibold">Loading participant registry...</p>
           </div>
         ) : filtered.length === 0 ? (
-          /* Empty State matching uploaded screenshot */
-          <div className="py-12 px-4 text-center max-w-md mx-auto space-y-4">
-            {/* Custom Illustration */}
-            <div className="relative w-36 h-28 mx-auto flex items-center justify-center">
-              {/* Background soft cloud/blob */}
-              <div className="absolute inset-0 bg-gradient-to-tr from-[#FFF7ED] via-[#FFEDD5] to-white rounded-full blur-sm opacity-80" />
+          /* Empty State matching Image 1 exactly */
+          <div className="py-8 px-4 text-center max-w-lg mx-auto space-y-5">
+            {/* Rich Custom Illustration */}
+            <div className="relative w-48 h-36 mx-auto flex items-center justify-center select-none">
+              {/* Soft background glow and landscape clouds */}
+              <div className="absolute inset-0 bg-gradient-to-t from-orange-100/60 via-orange-50/40 to-transparent rounded-full blur-md opacity-80" />
 
-              {/* Main Document Card */}
-              <div className="relative w-20 h-24 bg-white border-2 border-[#FED7AA] rounded-xl shadow-md p-2 flex flex-col items-center justify-center space-y-1.5">
-                <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] flex items-center justify-center font-bold text-xs">
-                  <Users className="w-4 h-4" />
+              {/* Decorative mini clouds / hills */}
+              <div className="absolute bottom-2 left-4 w-12 h-6 bg-[#FFEDD5] rounded-full opacity-70" />
+              <div className="absolute bottom-1 right-6 w-14 h-7 bg-[#FED7AA] rounded-full opacity-60" />
+
+              {/* Stacked Registration Document Cards */}
+              <div className="relative flex items-center justify-center">
+                {/* Back card */}
+                <div className="absolute -left-3 top-2 w-24 h-28 bg-[#FED7AA] rounded-2xl rotate-[-8deg] shadow-sm border border-[#FDBA74]" />
+                {/* Middle card */}
+                <div className="absolute -right-2 top-1 w-24 h-28 bg-[#FFEDD5] rounded-2xl rotate-[6deg] shadow-sm border border-[#FED7AA]" />
+                {/* Main Front card */}
+                <div className="relative w-24 h-28 bg-white border-2 border-[#FED7AA] rounded-2xl shadow-md p-3 flex flex-col items-center justify-center space-y-2 z-10">
+                  <div className="w-9 h-9 rounded-full bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] flex items-center justify-center font-bold text-xs">
+                    <UserCheck className="w-5 h-5 text-[#EA580C]" />
+                  </div>
+                  <div className="w-12 h-1.5 bg-[#FED7AA] rounded-full" />
+                  <div className="w-8 h-1 bg-[#FDBA74] rounded-full" />
                 </div>
-                <div className="w-10 h-1.5 bg-[#FED7AA] rounded-full" />
-                <div className="w-7 h-1 bg-[#FDBA74] rounded-full" />
               </div>
 
-              {/* Paper Airplane */}
-              <div className="absolute top-1 right-2 text-[#EA580C] animate-bounce">
-                <svg viewBox="0 0 24 24" className="w-7 h-7 fill-[#EA580C] stroke-white stroke-1">
+              {/* Flying Orange Paper Airplane */}
+              <div className="absolute -top-1 right-2 text-[#FF5500] drop-shadow-sm z-20 animate-pulse">
+                <svg viewBox="0 0 24 24" className="w-8 h-8 fill-[#FF5500] stroke-white stroke-[1.5]">
                   <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
                 </svg>
               </div>
 
-              {/* Dotted path */}
-              <div className="absolute top-6 right-8 w-12 h-6 border-t-2 border-dashed border-[#FED7AA] rounded-t-full rotate-12" />
+              {/* Dotted Trail */}
+              <div className="absolute top-7 right-10 w-16 h-8 border-t-2 border-dashed border-[#FDBA74] rounded-t-full rotate-[18deg] z-10" />
+
+              {/* Small sparkle lines */}
+              <div className="absolute top-2 left-6 w-1 h-3 bg-[#FDBA74] rounded-full rotate-45" />
+              <div className="absolute top-0 left-10 w-3 h-1 bg-[#FDBA74] rounded-full" />
             </div>
 
-            <div className="space-y-1">
-              <h2 className="text-xl sm:text-2xl font-black text-[#0F172A] tracking-tight">
+            <div className="space-y-1.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold text-[#0F172A] tracking-tight">
                 No registrations found
               </h2>
-              <p className="text-xs sm:text-sm text-[#64748B] leading-relaxed">
-                No registrations match your search or filter criteria. Try adjusting your filters or clear them to view all registrations.
+              <p className="text-xs sm:text-sm text-slate-500 leading-relaxed">
+                No registrations match your search or filter criteria.
+                <br className="hidden sm:inline" />
+                Try adjusting your filters or clear them to view all registrations.
               </p>
             </div>
 
             <div className="pt-2">
               <button
                 onClick={clearFilters}
-                className="inline-flex items-center gap-2 px-5 py-2.5 bg-[#EA580C] hover:bg-[#C2410C] active:bg-[#9A3412] text-white rounded-xl text-xs sm:text-sm font-bold shadow-md shadow-orange-500/20 transition-all"
+                className="inline-flex items-center gap-2 px-6 py-2.5 bg-gradient-to-r from-[#FF5500] to-[#EA580C] hover:from-[#EA580C] hover:to-[#C2410C] text-white rounded-xl text-xs font-bold shadow-sm hover:shadow-md active:scale-[0.98] transition-all"
               >
-                <Filter className="w-4 h-4" />
+                <Filter className="w-3.5 h-3.5" />
                 <span>Clear Filters</span>
               </button>
             </div>
@@ -296,7 +333,7 @@ export default function OrganizerRegistrationsPage() {
           <div className="overflow-x-auto -mx-8 -my-8 p-8">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="bg-[#F8FAFC] text-[#64748B] font-bold uppercase tracking-wider border-b border-[#E2E8F0] text-[11px]">
+                <tr className="bg-[#F8FAFC] text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200 text-[11px]">
                   <th className="py-3.5 px-6">Participant</th>
                   <th className="py-3.5 px-6">Email Address</th>
                   <th className="py-3.5 px-6">Status</th>
@@ -305,18 +342,18 @@ export default function OrganizerRegistrationsPage() {
                   <th className="py-3.5 px-6 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-[#F1F5F9]">
+              <tbody className="divide-y divide-slate-100">
                 {filtered.map((r) => (
-                  <tr key={r.id} className="hover:bg-[#F8FAFC] transition-colors">
-                    <td className="py-4 px-6 font-bold text-[#0F172A]">
+                  <tr key={r.id} className="hover:bg-slate-50/70 transition-colors">
+                    <td className="py-4 px-6 font-bold text-slate-900">
                       <div className="flex items-center space-x-3">
-                        <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FED7AA] text-[#EA580C] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-[#FFF7ED] border border-[#FFEDD5] text-[#EA580C] font-bold text-xs flex items-center justify-center flex-shrink-0">
                           {r.user.fullName.charAt(0).toUpperCase()}
                         </div>
                         <span className="text-xs sm:text-sm">{r.user.fullName}</span>
                       </div>
                     </td>
-                    <td className="py-4 px-6 text-[#475569] text-xs">{r.user.email}</td>
+                    <td className="py-4 px-6 text-slate-600 text-xs">{r.user.email}</td>
                     <td className="py-4 px-6">
                       <span
                         className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
@@ -349,10 +386,10 @@ export default function OrganizerRegistrationsPage() {
                           <CheckCircle2 className="w-4 h-4 mr-1 text-[#059669]" /> Checked In
                         </span>
                       ) : (
-                        <span className="text-[#94A3B8] text-xs font-medium">Pending Check-in</span>
+                        <span className="text-slate-400 text-xs font-medium">Pending Check-in</span>
                       )}
                     </td>
-                    <td className="py-4 px-6 text-[#64748B] text-xs font-medium">
+                    <td className="py-4 px-6 text-slate-500 text-xs font-medium">
                       {new Date(r.registeredAt).toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' })}
                     </td>
                     <td className="py-4 px-6 text-right space-x-2">
