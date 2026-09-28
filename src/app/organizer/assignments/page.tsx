@@ -7,12 +7,10 @@ import {
   ShieldCheck,
   Zap,
   Trophy,
-  ChevronRight,
   Settings,
   CheckCircle2,
   AlertCircle,
   X,
-  FileText,
 } from 'lucide-react';
 
 interface AssignmentItem {
@@ -250,7 +248,7 @@ export default function OrganizerAssignmentsPage() {
       if (!res.ok) throw new Error(json.message || 'Auto-assignment failed');
       setMessage({ type: 'success', text: json.message || 'Assignments generated and balanced across judges.' });
       fetchAssignments(selectedHackathonId);
-    } catch (err: any) {
+    } catch {
       // Local demo fallback to keep workflow responsive
       setMessage({
         type: 'success',
@@ -264,21 +262,8 @@ export default function OrganizerAssignmentsPage() {
 
   return (
     <div className="space-y-6 select-none font-sans max-w-7xl mx-auto pb-12">
-      {/* ================= BREADCRUMBS ================= */}
-      <nav className="flex items-center text-xs text-slate-400 font-medium space-x-2">
-        <Link href="/" className="hover:text-slate-700 transition-colors">
-          Home
-        </Link>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <Link href="/organizer/dashboard" className="hover:text-slate-700 transition-colors">
-          Organizer
-        </Link>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <span className="text-slate-800 font-semibold">Assignments</span>
-      </nav>
-
       {/* ================= HEADER TOOLBAR ================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
+      <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-6 pb-2">
         <div className="space-y-2">
           {/* Top Badges */}
           <div className="flex flex-wrap items-center gap-2.5">
@@ -303,10 +288,10 @@ export default function OrganizerAssignmentsPage() {
           </div>
         </div>
 
-        {/* Right Controls */}
+        {/* Right Controls - Single aligned toolbar matching Image 1 */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Hackathon Selector */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2 shadow-xs">
             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
               <Trophy className="w-4 h-4 text-amber-500 flex-shrink-0" />
               <select
@@ -325,7 +310,7 @@ export default function OrganizerAssignmentsPage() {
           </div>
 
           {/* Judges Per Project Stepper */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs text-xs font-medium text-slate-600">
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2 shadow-xs text-xs font-medium text-slate-600">
             <span className="whitespace-nowrap font-semibold">Judges / Project:</span>
             <input
               type="number"
@@ -466,4 +451,3 @@ export default function OrganizerAssignmentsPage() {
     </div>
   );
 }
-

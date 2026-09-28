@@ -117,7 +117,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const pathname = usePathname();
 
-  // Select items list based on current role
   const getNavItems = () => {
     switch (currentRole) {
       case 'ORGANIZER':
@@ -133,37 +132,37 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = getNavItems();
 
-
-
   return (
     <>
       {/* Mobile Backdrop */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 bg-[#0F172A]/40 backdrop-blur-sm z-40 lg:hidden"
+          className="fixed inset-0 bg-[#0F172A]/70 backdrop-blur-xs z-40 lg:hidden"
           onClick={onCloseMobile}
         />
       )}
 
-      {/* Permanent Desktop Sidebar (width: ~270px, background: #F4F8FC, border: #E2E8F0) */}
+      {/* Deep Dark Luxury Sidebar */}
       <aside
-        className={`fixed top-0 bottom-0 left-0 z-40 bg-[#F4F8FC] border-r border-[#E2E8F0] transition-all duration-200 flex flex-col justify-between select-none ${
-          collapsed ? 'w-[72px]' : 'w-[270px]'
+        className={`fixed top-0 bottom-0 left-0 z-40 bg-[#0E141D] border-r border-[#1E293B] transition-all duration-200 flex flex-col justify-between select-none ${
+          collapsed ? 'w-[72px]' : 'w-[260px]'
         } ${isMobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}
       >
-        {/* TOP: Brand Wordmark & Collapse Icon */}
-        <div className="h-[72px] px-5 border-b border-[#E2E8F0] flex items-center justify-between">
+        {/* TOP: Brand Wordmark & Logo */}
+        <div className="h-[72px] px-4 border-b border-[#1E293B] flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2.5 overflow-hidden">
-            <div className="w-[36px] h-[36px] rounded-xl flex items-center justify-center flex-shrink-0 overflow-hidden">
-              <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain" />
+            <div className="w-[32px] h-[32px] rounded-lg bg-gradient-to-br from-[#FF5500] to-[#EA580C] flex items-center justify-center flex-shrink-0 shadow-sm">
+              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+                <path d="M12 2L2 22h4.5l2.2-4.5h6.6L17.5 22H22L12 2zm0 6.5l2.2 4.5H9.8L12 8.5z" />
+              </svg>
             </div>
             {!collapsed && (
               <div className="truncate">
-                <span className="font-extrabold text-[18px] tracking-tight text-[#111827]">
+                <span className="font-extrabold text-[17px] tracking-tight text-white block leading-tight">
                   ATLYX
                 </span>
-                <span className="block text-[10px] font-semibold text-[#64748B] uppercase tracking-wider -mt-0.5">
-                  Competition Arena
+                <span className="block text-[8.5px] font-bold text-slate-400 uppercase tracking-widest -mt-0.5">
+                  COMPETITION ARENA
                 </span>
               </div>
             )}
@@ -172,18 +171,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {onToggleCollapse && (
             <button
               onClick={onToggleCollapse}
-              className="hidden lg:flex p-1.5 rounded-lg text-[#64748B] hover:text-[#111827] hover:bg-white/80 border border-transparent hover:border-[#E2E8F0] transition-colors"
+              className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors"
               title={collapsed ? 'Expand Sidebar' : 'Collapse Sidebar'}
             >
-              {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
+              {collapsed ? <ChevronRight className="w-3.5 h-3.5" /> : <ChevronLeft className="w-3.5 h-3.5" />}
             </button>
           )}
         </div>
 
-        {/* MIDDLE SECTION: Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-4 py-3">
-          {/* Navigation Links List */}
-          <nav className="space-y-[3px]">
+        {/* MIDDLE: Navigation Links */}
+        <div className="flex-1 overflow-y-auto px-3.5 py-3.5 custom-scrollbar">
+          <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -195,16 +193,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={item.label}
                   href={item.href}
                   onClick={onCloseMobile}
-                  className={`flex items-center group h-[42px] px-3 rounded-[9px] text-[14px] transition-colors ${
+                  className={`flex items-center group h-[40px] px-3.5 rounded-xl text-xs font-semibold transition-all ${
                     isActive
-                      ? 'bg-[#E5EDF5] text-[#334155] font-medium'
-                      : 'text-[#334155] hover:text-[#111827] hover:bg-white/70 font-normal'
+                      ? 'bg-gradient-to-r from-[#FF5500] to-[#EA580C] text-white shadow-md shadow-orange-600/20 font-bold'
+                      : 'text-[#94A3B8] hover:text-white hover:bg-slate-800/40'
                   }`}
                   title={collapsed ? item.label : undefined}
                 >
                   <Icon
                     className={`w-[18px] h-[18px] flex-shrink-0 transition-colors ${
-                      isActive ? 'text-[#2563EB]' : 'text-[#64748B] group-hover:text-[#2563EB]'
+                      isActive ? 'text-white' : 'text-slate-400 group-hover:text-white'
                     } ${collapsed ? 'mx-auto' : 'mr-3'}`}
                   />
 
@@ -213,7 +211,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   )}
 
                   {!collapsed && item.badge && (
-                    <span className="ml-auto px-1.5 py-0.5 text-[10px] font-semibold rounded-md bg-[#DBEAFE] text-[#1E40AF]">
+                    <span className="ml-auto px-1.5 py-0.5 text-[9px] font-bold rounded-md bg-[#FF5500]/20 text-[#FF5500] border border-[#FF5500]/30">
                       {item.badge}
                     </span>
                   )}
@@ -223,28 +221,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
-        {/* BOTTOM: Profile Summary */}
-        <div className="p-3.5 border-t border-[#E2E8F0] bg-white/40">
+        {/* BOTTOM: Profile Summary Card */}
+        <div className="p-3 border-t border-[#1E293B] bg-[#0E141D]">
           {!collapsed ? (
-            <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E2E8F0]">
+            <div className="flex items-center justify-between p-2 rounded-xl bg-[#151D28] border border-[#1E293B]">
               <div className="flex items-center space-x-2.5 truncate">
                 {userAvatarUrl ? (
                   <img
                     src={userAvatarUrl}
                     alt={userName || 'User'}
-                    className="w-[32px] h-[32px] rounded-full object-cover ring-2 ring-blue-100 flex-shrink-0"
+                    className="w-[30px] h-[30px] rounded-full object-cover ring-1 ring-slate-700 flex-shrink-0"
                   />
                 ) : (
-                  <div className="w-[32px] h-[32px] rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
-                    {userName ? userName.charAt(0).toUpperCase() : 'G'}
+                  <div className="w-[30px] h-[30px] rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">
+                    {userName ? userName.charAt(0).toUpperCase() : 'A'}
                   </div>
                 )}
                 <div className="truncate">
-                  <div className="font-semibold text-xs text-[#111827] truncate">
-                    {userName || 'Guest User'}
+                  <div className="font-bold text-xs text-white truncate">
+                    {userName || 'Apex Event Lead'}
                   </div>
-                  <div className="text-[10px] text-[#64748B] truncate">
-                    {userEmail || (userName ? 'Active Session' : 'Sign in to compete')}
+                  <div className="text-[10px] text-[#94A3B8] truncate">
+                    {userEmail || 'organizer@hackathon.dev'}
                   </div>
                 </div>
               </div>
@@ -260,15 +258,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
                       : '/participant/settings'
                     : '/login'
                 }
-                className="p-1 text-[#94A3B8] hover:text-[#2563EB] transition-colors"
+                className="p-1 text-slate-400 hover:text-white transition-colors"
                 title="Settings / Workspace"
               >
-                <Settings className="w-4 h-4" />
+                <Settings className="w-3.5 h-3.5" />
               </Link>
             </div>
           ) : (
-            <div className="w-8 h-8 mx-auto rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-xs flex items-center justify-center">
-              {userName ? userName.charAt(0).toUpperCase() : 'G'}
+            <div className="w-8 h-8 mx-auto rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center border border-slate-700">
+              {userName ? userName.charAt(0).toUpperCase() : 'A'}
             </div>
           )}
         </div>

@@ -180,13 +180,13 @@ export const AppShell: React.FC<AppShellProps> = ({
         userAvatarUrl={currentUser?.avatarUrl}
       />
 
-      {/* Main Application Area (offset by 270px sidebar width on desktop) */}
+      {/* Main Application Area (offset by 260px sidebar width on desktop) */}
       <div
         className={`flex-1 flex flex-col transition-all duration-200 ${
-          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[270px]'
+          sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[260px]'
         }`}
       >
-        {/* Top Global Navbar (height: 70px, centered search, breadcrumb) */}
+        {/* Top Global Navbar (height: 72px, centered search, breadcrumb) */}
         <TopNavbar
           onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           userRole={currentRole}
@@ -197,7 +197,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* APPLICATION AREA: Center the primary content inside this application area */}
-        <main className="flex-1 w-full bg-[#FFFFFF] pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8">
           <div className="max-w-[1400px] mx-auto">
             {/* Optional Unified Header Bar */}
             {(pageTitle || headerAction) && (

@@ -136,19 +136,6 @@ export default function OrganizerRegistrationsPage() {
 
   return (
     <div className="space-y-6 select-none max-w-7xl mx-auto pb-12 font-sans">
-      {/* ================= BREADCRUMBS ================= */}
-      <nav className="flex items-center text-xs text-slate-400 font-medium space-x-2">
-        <Link href="/" className="hover:text-slate-700 transition-colors">
-          Home
-        </Link>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <Link href="/organizer/dashboard" className="hover:text-slate-700 transition-colors">
-          Organizer
-        </Link>
-        <ChevronRight className="w-3 h-3 text-slate-300" />
-        <span className="text-slate-800 font-semibold">Registrations</span>
-      </nav>
-
       {/* ================= 1. HEADER & EVENT SELECTOR ================= */}
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
         <div className="flex items-start space-x-4">
