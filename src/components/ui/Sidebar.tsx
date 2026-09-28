@@ -151,10 +151,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* TOP: Brand Wordmark & Logo */}
         <div className="h-[72px] px-4 border-b border-[#1E293B] flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-2.5 overflow-hidden">
-            <div className="w-[32px] h-[32px] rounded-lg bg-gradient-to-br from-[#FF5500] to-[#EA580C] flex items-center justify-center flex-shrink-0 shadow-sm">
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
-                <path d="M12 2L2 22h4.5l2.2-4.5h6.6L17.5 22H22L12 2zm0 6.5l2.2 4.5H9.8L12 8.5z" />
-              </svg>
+            <div className="w-[34px] h-[34px] flex items-center justify-center flex-shrink-0">
+              <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain drop-shadow-md" />
             </div>
             {!collapsed && (
               <div className="truncate">
@@ -195,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   onClick={onCloseMobile}
                   className={`flex items-center group h-[40px] px-3.5 rounded-xl text-xs font-semibold transition-all ${
                     isActive
-                      ? 'bg-gradient-to-r from-[#FF5500] to-[#EA580C] text-white shadow-md shadow-orange-600/20 font-bold'
+                      ? 'bg-gradient-to-r from-[#FF5500] to-[#EA580C] hover:from-[#EA580C] hover:to-[#C2410C] text-white shadow-md shadow-orange-600/25 font-bold'
                       : 'text-[#94A3B8] hover:text-white hover:bg-slate-800/40'
                   }`}
                   title={collapsed ? item.label : undefined}

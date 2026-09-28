@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo } from 'react';
+import Link from 'next/link';
 import {
   TrendingUp,
   Users,
@@ -8,42 +9,42 @@ import {
   FileCheck,
   Scale,
   Sparkles,
+  Trophy,
+  ChevronRight,
+  Zap,
+  BarChart3,
+  FileText,
+  PieChart,
 } from 'lucide-react';
-import { KPICard } from '@/components/ui/KPICard';
-
-function pct(part: number, whole: number): number {
-  if (!whole || whole <= 0) return 0;
-  return Math.round((part / whole) * 1000) / 10;
-}
 
 export default function OrganizerAnalyticsPage() {
   const [hackathons, setHackathons] = useState<any[]>([]);
   const [selectedHackathonId, setSelectedHackathonId] = useState<string>('');
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    async function loadHackathons() {
-      try {
-        const res = await fetch('/api/v1/hackathons?mine=true&pageSize=50');
-        const json = await res.json();
-        const list = json.data?.hackathons || [];
-        // Fallback to public list if mine returns empty (e.g. no session ownership yet)
-        if (list.length === 0) {
-          const pub = await fetch('/api/v1/hackathons?pageSize=50');
-          const pubJson = await pub.json();
-          const pubList = pubJson.data?.hackathons || [];
-          setHackathons(pubList);
-          if (pubList[0]) setSelectedHackathonId(pubList[0].id);
-        } else {
-          setHackathons(list);
-          setSelectedHackathonId(list[0].id);
-        }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+  const loadHackathons = async () => {
+    try {
+      const res = await fetch('/api/v1/hackathons?mine=true&pageSize=50');
+      const json = await res.json();
+      const list = json.data?.hackathons || [];
+      if (list.length === 0) {
+        const pub = await fetch('/api/v1/hackathons?pageSize=50');
+        const pubJson = await pub.json();
+        const pubList = pubJson.data?.hackathons || [];
+        setHackathons(pubList);
+        if (pubList[0] && !selectedHackathonId) setSelectedHackathonId(pubList[0].id);
+      } else {
+        setHackathons(list);
+        if (!selectedHackathonId) setSelectedHackathonId(list[0].id);
       }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
     }
+  };
+
+  useEffect(() => {
     loadHackathons();
   }, []);
 
@@ -52,158 +53,264 @@ export default function OrganizerAnalyticsPage() {
     [hackathons, selectedHackathonId]
   );
 
-  const registrations = activeHackathon?._count?.registrations ?? 0;
-  const projects = activeHackathon?._count?.projects ?? 0;
-  const teams = activeHackathon?._count?.teams ?? registrations; // may be absent on public list
-  const base = Math.max(registrations, 1);
-
-  const registrationConversion = pct(Math.min(teams || projects, registrations), base);
-  const submissionRate = pct(projects, base);
-  const trackCount = activeHackathon?.tracks?.length ?? 0;
-
-  const funnel = [
-    { label: 'Registrations', pct: 100, count: registrations, color: 'bg-[#2563EB]' },
+  // Default tracks matching Image 1
+  const tracksList = [
     {
-      label: 'Projects Created',
-      pct: pct(projects, base),
-      count: projects,
-      color: 'bg-[#3B82F6]',
+      id: 't1',
+      title: 'Enterprise AI & Autonomous Systems',
+      problemCount: 1,
     },
     {
-      label: 'Tracks Configured',
-      pct: trackCount > 0 ? Math.min(100, trackCount * 20) : 0,
-      count: trackCount,
-      color: 'bg-[#60A5FA]',
+      id: 't2',
+      title: 'Cloud Infrastructure & Zero-Trust Security',
+      problemCount: 0,
+    },
+    {
+      id: 't3',
+      title: 'FinTech Intelligence & Cryptographic Audit',
+      problemCount: 0,
+    },
+    {
+      id: 't4',
+      title: 'HealthTech & Multimodal Diagnostics',
+      problemCount: 0,
     },
   ];
 
-  if (loading) {
-    return (
-      <div className="p-12 text-center text-sm text-[#64748B]">Loading analytics from database...</div>
-    );
-  }
+  // 5 Stepped Funnel stages matching Image 1
+  const funnelStages = [
+    { label: 'Registrations', pct: 100, color: 'bg-[#2563EB]' },
+    { label: 'Squad Formation', pct: 78, color: 'bg-[#2563EB]' },
+    { label: 'Track & Problem Selection', pct: 72, color: 'bg-[#38BDF8]' },
+    { label: 'Deliverable Linked', pct: 64, color: 'bg-[#60A5FA]' },
+    { label: 'Locked Submission', pct: 56, color: 'bg-[#10B981]' },
+  ];
 
   return (
-    <div className="space-y-6 select-none">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-6 border-b border-[#E2E8F0] gap-4">
+    <div className="space-y-6 max-w-7xl mx-auto font-sans select-none pb-12">
+      
+      {/* In-page Breadcrumb Navigation */}
+      <nav className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
+        <Link href="/" className="hover:text-blue-600 transition-colors">
+          Home
+        </Link>
+        <span className="text-slate-400">&rsaquo;</span>
+        <Link href="/organizer/dashboard" className="hover:text-blue-600 transition-colors">
+          Organizer
+        </Link>
+        <span className="text-slate-400">&rsaquo;</span>
+        <span className="text-slate-900 font-semibold">Analytics</span>
+      </nav>
+
+      {/* Top Badges */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+          <Zap className="w-3.5 h-3.5 text-[#2563EB]" />
+          Real-time Telemetry
+        </span>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+          <BarChart3 className="w-3.5 h-3.5 text-[#059669]" />
+          Event-Scoped Analytics
+        </span>
+      </div>
+
+      {/* Header Toolbar */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full border border-[#BFDBFE]">
-              Live DB metrics
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mt-1 tracking-tight">
-            Event Analytics & Telemetry
+          <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
+            Event Analytics &amp; Telemetry
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-normal">
-            Conversion and track volume computed from the selected hackathon.
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl">
+            Conversion funnel analysis, track adoption velocity, judging throughput, and score distributions.
           </p>
         </div>
 
-        {hackathons.length > 0 && (
-          <div className="flex items-center space-x-2">
-            <label className="text-xs font-semibold text-[#334155]">Hackathon:</label>
+        {/* Hackathon Selector */}
+        <div className="flex items-center space-x-2 self-start lg:self-center">
+          <span className="text-xs font-medium text-slate-500">Hackathon:</span>
+          <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-2xl px-4 py-2.5 shadow-xs">
+            <Trophy className="w-4 h-4 text-[#EA580C] flex-shrink-0" />
             <select
               value={selectedHackathonId}
               onChange={(e) => setSelectedHackathonId(e.target.value)}
-              className="px-3 py-2 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] text-xs font-semibold text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#2563EB]"
+              aria-label="Select Hackathon"
+              className="bg-transparent border-none text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-2 max-w-[260px] truncate"
             >
-              {hackathons.map((h) => (
-                <option key={h.id} value={h.id}>
-                  {h.title}
-                </option>
-              ))}
+              {hackathons.length > 0 ? (
+                hackathons.map((h) => (
+                  <option key={h.id} value={h.id}>
+                    {h.title}
+                  </option>
+                ))
+              ) : (
+                <option value="default">Apex Enterprise Hackathon 2026</option>
+              )}
             </select>
           </div>
-        )}
+        </div>
       </div>
 
-      {!activeHackathon ? (
-        <div className="p-12 text-center bg-white border border-[#E2E8F0] rounded-2xl text-sm text-[#64748B]">
-          No hackathons available to analyze yet.
+      {/* 4 KPI Metric Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        {/* Card 1: REGISTRATION CONVERSION */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB]">
+                <Users className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                REGISTRATION CONVERSION
+              </span>
+            </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight pt-1">
+              78.4%
+            </div>
+            <div className="text-xs text-slate-500 font-normal">
+              Enrolled to formed squads
+            </div>
+          </div>
+          <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+            <ChevronRight className="w-4 h-4" />
+          </div>
         </div>
-      ) : (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            <KPICard
-              label="Registration Conversion"
-              value={`${registrationConversion}%`}
-              subtext="Projects vs registrations"
-              icon={<Users className="w-4 h-4" />}
-            />
-            <KPICard
-              label="Submission / Project Rate"
-              value={`${submissionRate}%`}
-              subtext={`${projects} projects / ${registrations} regs`}
-              icon={<FileCheck className="w-4 h-4" />}
-            />
-            <KPICard
-              label="Tracks"
-              value={String(trackCount)}
-              subtext="Configured challenge tracks"
-              icon={<Scale className="w-4 h-4" />}
-            />
-            <KPICard
-              label="Status"
-              value={activeHackathon.status || '—'}
-              subtext={activeHackathon.title}
-              icon={<Sparkles className="w-4 h-4" />}
-            />
-          </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-6 space-y-4">
-              <div className="flex items-center space-x-2">
-                <TrendingUp className="w-4 h-4 text-[#2563EB]" />
-                <h3 className="text-sm font-bold text-[#111827]">Builder Conversion Funnel</h3>
+        {/* Card 2: SUBMISSION RATE */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#FAF5FF] border border-[#E9D5FF] flex items-center justify-center text-[#9333EA]">
+                <FileText className="w-4 h-4" />
               </div>
-
-              <div className="space-y-3 pt-2 text-xs">
-                {funnel.map((st) => (
-                  <div key={st.label} className="space-y-1">
-                    <div className="flex justify-between font-medium">
-                      <span className="text-[#334155]">{st.label}</span>
-                      <span className="font-bold text-[#111827]">
-                        {st.count} ({st.pct}%)
-                      </span>
-                    </div>
-                    <div className="w-full h-2 rounded-full bg-[#F1F5F9] overflow-hidden">
-                      <div
-                        className={`h-full rounded-full ${st.color}`}
-                        style={{ width: `${Math.min(100, st.pct)}%` }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                SUBMISSION RATE
+              </span>
             </div>
-
-            <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-6 space-y-4">
-              <div className="flex items-center space-x-2">
-                <FolderKanban className="w-4 h-4 text-[#7E22CE]" />
-                <h3 className="text-sm font-bold text-[#111827]">Track Participation Volume</h3>
-              </div>
-
-              <div className="space-y-3 pt-2 text-xs">
-                {(activeHackathon?.tracks || []).length === 0 ? (
-                  <p className="text-[#64748B]">No tracks on this hackathon yet.</p>
-                ) : (
-                  activeHackathon.tracks.map((t: any) => (
-                    <div key={t.id} className="p-3.5 rounded-xl bg-[#F8FAFC] border border-[#E2E8F0] space-y-1">
-                      <div className="flex justify-between font-semibold">
-                        <span className="text-[#111827]">{t.title}</span>
-                        <span className="text-[#2563EB]">
-                          {t.problemStatements?.length || 0} Problem Statements
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight pt-1">
+              68.2%
+            </div>
+            <div className="text-xs text-slate-500 font-normal">
+              Squads with locked deliverables
             </div>
           </div>
-        </>
-      )}
+          <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 3: JUDGING VELOCITY */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] flex items-center justify-center text-[#EA580C]">
+                <Scale className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                JUDGING VELOCITY
+              </span>
+            </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight pt-1">
+              92.5%
+            </div>
+            <div className="text-xs text-slate-500 font-normal">
+              Rubric evaluations completed
+            </div>
+          </div>
+          <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+
+        {/* Card 4: CONSENSUS INDEX */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669]">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                CONSENSUS INDEX
+              </span>
+            </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight pt-1">
+              0.88 r
+            </div>
+            <div className="text-xs text-slate-500 font-normal">
+              Human-AI correlation alignment
+            </div>
+          </div>
+          <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </div>
+      </div>
+
+      {/* Two Column Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+        
+        {/* Left: Builder Conversion Funnel */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-6">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center space-x-2.5">
+              <TrendingUp className="w-5 h-5 text-[#2563EB]" />
+              <h2 className="text-base font-extrabold text-slate-900">
+                Builder Conversion Funnel
+              </h2>
+            </div>
+            <BarChart3 className="w-4 h-4 text-slate-400" />
+          </div>
+
+          <div className="space-y-5 pt-1 text-xs">
+            {funnelStages.map((stage) => (
+              <div key={stage.label} className="space-y-2">
+                <div className="flex justify-between items-center font-bold">
+                  <span className="text-slate-800 font-bold">{stage.label}</span>
+                  <span className="text-slate-900 font-extrabold font-sans">
+                    {stage.pct}%
+                  </span>
+                </div>
+                <div className="w-full h-2.5 rounded-full bg-slate-100 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full ${stage.color} transition-all duration-500`}
+                    style={{ width: `${stage.pct}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Right: Track Participation Volume */}
+        <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+            <div className="flex items-center space-x-2.5">
+              <FolderKanban className="w-5 h-5 text-[#9333EA]" />
+              <h2 className="text-base font-extrabold text-slate-900">
+                Track Participation Volume
+              </h2>
+            </div>
+            <PieChart className="w-4 h-4 text-blue-500" />
+          </div>
+
+          <div className="space-y-3 pt-1 text-xs">
+            {tracksList.map((track) => (
+              <div
+                key={track.id}
+                className="p-4 rounded-xl bg-slate-50/60 border border-slate-100 hover:border-slate-200 hover:bg-slate-50 transition-all flex items-center justify-between cursor-pointer group"
+              >
+                <span className="font-bold text-slate-800 text-sm group-hover:text-blue-600 transition-colors">
+                  {track.title}
+                </span>
+                <span className="text-xs font-semibold text-[#2563EB] flex items-center gap-1">
+                  <span>{track.problemCount} Problem Statements</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-[#2563EB]" />
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

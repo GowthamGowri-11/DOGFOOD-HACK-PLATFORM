@@ -8,18 +8,13 @@ import {
   Scale,
   CheckCircle2,
   AlertCircle,
-  ShieldCheck,
+  AlertTriangle,
+  PlusCircle,
   Trash2,
   RefreshCw,
   Trophy,
   ChevronRight,
-  Settings,
-  Sparkles,
-  Info,
   X,
-  Layers,
-  HelpCircle,
-  Wand2,
 } from 'lucide-react';
 
 interface CriterionItem {
@@ -41,83 +36,44 @@ interface RubricData {
 
 const DEFAULT_DEMO_RUBRIC: RubricData = {
   id: 'rubric_demo_001',
-  name: 'Enterprise Hackathon Standard Rubric',
-  version: 1,
+  name: 'Enterprise Evaluation Rubric 2026 (v2)',
+  version: 2,
   isCurrent: true,
   criteria: [
     {
       id: 'crit_001',
-      title: 'Architectural Resilience & Code Quality',
-      description: 'Clean modular codebase, test coverage, distributed safety, and error handling.',
-      weightPercentage: 30,
+      title: 'Technical Architecture & Scalability',
+      description: 'High-throughput concurrency, microservice decoupling, and distributed resilience.',
+      weightPercentage: 35,
       maxScore: 100,
       requiredFeedback: true,
     },
     {
       id: 'crit_002',
-      title: 'Innovation & Technical Ambition',
-      description: 'Novelty of approach, creative use of agentic models, or novel cryptographic techniques.',
-      weightPercentage: 25,
+      title: 'Frontier AI & Autonomous Intelligence',
+      description: 'Reasoning depth, multi-agent coordination, and contextual adaptability.',
+      weightPercentage: 35,
       maxScore: 100,
       requiredFeedback: true,
     },
     {
       id: 'crit_003',
-      title: 'Enterprise Utility & Business Impact',
-      description: 'Practical deployment value, scalability under load, and demonstrable business ROI.',
-      weightPercentage: 25,
+      title: 'Security, Compliance & Business Impact',
+      description: 'Zero-trust integration, auditability, and measurable enterprise value.',
+      weightPercentage: 30,
       maxScore: 100,
       requiredFeedback: true,
     },
     {
       id: 'crit_004',
-      title: 'User Experience & Interface Polish',
-      description: 'Intuitive ergonomics, responsive design, micro-interactions, and clear product flow.',
-      weightPercentage: 20,
+      title: 'Business Viability & Go-To-Market Strategy',
+      description: 'Market fit, business model sustainability, and monetization potential.',
+      weightPercentage: 10,
       maxScore: 100,
       requiredFeedback: true,
     },
   ],
 };
-
-const TEMPLATE_PRESETS = [
-  {
-    name: 'Full-Stack Hackathon Standard (30/25/25/20)',
-    criteria: [
-      { title: 'Architectural Resilience & Code Quality', description: 'Clean code, testing, and performance.', weightPercentage: 30, maxScore: 100 },
-      { title: 'Innovation & Novelty', description: 'Fresh ideas and creative problem solving.', weightPercentage: 25, maxScore: 100 },
-      { title: 'Real-world Utility & Viability', description: 'Practical usefulness and market potential.', weightPercentage: 25, maxScore: 100 },
-      { title: 'UX & Interaction Design', description: 'Visual polish, user flow, and accessibility.', weightPercentage: 20, maxScore: 100 },
-    ],
-  },
-  {
-    name: 'AI & LLM Track Rubric (35/30/20/15)',
-    criteria: [
-      { title: 'Autonomous Agent Logic & Prompt Pipeline', description: 'Model orchestration and hallucination mitigations.', weightPercentage: 35, maxScore: 100 },
-      { title: 'Algorithmic Novelty & Data Integration', description: 'High-throughput RAG or fine-tuned weights.', weightPercentage: 30, maxScore: 100 },
-      { title: 'Safety, Guardrails & COI Protection', description: 'Deterministic bounds and eval safety.', weightPercentage: 20, maxScore: 100 },
-      { title: 'Live Demo & Interface Polish', description: 'Interactive demo experience.', weightPercentage: 15, maxScore: 100 },
-    ],
-  },
-  {
-    name: 'Security & Web3 Zero-Trust (40/30/15/15)',
-    criteria: [
-      { title: 'Cryptographic Security & Verification', description: 'Formal verification, attack resilience, and key safety.', weightPercentage: 40, maxScore: 100 },
-      { title: 'Protocol Architecture & Low-latency Throughput', description: 'Consensus robustness and network telemetry.', weightPercentage: 30, maxScore: 100 },
-      { title: 'Developer Experience & SDK APIs', description: 'Clean public surfaces and developer ergonomics.', weightPercentage: 15, maxScore: 100 },
-      { title: 'Product Pitch & Documentation', description: 'Documentation clarity and architecture diagrams.', weightPercentage: 15, maxScore: 100 },
-    ],
-  },
-];
-
-const WEIGHT_COLORS = [
-  'bg-[#FF5500]',
-  'bg-[#3B82F6]',
-  'bg-[#10B981]',
-  'bg-[#8B5CF6]',
-  'bg-[#F59E0B]',
-  'bg-[#EC4899]',
-];
 
 export default function OrganizerRubricsPage() {
   const [hackathons, setHackathons] = useState<any[]>([]);
@@ -125,7 +81,6 @@ export default function OrganizerRubricsPage() {
   const [rubric, setRubric] = useState<RubricData | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showTemplateMenu, setShowTemplateMenu] = useState(false);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [weight, setWeight] = useState(25);
@@ -230,7 +185,7 @@ export default function OrganizerRubricsPage() {
           ? { ...prev, criteria: [...prev.criteria, newCrit] }
           : { ...DEFAULT_DEMO_RUBRIC, criteria: [newCrit] }
       );
-      setMessage({ type: 'success', text: 'Rubric criterion configured and balanced.' });
+      setMessage({ type: 'success', text: 'Rubric criterion configured and added.' });
       setTitle('');
       setDescription('');
       setShowAddModal(false);
@@ -264,132 +219,87 @@ export default function OrganizerRubricsPage() {
     }
   };
 
-  const handleApplyTemplate = (tpl: typeof TEMPLATE_PRESETS[0]) => {
-    const newCriteria: CriterionItem[] = tpl.criteria.map((c, i) => ({
-      id: `crit_tpl_${Date.now()}_${i}`,
-      title: c.title,
-      description: c.description,
-      weightPercentage: c.weightPercentage,
-      maxScore: c.maxScore,
-      requiredFeedback: true,
-    }));
-    setRubric({
-      id: `rubric_${Date.now()}`,
-      name: tpl.name,
-      version: (rubric?.version || 1) + 1,
-      isCurrent: true,
-      criteria: newCriteria,
-    });
-    setShowTemplateMenu(false);
-    setMessage({ type: 'success', text: `Loaded preset: "${tpl.name}". Calibrated to 100% total weight.` });
-  };
-
   const totalWeight = rubric?.criteria?.reduce((acc, c) => acc + c.weightPercentage, 0) || 0;
   const isBalanced = totalWeight === 100;
 
   return (
     <div className="space-y-6 select-none font-sans max-w-7xl mx-auto pb-12">
-      {/* ================= HEADER TOOLBAR ================= */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 pb-2">
-        <div className="space-y-2">
-          {/* Top Badges */}
-          <div className="flex flex-wrap items-center gap-2.5">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]">
-              <Settings className="w-3.5 h-3.5 text-[#EA580C]" />
-              Evaluation Calibration
-            </span>
-            <span
-              className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
-                isBalanced
-                  ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
-                  : 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]'
-              }`}
-            >
-              <Scale className="w-3.5 h-3.5" />
-              Weight Sum: {totalWeight}% / 100% {isBalanced ? '• Balanced' : '• Requires Calibration'}
-            </span>
-          </div>
+      {/* ================= IN-PAGE BREADCRUMBS ================= */}
+      <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium">
+        <Link href="/" className="hover:text-slate-800 transition-colors">Home</Link>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+        <Link href="/organizer/dashboard" className="hover:text-slate-800 transition-colors">Organizer</Link>
+        <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
+        <span className="text-slate-900 font-semibold">Rubrics</span>
+      </div>
 
-          {/* Title & Subtitle */}
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
-              Scoring Rubric & Weight Calibration
-            </h1>
-            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl">
-              Configure weighted evaluation dimensions ensuring criteria total exactly 100% for deterministic normalization.
-            </p>
-          </div>
+      {/* ================= TOP PILLS ================= */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+          <PlusCircle className="w-3.5 h-3.5 text-[#2563EB]" />
+          Evaluation Calibration
+        </span>
+        <span
+          className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${
+            isBalanced
+              ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
+              : 'bg-[#FFF7ED] text-[#EA580C] border-[#FFEDD5]'
+          }`}
+        >
+          {isBalanced ? (
+            <CheckCircle2 className="w-3.5 h-3.5 text-[#059669]" />
+          ) : (
+            <AlertTriangle className="w-3.5 h-3.5 text-[#EA580C]" />
+          )}
+          Weight Sum: {totalWeight}% / 100% {isBalanced ? '(Balanced)' : '(Needs Calibration)'}
+        </span>
+      </div>
+
+      {/* ================= HEADER TOOLBAR ================= */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        {/* Title & Subtitle */}
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
+            Scoring Rubric & Weight Calibration
+          </h1>
+          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl">
+            Configure weighted evaluation dimensions ensuring criteria total exactly 100% for deterministic normalization.
+          </p>
         </div>
 
         {/* Right Controls */}
-        <div className="flex flex-wrap items-center gap-3 relative">
+        <div className="flex flex-wrap items-center gap-3">
           {/* Hackathon Selector */}
-          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3 py-2 shadow-xs">
-            <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
-              <Trophy className="w-4 h-4 text-amber-500 flex-shrink-0" />
-              <select
-                value={selectedHackathonId}
-                onChange={(e) => setSelectedHackathonId(e.target.value)}
-                aria-label="Select Hackathon"
-                className="bg-transparent border-none text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-2"
-              >
-                {hackathons.map((h) => (
-                  <option key={h.id} value={h.id}>
-                    {h.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          {/* Quick Presets Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setShowTemplateMenu(!showTemplateMenu)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs transition-colors"
+          <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 shadow-xs">
+            <Trophy className="w-4 h-4 text-[#FF5500] flex-shrink-0" />
+            <select
+              value={selectedHackathonId}
+              onChange={(e) => setSelectedHackathonId(e.target.value)}
+              aria-label="Select Hackathon"
+              className="bg-transparent border-none text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-2"
             >
-              <Wand2 className="w-3.5 h-3.5 text-[#EA580C]" />
-              <span>Presets</span>
-            </button>
-
-            {showTemplateMenu && (
-              <div className="absolute right-0 mt-2 w-80 bg-white border border-slate-200 rounded-2xl shadow-xl z-30 p-2 text-xs animate-in fade-in slide-in-from-top-2">
-                <div className="px-3 py-2 border-b border-slate-100 font-bold text-slate-800 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-[#FF5500]" />
-                  Standard Rubric Templates
-                </div>
-                <div className="py-1 space-y-1">
-                  {TEMPLATE_PRESETS.map((tpl) => (
-                    <button
-                      key={tpl.name}
-                      onClick={() => handleApplyTemplate(tpl)}
-                      className="w-full text-left px-3 py-2.5 rounded-xl hover:bg-orange-50/70 hover:text-[#EA580C] text-slate-700 font-medium transition-colors"
-                    >
-                      <div className="font-bold text-xs">{tpl.name}</div>
-                      <div className="text-[11px] text-slate-400 mt-0.5">
-                        {tpl.criteria.length} criteria • Balanced at 100%
-                      </div>
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+              {hackathons.map((h) => (
+                <option key={h.id} value={h.id}>
+                  {h.title}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Refresh Button */}
           <button
             onClick={() => fetchRubric(selectedHackathonId)}
             disabled={loading}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-semibold text-slate-700 shadow-xs transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-xs font-bold text-slate-700 shadow-xs transition-colors disabled:opacity-50"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-[#EA580C] ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-600 ${loading ? 'animate-spin' : ''}`} />
             <span>Refresh</span>
           </button>
 
-          {/* Add Criterion Button (Vibrant Orange Gradient) */}
+          {/* Add Criterion Button */}
           <button
             onClick={() => setShowAddModal(true)}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold text-white bg-gradient-to-r from-[#FF5500] to-[#EA580C] hover:from-[#EA580C] hover:to-[#C2410C] shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
+            className="inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-[#FF5500] hover:bg-[#E04D00] shadow-sm hover:shadow-md transition-all active:scale-[0.98]"
           >
             <Plus className="w-4 h-4" />
             <span>Add Criterion</span>
@@ -423,56 +333,12 @@ export default function OrganizerRubricsPage() {
         </div>
       )}
 
-      {/* ================= WEIGHT DISTRIBUTION BAR ================= */}
-      <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-bold text-slate-800 uppercase tracking-wider">
-              Weight Distribution Visualizer
-            </span>
-            <span className="text-xs text-slate-400">
-              ({rubric?.criteria?.length || 0} active dimensions)
-            </span>
-          </div>
-          <span
-            className={`text-xs font-bold px-2.5 py-0.5 rounded-full ${
-              isBalanced
-                ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                : 'bg-amber-50 text-amber-700 border border-amber-200'
-            }`}
-          >
-            {totalWeight}% Allocated {isBalanced ? '✓' : `(${100 - totalWeight > 0 ? `+${100 - totalWeight}% remaining` : `${totalWeight - 100}% over`})`}
-          </span>
-        </div>
-
-        {/* Segmented Progress Bar */}
-        <div className="h-4 w-full bg-slate-100 rounded-full overflow-hidden flex p-0.5 gap-0.5">
-          {rubric?.criteria?.map((c, i) => {
-            const colorClass = WEIGHT_COLORS[i % WEIGHT_COLORS.length];
-            return (
-              <div
-                key={c.id}
-                style={{ width: `${Math.min(c.weightPercentage, 100)}%` }}
-                className={`${colorClass} h-full rounded-sm transition-all duration-300 relative group cursor-pointer`}
-                title={`${c.title}: ${c.weightPercentage}%`}
-              />
-            );
-          })}
-        </div>
-
-        {/* Legend */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1 text-[11px] text-slate-600">
-          {rubric?.criteria?.map((c, i) => {
-            const colorClass = WEIGHT_COLORS[i % WEIGHT_COLORS.length];
-            return (
-              <div key={c.id} className="flex items-center gap-1.5 font-medium">
-                <span className={`w-2.5 h-2.5 rounded-full ${colorClass} inline-block`} />
-                <span className="truncate max-w-[180px]">{c.title}</span>
-                <span className="font-bold text-slate-900">({c.weightPercentage}%)</span>
-              </div>
-            );
-          })}
-        </div>
+      {/* ================= SUBHEADER BAR ================= */}
+      <div className="flex items-center justify-between text-xs text-slate-500 pt-2 font-medium">
+        <span>
+          Rubric: <strong className="text-slate-900 font-bold">{rubric?.name || 'Enterprise Evaluation Rubric 2026 (v2)'}</strong> (v{rubric?.version || 2})
+        </span>
+        <span>{rubric?.criteria?.length || 4} Evaluation Criteria Active</span>
       </div>
 
       {/* ================= CRITERIA CARDS GRID ================= */}
@@ -489,7 +355,7 @@ export default function OrganizerRubricsPage() {
           <div className="max-w-md mx-auto">
             <h3 className="text-base font-bold text-slate-900">No Scoring Dimensions Configured</h3>
             <p className="text-xs text-slate-500 mt-1">
-              Add custom criteria or select a pre-calibrated template preset to start evaluating projects deterministically.
+              Add custom criteria to evaluate projects deterministically.
             </p>
           </div>
           <button
@@ -501,73 +367,54 @@ export default function OrganizerRubricsPage() {
           </button>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between text-xs text-slate-500 px-1 font-medium">
-            <span>
-              Active Rubric: <strong className="text-slate-900 font-bold">{rubric.name}</strong> (v{rubric.version})
-            </span>
-            <span>{rubric.criteria.length} Dimensions Configured</span>
-          </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          {rubric.criteria.map((c) => (
+            <div
+              key={c.id}
+              className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all flex flex-col justify-between relative border-l-[4px] border-l-[#FF5500] min-h-[140px]"
+            >
+              <div>
+                <div className="flex items-start justify-between gap-3">
+                  <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight">
+                    {c.title}
+                  </h3>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {rubric.criteria.map((c, i) => {
-              const colorClass = WEIGHT_COLORS[i % WEIGHT_COLORS.length];
-              return (
-                <div
-                  key={c.id}
-                  className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl p-5 shadow-xs hover:shadow-md transition-all space-y-4 relative border-l-4 border-l-[#FF5500]"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1 pr-2">
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-orange-50 text-[#EA580C] border border-orange-100">
-                          Dimension #{i + 1}
-                        </span>
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 px-2 py-0.5 rounded-md">
-                          Max: {c.maxScore} pts
-                        </span>
-                      </div>
-                      <h3 className="text-sm sm:text-base font-bold text-slate-900 tracking-tight mt-1">
-                        {c.title}
-                      </h3>
-                      <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                        {c.description}
-                      </p>
-                    </div>
-
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-extrabold bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]">
-                        {c.weightPercentage}% Weight
-                      </span>
-                      <button
-                        onClick={() => handleDeleteCriterion(c.id)}
-                        disabled={deletingId === c.id}
-                        className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                        title="Delete criterion"
-                      >
-                        {deletingId === c.id ? (
-                          <div className="w-4 h-4 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <Trash2 className="w-4 h-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Dimension Gauge & Requirement */}
-                  <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-600">
-                    <div className="flex items-center gap-1.5 text-emerald-700 font-semibold text-[11px]">
-                      <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                      <span>Written Feedback Mandatory</span>
-                    </div>
-                    <div className="text-[11px] text-slate-400 font-medium">
-                      Scale: 0 - {c.maxScore}
-                    </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#F3E8FF] text-[#7E22CE]">
+                      {c.weightPercentage}% Weight
+                    </span>
+                    <button
+                      onClick={() => handleDeleteCriterion(c.id)}
+                      disabled={deletingId === c.id}
+                      className="p-1 rounded-lg text-slate-400 hover:text-red-600 transition-colors"
+                      title="Delete criterion"
+                    >
+                      {deletingId === c.id ? (
+                        <div className="w-3.5 h-3.5 border-2 border-red-500 border-t-transparent rounded-full animate-spin" />
+                      ) : (
+                        <Trash2 className="w-4 h-4" />
+                      )}
+                    </button>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                <p className="text-xs text-slate-500 mt-2 leading-relaxed font-normal">
+                  {c.description}
+                </p>
+              </div>
+
+              {/* Bottom Row */}
+              <div className="mt-5 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
+                <div className="text-slate-500 font-medium">
+                  Max Score: <strong className="text-slate-900 font-bold">{c.maxScore} pts</strong>
+                </div>
+                <div className="flex items-center gap-1.5 text-emerald-600 font-semibold text-xs">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-500" />
+                  <span>Feedback Required</span>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 

@@ -166,7 +166,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   };
 
   return (
-    <div className="min-h-screen bg-[#FFFFFF] flex flex-col font-sans antialiased text-[#111827]">
+    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans antialiased text-[#111827]">
       {/* Permanent Desktop Sidebar (w-260 or w-72 when collapsed) */}
       <Sidebar
         currentRole={currentRole}
@@ -197,17 +197,17 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* APPLICATION AREA: Center the primary content inside this application area */}
-        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827]">
           <div className="max-w-[1400px] mx-auto">
             {/* Optional Unified Header Bar */}
             {(pageTitle || headerAction) && (
-              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-5 mb-6 border-b border-[#E2E8F0] gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-5 mb-6 gap-4 border-b border-[#E2E8F0]">
                 <div>
-                  <h1 className="text-[28px] sm:text-[34px] font-bold text-[#0F172A] tracking-tight leading-[1.2]">
+                  <h1 className="text-[28px] sm:text-[34px] font-bold tracking-tight leading-[1.2] text-[#0F172A]">
                     {pageTitle}
                   </h1>
                   {pageSubtitle && (
-                    <p className="text-[14px] sm:text-[15px] text-[#64748B] mt-1 font-normal leading-[1.5]">
+                    <p className="text-[14px] sm:text-[15px] mt-1 font-normal leading-[1.5] text-[#64748B]">
                       {pageSubtitle}
                     </p>
                   )}
