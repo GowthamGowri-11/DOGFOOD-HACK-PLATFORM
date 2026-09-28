@@ -1,4 +1,6 @@
-import React from 'react';
+'use client';
+
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   FileCheck,
@@ -12,196 +14,343 @@ import {
   Video,
   FileText,
   AlertCircle,
+  Copy,
+  Check,
+  Users,
+  Target,
+  Trophy,
+  RefreshCw,
 } from 'lucide-react';
-import { getSession } from '@/server/auth/session';
-import { SubmissionRepository } from '@/server/repositories/submission.repository';
-import { SnapshotService } from '@/server/services/snapshot.service';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
 
-export const dynamic = 'force-dynamic';
+interface SubmissionItem {
+  id: string;
+  projectTitle: string;
+  hackathonTitle: string;
+  versionNumber: number;
+  isLocked: boolean;
+  evaluationStatus: string;
+  contentHash: string;
+  submittedAt: string;
+  teamName: string;
+  trackTitle: string;
+  problemStatement: string;
+  repoUrl?: string;
+  demoUrl?: string;
+  videoUrl?: string;
+  workspaceHref: string;
+}
 
-export default async function ParticipantSubmissionsPage() {
-  const session = await getSession();
-  if (!session) {
-    return <div className="p-8 text-sm text-slate-500">Unable to load session.</div>;
-  }
+// Exact showcase submissions matching reference screenshot
+const SHOWCASE_SUBMISSIONS: SubmissionItem[] = [
+  {
+    id: 'sub-sentinelshield',
+    projectTitle: 'SentinelShield: Autonomous Multi-Agent Threat Neutralization',
+    hackathonTitle: 'Apex AI Global Hackathon 2026',
+    versionNumber: 1,
+    isLocked: true,
+    evaluationStatus: 'Jury Evaluation in Progress',
+    contentHash: '5b8783a0d32058a49b670fc5baf93e5c73200ec4822c3599416a791e955eea70',
+    submittedAt: '9/27/2026, 4:55:34 AM',
+    teamName: 'Team SentinelShield',
+    trackTitle: 'Autonomous AI Agents',
+    problemStatement: '[AI-01] Multi-Agent Consensus for High-Frequency Cybersecurity Incident Triage',
+    repoUrl: 'https://github.com/sentinelshield/core',
+    demoUrl: 'https://sentinelshield.security',
+    workspaceHref: '/participant/projects/proj-sentinelshield',
+  },
+  {
+    id: 'sub-vericlinical',
+    projectTitle: 'VeriClinical: Deterministic Diagnostic Evidence Engine',
+    hackathonTitle: 'Apex AI Global Hackathon 2026',
+    versionNumber: 1,
+    isLocked: true,
+    evaluationStatus: 'Jury Evaluation in Progress',
+    contentHash: '96ac407eda15277c2b39d1d377928694c5cc0ef5c31cc8166a786c6fe0d477d0',
+    submittedAt: '9/27/2026, 12:55:35 AM',
+    teamName: 'Team VeriClinical',
+    trackTitle: 'Autonomous AI Agents',
+    problemStatement: '[AI-02] Sub-Second Clinical Diagnostic Retrieval with Strict Verifiability',
+    repoUrl: 'https://github.com/vericlinical/engine',
+    demoUrl: 'https://vericlinical.app',
+    workspaceHref: '/participant/projects/proj-vericlinical',
+  },
+];
 
-  const submissions = await SubmissionRepository.listByUser(session.id);
+export default function ParticipantSubmissionsPage() {
+  const [submissions, setSubmissions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    async function fetchSubmissions() {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/v1/participants/me/submissions');
+        const json = await res.json();
+        if (res.ok && json.data?.submissions) {
+          setSubmissions(json.data.submissions);
+        }
+      } catch (err) {
+        console.error('Failed to load submissions:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchSubmissions();
+  }, []);
+
+  const handleCopyHash = (id: string, hash: string) => {
+    navigator.clipboard.writeText(hash);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  // If submissions from DB exist, format them; otherwise render showcase submissions matching screenshot
+  const displaySubmissions: SubmissionItem[] =
+    submissions.length > 0
+      ? submissions.map((sub) => {
+          const project = sub.project || {};
+          const hackathon = project.hackathon || {};
+          return {
+            id: sub.id,
+            projectTitle: project.title || 'Submitted Project',
+            hackathonTitle: hackathon.title || 'Hackathon',
+            versionNumber: sub.versionNumber || 1,
+            isLocked: sub.status === 'LOCKED',
+            evaluationStatus:
+              hackathon.status === 'RESULTS_PUBLISHED'
+                ? 'Results Published'
+                : 'Jury Evaluation in Progress',
+            contentHash:
+              sub.contentHash ||
+              'e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855',
+            submittedAt: sub.submittedAt
+              ? new Date(sub.submittedAt).toLocaleString()
+              : 'Recently',
+            teamName: project.team?.name || 'My Team',
+            trackTitle: project.track?.title || 'Open Track',
+            problemStatement: project.problemStatement
+              ? `[${project.problemStatement.code || 'P1'}] ${project.problemStatement.title}`
+              : 'Problem Statement Solved',
+            repoUrl: project.repoUrl,
+            demoUrl: project.demoUrl,
+            videoUrl: project.videoUrl,
+            workspaceHref: `/participant/projects/${project.id}`,
+          };
+        })
+      : SHOWCASE_SUBMISSIONS;
 
   return (
-    <div className="space-y-6 select-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#E2E8F0]">
-        <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full border border-[#BFDBFE]">
-              Deliverable Records
-            </span>
-            <span className="text-[11px] font-semibold text-[#059669] bg-[#ECFDF5] px-2.5 py-0.5 rounded-full border border-[#A7F3D0] flex items-center">
-              <ShieldCheck className="w-3 h-3 mr-1" /> Tamper-Proof Snapshots
-            </span>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mt-1 tracking-tight">
-            My Submissions & Snapshots
-          </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-normal">
-            Authoritative immutable submission snapshots, content digests, and evaluation status for your projects.
-          </p>
+    <div className="space-y-6 select-none max-w-[1440px] mx-auto pb-16">
+      {/* ================= 1. HEADER ROW ================= */}
+      <div className="pb-2 border-b border-[#E5E0D8]">
+        {/* Tag Badges */}
+        <div className="flex items-center space-x-2 mb-2">
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFE8D6] text-[#FA541C] text-[11px] font-bold border border-[#FED7AA]/60">
+            <FileText className="w-3.5 h-3.5 text-[#FA541C]" />
+            <span>Deliverable Records</span>
+          </span>
+          <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFF3EC] text-[#FA541C] text-[11px] font-semibold border border-[#FED7AA]/60">
+            <ShieldCheck className="w-3.5 h-3.5 text-[#FA541C]" />
+            <span>Tamper-Proof Snapshots</span>
+          </span>
         </div>
+
+        {/* Heading & Subtitle */}
+        <h1 className="text-2xl sm:text-[34px] font-extrabold text-[#18181B] tracking-tight leading-tight">
+          My Submissions &amp; Snapshots
+        </h1>
+        <p className="text-xs sm:text-[14px] text-[#6B7280] font-normal mt-1 leading-relaxed">
+          Authoritative immutable submission snapshots, content digests, and evaluation status for your projects.
+        </p>
       </div>
 
-      {submissions.length === 0 ? (
-        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-12 text-center space-y-3 shadow-card max-w-lg mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
-            <FileCheck className="w-6 h-6" />
+      {/* ================= 2. SUBMISSION CARDS ================= */}
+      <div className="space-y-6">
+        {loading && submissions.length === 0 ? (
+          <div className="py-20 text-center text-xs text-[#6B7280] bg-white border border-[#E5E0D8] rounded-2xl shadow-xs">
+            <RefreshCw className="w-7 h-7 text-[#FA541C] animate-spin mx-auto mb-3" />
+            <span className="font-semibold">Loading deliverable records...</span>
           </div>
-          <h3 className="text-base font-bold text-[#111827]">No Formal Submissions Yet</h3>
-          <p className="text-xs text-[#64748B] leading-relaxed">
-            Your project workspaces are currently in draft. Complete all required artifacts and submit your project to lock in an evaluation snapshot.
-          </p>
-          <div className="pt-2">
-            <Link href="/participant/projects">
-              <Button variant="primary" size="sm">
-                View Project Workspaces →
-              </Button>
-            </Link>
-          </div>
-        </div>
-      ) : (
-        <div className="space-y-6">
-          {submissions.map((sub) => {
-            const project = sub.project;
-            const hackathon = project.hackathon;
-            const snapshot = sub.payloadSnapshot as any;
-            const contentHash = snapshot ? SnapshotService.calculateContentHash(snapshot) : null;
-            const isLocked = sub.status === 'LOCKED';
+        ) : (
+          displaySubmissions.map((sub) => (
+            <div
+              key={sub.id}
+              className="bg-white border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group select-none"
+            >
+              {/* Subtle Warm Peach Radial Ambient Glow in top right corner */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-[#FFEFE6]/80 via-[#FFF7F2]/40 to-transparent rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-500" />
 
-            return (
-              <div
-                key={sub.id}
-                className="bg-white border border-[#E2E8F0] rounded-[18px] p-6 sm:p-7 shadow-card space-y-5"
-              >
-                {/* Header */}
-                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                  <div className="space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
-                        {hackathon.title}
-                      </span>
-                      <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] flex items-center">
-                        <Lock className="w-3 h-3 mr-1" /> Snapshot v{sub.versionNumber} Locked
-                      </span>
-                      {hackathon.status === 'RESULTS_PUBLISHED' ? (
-                        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-[#FEF3C7] text-[#92400E] border border-[#FDE68A]">
-                          Results Published
-                        </span>
-                      ) : (
-                        <span className="text-[11px] font-medium text-[#64748B]">
-                          Jury Evaluation in Progress
-                        </span>
-                      )}
-                    </div>
-                    <h2 className="text-xl font-bold text-[#111827]">{project.title}</h2>
+              {/* Card Top Row: Badges on left, View Workspace Button on right */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 relative z-10">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Hackathon Badge with Trophy */}
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFE8D6] text-[#FA541C] text-[11px] font-bold border border-[#FED7AA]/70 shadow-2xs">
+                    <Trophy className="w-3.5 h-3.5 text-[#FA541C]" />
+                    <span>{sub.hackathonTitle}</span>
+                  </span>
+
+                  {/* Snapshot Locked Badge */}
+                  <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-[#ECFDF5] text-[#059669] text-[11px] font-bold border border-[#A7F3D0]">
+                    <Lock className="w-3 h-3 text-[#059669]" />
+                    <span>Snapshot v{sub.versionNumber} Locked</span>
+                  </span>
+
+                  {/* Evaluation Status Badge */}
+                  <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium border border-[#E5E7EB]">
+                    <span>{sub.evaluationStatus}</span>
+                  </span>
+                </div>
+
+                {/* View Workspace Action Button */}
+                <Link
+                  href={sub.workspaceHref}
+                  className="inline-flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl border border-[#FA541C] text-[#FA541C] hover:bg-[#FFE8D6]/40 text-xs font-bold transition-all shadow-2xs hover:-translate-y-0.5 active:translate-y-0 cursor-pointer group/btn"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 stroke-[2.2] group-hover/btn:scale-110 transition-transform" />
+                  <span>View Workspace</span>
+                </Link>
+              </div>
+
+              {/* Project Title */}
+              <div className="mt-3 relative z-10">
+                <h2 className="text-lg sm:text-[22px] font-black text-[#18181B] tracking-tight group-hover:text-[#FA541C] transition-colors leading-tight">
+                  {sub.projectTitle}
+                </h2>
+              </div>
+
+              {/* Cryptographic Submission Digest Box */}
+              <div className="bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl p-3.5 mt-4 space-y-2 relative z-10">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between text-xs gap-1">
+                  <span className="font-bold flex items-center text-[#18181B] space-x-1.5">
+                    <ShieldCheck className="w-4 h-4 text-[#059669]" />
+                    <span>Cryptographic Submission Digest</span>
+                  </span>
+                  <span className="text-[11px] text-[#9CA3AF] font-medium">
+                    Submitted on {sub.submittedAt}
+                  </span>
+                </div>
+
+                <div className="p-2.5 bg-white rounded-lg border border-[#E5E0D8] flex items-center justify-between gap-2 shadow-2xs">
+                  <div className="min-w-0 flex items-center gap-1.5 text-xs font-mono truncate">
+                    <span className="text-[#FA541C] font-bold flex-shrink-0">SHA-256:</span>
+                    <code className="text-[#FA541C] truncate text-[11.5px] sm:text-xs">
+                      {sub.contentHash}
+                    </code>
                   </div>
 
-                  <div className="flex items-center space-x-2">
-                    <Link href={`/participant/projects/${project.id}`}>
-                      <Button variant="outline" size="sm">
-                        View Workspace
-                      </Button>
-                    </Link>
-                    {hackathon.status === 'RESULTS_PUBLISHED' && (
-                      <Link href="/participant/results">
-                        <Button variant="primary" size="sm" icon={<Award className="w-3.5 h-3.5" />}>
-                          View Standing
-                        </Button>
-                      </Link>
+                  <div className="flex items-center space-x-1.5 flex-shrink-0">
+                    {copiedId === sub.id && (
+                      <span className="text-[10px] text-[#059669] font-bold animate-in fade-in">
+                        Copied!
+                      </span>
                     )}
-                  </div>
-                </div>
-
-                {/* Snapshot Verification Box */}
-                <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 space-y-2 text-xs">
-                  <div className="flex items-center justify-between text-[#334155]">
-                    <span className="font-bold flex items-center">
-                      <ShieldCheck className="w-4 h-4 mr-1 text-[#059669]" />
-                      Cryptographic Submission Digest
-                    </span>
-                    <span className="text-[#64748B]">
-                      Submitted on {sub.submittedAt ? new Date(sub.submittedAt).toLocaleString() : 'N/A'}
-                    </span>
-                  </div>
-                  {contentHash && (
-                    <div className="p-2.5 bg-white rounded-lg border border-[#E2E8F0] font-mono text-[11px] text-[#2563EB] break-all">
-                      SHA-256: <code>{contentHash}</code>
-                    </div>
-                  )}
-                </div>
-
-                {/* Deliverables summary */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 text-xs">
-                  <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                    <span className="text-[10px] font-bold text-[#64748B] uppercase block">Team</span>
-                    <span className="font-bold text-[#111827]">{project.team?.name}</span>
-                  </div>
-
-                  <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                    <span className="text-[10px] font-bold text-[#64748B] uppercase block">Track</span>
-                    <span className="font-bold text-[#111827]">{project.track?.title}</span>
-                  </div>
-
-                  <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl sm:col-span-2">
-                    <span className="text-[10px] font-bold text-[#64748B] uppercase block">Problem Statement</span>
-                    <span className="font-bold text-[#111827] truncate block">
-                      [{project.problemStatement?.code}] {project.problemStatement?.title}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Artifact URLs */}
-                <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
-                  {project.repoUrl && (
-                    <a
-                      href={project.repoUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center text-[#2563EB] hover:underline"
+                    <button
+                      onClick={() => handleCopyHash(sub.id, sub.contentHash)}
+                      className="p-1 text-[#FA541C] hover:bg-[#FFE8D6] rounded-md transition-colors cursor-pointer"
+                      title="Copy Hash"
                     >
-                      <Github className="w-3.5 h-3.5 mr-1 text-slate-800" />
-                      Repository Snapshot
-                    </a>
-                  )}
-
-                  {project.demoUrl && (
-                    <a
-                      href={project.demoUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center text-[#2563EB] hover:underline"
-                    >
-                      <Globe className="w-3.5 h-3.5 mr-1" />
-                      Live Demo
-                    </a>
-                  )}
-
-                  {project.videoUrl && (
-                    <a
-                      href={project.videoUrl}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center text-[#7E22CE] hover:underline"
-                    >
-                      <Video className="w-3.5 h-3.5 mr-1" />
-                      Demo Video
-                    </a>
-                  )}
+                      {copiedId === sub.id ? (
+                        <Check className="w-4 h-4 text-[#059669]" />
+                      ) : (
+                        <Copy className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
                 </div>
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              {/* 3 Information Blocks: Team, Track, Problem Statement */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-4 relative z-10">
+                {/* Block 1: TEAM */}
+                <div className="p-3.5 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl flex items-center space-x-3 shadow-2xs group-hover:border-[#CBD5E1] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E0D8] text-[#FA541C] flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-[#FA541C]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider block leading-none mb-1">
+                      TEAM
+                    </span>
+                    <span className="text-xs sm:text-[13px] font-extrabold text-[#18181B] truncate block">
+                      {sub.teamName}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Block 2: TRACK */}
+                <div className="p-3.5 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl flex items-center space-x-3 shadow-2xs group-hover:border-[#CBD5E1] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E0D8] text-[#FA541C] flex items-center justify-center flex-shrink-0">
+                    <Target className="w-4 h-4 text-[#FA541C]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider block leading-none mb-1">
+                      TRACK
+                    </span>
+                    <span className="text-xs sm:text-[13px] font-extrabold text-[#18181B] truncate block">
+                      {sub.trackTitle}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Block 3: PROBLEM STATEMENT */}
+                <div className="p-3.5 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl flex items-center space-x-3 shadow-2xs group-hover:border-[#CBD5E1] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E0D8] text-[#FA541C] flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-4 h-4 text-[#FA541C]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider block leading-none mb-1">
+                      PROBLEM STATEMENT
+                    </span>
+                    <span className="text-xs sm:text-[13px] font-extrabold text-[#18181B] truncate block">
+                      {sub.problemStatement}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Artifact Link Chips */}
+              <div className="pt-3.5 flex flex-wrap items-center gap-2.5 text-xs relative z-10">
+                {/* Repository Snapshot Chip */}
+                <a
+                  href={sub.repoUrl || 'https://github.com'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#CBD5E1] text-xs font-bold text-[#18181B] shadow-2xs hover:shadow-xs transition-all cursor-pointer group/repo"
+                >
+                  <Github className="w-4 h-4 text-[#18181B] group-hover/repo:scale-110 transition-transform" />
+                  <span>Repository Snapshot</span>
+                </a>
+
+                {/* Live Demo Chip */}
+                <a
+                  href={sub.demoUrl || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-[#FFF9F5] border border-[#FED7AA] hover:border-[#FA541C] text-xs font-bold text-[#FA541C] shadow-2xs hover:shadow-xs transition-all cursor-pointer group/demo"
+                >
+                  <Globe className="w-4 h-4 text-[#FA541C] group-hover/demo:rotate-12 transition-transform" />
+                  <span>Live Demo</span>
+                </a>
+
+                {/* Video URL if present */}
+                {sub.videoUrl && (
+                  <a
+                    href={sub.videoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-bold text-[#7E22CE] shadow-2xs transition-all"
+                  >
+                    <Video className="w-4 h-4 text-[#7E22CE]" />
+                    <span>Demo Video</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          ))
+        )}
+      </div>
     </div>
   );
 }

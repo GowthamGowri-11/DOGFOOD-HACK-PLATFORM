@@ -8,7 +8,7 @@ import {
   ArrowLeft,
   Calendar,
   Users,
-  Building,
+  FileText,
   Plus,
   Trash2,
   CheckCircle2,
@@ -16,13 +16,20 @@ import {
   RefreshCw,
   Layers,
   Award,
+  Clock,
   Bold,
   Italic,
   Underline,
-  FileText,
-  Lightbulb,
+  List,
+  ListOrdered,
+  Link2,
+  UploadCloud,
+  ImageIcon,
+  X,
+  Sparkles,
+  ChevronDown,
+  Check,
 } from 'lucide-react';
-import { BannerUpload } from '@/components/admin/BannerUpload';
 import { TracksAndProblemsEditor, TrackItem } from '@/components/admin/TracksAndProblemsEditor';
 
 interface OrganizerContact {
@@ -59,68 +66,48 @@ interface EvaluationRound {
   tracks: TrackItem[];
 }
 
-
-
 export default function AdminCreateHackathonPage() {
   const router = useRouter();
-  const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  // Dynamic date helpers
+  // Helper date generators
   const now = new Date();
   const formatForInput = (d: Date) => d.toISOString().slice(0, 16);
   const addDays = (d: Date, days: number) => new Date(d.getTime() + days * 86400000);
 
-  // Formatter for "Selected: 16 Aug 2026 06:00 AM" display
-  const formatDateDisplay = (dateStr: string) => {
-    if (!dateStr) return '';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '';
-      const day = d.getDate();
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      const month = monthNames[d.getMonth()];
-      const year = d.getFullYear();
-      let hours = d.getHours();
-      const minutes = d.getMinutes().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = hours % 12;
-      hours = hours ? hours : 12;
-      const formattedHours = hours.toString().padStart(2, '0');
-      return `Selected: ${day} ${month} ${year} ${formattedHours}:${minutes} ${ampm}`;
-    } catch {
-      return '';
-    }
-  };
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Section 1: Event Details
+  // Form State
   const [title, setTitle] = useState('');
   const [slug, setSlug] = useState('');
   const [tagline, setTagline] = useState('');
-  const [prizePool, setPrizePool] = useState<number | string>('');
+  const [prizePool, setPrizePool] = useState<number | string>(75000);
   const [currency, setCurrency] = useState('USD');
   const [description, setDescription] = useState('');
   const [bannerUrl, setBannerUrl] = useState('');
-  const [organizationName, setOrganizationName] = useState('');
+  const [organizationName, setOrganizationName] = useState('ATLYX Enterprise Platform');
 
   // Organizers list
   const [organizers, setOrganizers] = useState<OrganizerContact[]>([
-    { name: '', contact: '' },
+    { name: 'ATLYX Academic Lead', contact: 'lead@atlyx.io' },
   ]);
 
-
-
-  // Section 2: Team Settings & Rules
+  // Team settings
   const [minTeamSize, setMinTeamSize] = useState<number>(2);
   const [maxTeamSize, setMaxTeamSize] = useState<number>(4);
-  const [maxTeamsAllowed, setMaxTeamsAllowed] = useState<string>('');
+  const [maxTeamsAllowed, setMaxTeamsAllowed] = useState<string>('100');
 
-  // Section: Important Details
+  // Important Dates & Submission Window
   const [registrationDeadline, setRegistrationDeadline] = useState(formatForInput(addDays(now, 7)));
+  const [eventStartTime, setEventStartTime] = useState(formatForInput(addDays(now, 8)));
+  const [eventEndTime, setEventEndTime] = useState(formatForInput(addDays(now, 11)));
+  const [subStartTime, setSubStartTime] = useState(formatForInput(addDays(now, 8)));
+  const [subEndTime, setSubEndTime] = useState(formatForInput(addDays(now, 10)));
+  const [showAdvancedWindow, setShowAdvancedWindow] = useState(false);
 
-  // Evaluation Rounds (Each round contains its own tracks and challenge questions)
+  // Evaluation Rounds & Criteria
+  const [activeRoundIdx, setActiveRoundIdx] = useState(0);
+  const [roundCollapsed, setRoundCollapsed] = useState<Record<number, boolean>>({});
   const [rounds, setRounds] = useState<EvaluationRound[]>([
     {
       name: 'The Qualifiers',
@@ -129,38 +116,32 @@ export default function AdminCreateHackathonPage() {
       startDate: formatForInput(addDays(now, 8)),
       endDate: formatForInput(addDays(now, 10)),
       submissionDeadline: formatForInput(addDays(now, 10)),
-      maxTeamsAllowed: 60,
+      maxTeamsAllowed: 50,
       requiredSubmissions: {
         github: true,
-        ppt: false,
+        ppt: true,
         video: false,
         document: false,
         techStack: true,
       },
-      termsAndConditions:
-        'Missing URL Check: Teams without a GitHub URL are immediately disqualified.\nCommit Time Check: Late commits lead to disqualification.\nCode Extraction: The full repository ZIP is downloaded for analysis.\nAI Analysis: The AI evaluates code quality, architecture, security, and innovation.',
+      termsAndConditions: 'All code must be original and built during the allocated hackathon round window.',
       criteria: [
-        { name: 'Innovation & Idea', maxMarks: 25, description: 'Originality of the idea and relevance of problem statement' },
-        { name: 'Technical Implementation', maxMarks: 25, description: 'Code quality, architecture, technology usage and functionality' },
-        { name: 'UI/UX Design', maxMarks: 20, description: 'User experience, visual appeal, usability, and accessibility' },
-        { name: 'Presentation & Pitch', maxMarks: 15, description: 'Communication, live demonstration, documentation' },
-        { name: 'Business Impact & Feasibility', maxMarks: 15, description: 'Real-world usefulness and deployment potential' },
+        { name: 'Technical Execution', maxMarks: 50, description: 'Code architecture and robustness' },
+        { name: 'Innovation', maxMarks: 50, description: 'Novelty of approach' },
       ],
       tracks: [
         {
-          title: 'Enterprise AI & Autonomous Systems',
-          slug: 'enterprise-ai-autonomous-systems',
-          description:
-            'Agentic LLM workflows, retrieval-augmented intelligence, multimodal copilots, and enterprise governance.',
-          colorHex: '#2563EB',
+          title: 'Core Innovation',
+          slug: 'core-innovation',
+          description: 'Challenge track for Core Innovation',
+          colorHex: '#FA541C',
           displayOrder: 0,
           problemStatements: [
             {
-              code: 'AI-01',
-              title: 'Autonomous Clinical Diagnostic and Treatment Verification Agent',
-              description:
-                'Design an autonomous agent that ingests raw EHR data, verifies multimodal diagnostic evidence against WHO protocols, and outputs structured physician action briefs.',
-              challengeDocUrl: 'https://github.com/enterprise/ai-agent-challenge',
+              code: 'PS-10-01',
+              title: 'Quantum Computing & Cryptographic Verification — Primary Challenge',
+              description: 'Build an end-to-end verifiable cryptographic pipeline leveraging quantum-resilient algorithms and autonomous agent audit layers.',
+              challengeDocUrl: '',
               isPublic: true,
               displayOrder: 0,
             },
@@ -168,59 +149,20 @@ export default function AdminCreateHackathonPage() {
         },
       ],
     },
-    {
-      name: 'The Grand Finale',
-      isFinal: true,
-      roundType: 'Hackathon',
-      startDate: formatForInput(addDays(now, 10)),
-      endDate: formatForInput(addDays(now, 12)),
-      submissionDeadline: formatForInput(addDays(now, 11)),
-      maxTeamsAllowed: 20,
-      requiredSubmissions: {
-        github: true,
-        ppt: true,
-        video: true,
-        document: false,
-        techStack: true,
-      },
-      termsAndConditions:
-        'Teams must present live before the evaluation panel.\nWorking prototype deployment is mandatory for final scoring.',
-      criteria: [
-        { name: 'Core Innovation', maxMarks: 30, description: 'Breakthrough capability and novelty' },
-        { name: 'Production Readiness', maxMarks: 30, description: 'Scalability, resilience, and code quality' },
-        { name: 'Product Polish', maxMarks: 20, description: 'Visual finesse and design execution' },
-        { name: 'Pitch Delivery', maxMarks: 20, description: 'Clarity and response to jury questions' },
-      ],
-      tracks: [],
-    },
   ]);
 
-  // Slug generator
+  // Banner Upload State
+  const [isUploadingBanner, setIsUploadingBanner] = useState(false);
+  const [bannerDragOver, setBannerDragOver] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const descTextareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-slug generator on title change
   const handleTitleChange = (val: string) => {
     setTitle(val);
     if (!slug || slug === title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '')) {
       setSlug(val.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''));
     }
-  };
-
-  // Description Rich Text Toolbar Handlers
-  const handleFormatText = (prefix: string, suffix: string = prefix) => {
-    const textarea = descriptionRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const currentVal = textarea.value;
-    const selectedText = currentVal.substring(start, end);
-
-    const replacement = `${prefix}${selectedText || 'text'}${suffix}`;
-    const newVal = currentVal.substring(0, start) + replacement + currentVal.substring(end);
-    setDescription(newVal);
-
-    setTimeout(() => {
-      textarea.focus();
-      textarea.setSelectionRange(start + prefix.length, start + prefix.length + (selectedText.length || 4));
-    }, 0);
   };
 
   // Organizers Handlers
@@ -238,43 +180,105 @@ export default function AdminCreateHackathonPage() {
     setOrganizers(updated);
   };
 
+  // Banner file upload handler
+  const handleBannerFile = async (file: File) => {
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      setError('Please select a valid image file (PNG, JPG, WEBP, or SVG).');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Banner image size exceeds 5MB limit.');
+      return;
+    }
 
+    setIsUploadingBanner(true);
+    try {
+      const preview = URL.createObjectURL(file);
+      setBannerUrl(preview);
 
-  // Rounds Handlers
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/v1/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      const data = await res.json();
+      if (res.ok && data?.data?.url) {
+        setBannerUrl(data.data.url);
+      } else {
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          if (e.target?.result) setBannerUrl(e.target.result as string);
+        };
+        reader.readAsDataURL(file);
+      }
+    } catch {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        if (e.target?.result) setBannerUrl(e.target.result as string);
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsUploadingBanner(false);
+    }
+  };
+
+  // Text formatting in description
+  const applyFormat = (prefix: string, suffix: string = '') => {
+    const textarea = descTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = description.substring(start, end);
+    const replacement = `${prefix}${selected || 'text'}${suffix}`;
+    const nextVal = description.substring(0, start) + replacement + description.substring(end);
+    setDescription(nextVal);
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, start + replacement.length - suffix.length);
+    }, 0);
+  };
+
+  // Current Round helpers
+  const currentRound = rounds[activeRoundIdx] || rounds[0];
+
   const addRound = () => {
-    const lastRound = rounds[rounds.length - 1];
-    const newStart = lastRound ? lastRound.endDate : formatForInput(addDays(now, 12));
-    const newEnd = formatForInput(addDays(new Date(newStart), 2));
-
-    setRounds([
-      ...rounds,
-      {
-        name: `Round ${rounds.length + 1}`,
-        isFinal: false,
-        roundType: 'Hackathon',
-        startDate: newStart,
-        endDate: newEnd,
-        submissionDeadline: newEnd,
-        maxTeamsAllowed: 50,
-        requiredSubmissions: {
-          github: true,
-          ppt: true,
-          video: false,
-          document: false,
-          techStack: true,
-        },
-        termsAndConditions: 'All code must be original and built during the allocated hackathon round window.',
-        criteria: [
-          { name: 'Innovation & Idea', maxMarks: 50, description: 'Novelty and relevance' },
-          { name: 'Implementation', maxMarks: 50, description: 'Code quality and completeness' },
-        ],
-        tracks: [],
+    const nextNum = rounds.length + 1;
+    const newRound: EvaluationRound = {
+      name: `Round ${nextNum}`,
+      isFinal: false,
+      roundType: 'Hackathon',
+      startDate: eventStartTime,
+      endDate: eventEndTime,
+      submissionDeadline: eventEndTime,
+      maxTeamsAllowed: 50,
+      requiredSubmissions: {
+        github: true,
+        ppt: true,
+        video: false,
+        document: false,
+        techStack: true,
       },
-    ]);
+      termsAndConditions: 'All code must be original and built during the allocated hackathon round window.',
+      criteria: [
+        { name: 'Technical Execution', maxMarks: 50, description: 'Code architecture and robustness' },
+        { name: 'Innovation', maxMarks: 50, description: 'Novelty of approach' },
+      ],
+      tracks: [],
+    };
+    setRounds([...rounds, newRound]);
+    setActiveRoundIdx(rounds.length);
   };
 
   const removeRound = (roundIndex: number) => {
-    setRounds(rounds.filter((_, i) => i !== roundIndex));
+    if (rounds.length <= 1) return;
+    const updated = rounds.filter((_, i) => i !== roundIndex);
+    setRounds(updated);
+    if (activeRoundIdx >= updated.length) {
+      setActiveRoundIdx(updated.length - 1);
+    }
   };
 
   const updateRound = (roundIndex: number, field: keyof EvaluationRound, value: any) => {
@@ -287,7 +291,7 @@ export default function AdminCreateHackathonPage() {
     const updated = [...rounds];
     updated[roundIndex].criteria.push({
       name: '',
-      maxMarks: 20,
+      maxMarks: 25,
       description: '',
     });
     setRounds(updated);
@@ -320,12 +324,11 @@ export default function AdminCreateHackathonPage() {
     updateRoundTracks(targetIdx, copiedTracks);
   };
 
-  // Form Submit Handler
+  // Submit Handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validation
     if (!title.trim()) {
       setError('Please provide a hackathon title');
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -349,7 +352,6 @@ export default function AdminCreateHackathonPage() {
     try {
       const cleanedOrganizers = organizers.filter((o) => o.name.trim() !== '');
 
-      // Flatten all tracks across rounds for Prisma persistence
       const allTracks: TrackItem[] = rounds.flatMap((r, rIdx) =>
         (r.tracks || []).map(t => ({
           ...t,
@@ -360,7 +362,6 @@ export default function AdminCreateHackathonPage() {
         }))
       );
 
-      // Build question-to-round assignment map for backwards compatibility
       const questionRoundAssignments: Record<string, number> = {};
       rounds.forEach((r, rIdx) => {
         (r.tracks || []).forEach(t => {
@@ -371,49 +372,33 @@ export default function AdminCreateHackathonPage() {
       });
 
       const extendedConfig = {
-        organizers: cleanedOrganizers.length > 0 ? cleanedOrganizers : [{ name: 'Event Coordinator', contact: 'coordinator@platform.dev' }],
+        organizers: cleanedOrganizers.length > 0 ? cleanedOrganizers : [{ name: 'ATLYX Academic Lead', contact: 'lead@atlyx.io' }],
         maxTeamsAllowed: maxTeamsAllowed ? Number(maxTeamsAllowed) : null,
         rounds: rounds.map(r => ({
           ...r,
           criteria: r.criteria.map(c => ({
             ...c,
-            maxMarks: Number(c.maxMarks) || 10
-          }))
+            maxMarks: Number(c.maxMarks) || 10,
+          })),
         })),
         questionRoundAssignments,
         prizePool: Number(prizePool) || 0,
         currency,
       };
 
-      // Determine chronological event dates based on rounds and registration
       const regStart = new Date(Date.now() - 60000);
       const regEnd = new Date(registrationDeadline);
-
-      const firstRound = rounds[0];
-      const lastRound = rounds[rounds.length - 1];
-
-      const eventStart = firstRound && firstRound.startDate
-        ? new Date(firstRound.startDate)
-        : addDays(regEnd, 1);
-
-      const eventEnd = lastRound && lastRound.endDate
-        ? new Date(lastRound.endDate)
-        : addDays(eventStart, 3);
-
-      const subStart = eventStart;
-      const subEnd = lastRound && lastRound.submissionDeadline
-        ? new Date(lastRound.submissionDeadline)
-        : eventEnd;
-
-      const judgingStart = subEnd;
-      const judgingEnd = eventEnd;
+      const eventStart = eventStartTime ? new Date(eventStartTime) : addDays(regEnd, 1);
+      const eventEnd = eventEndTime ? new Date(eventEndTime) : addDays(eventStart, 3);
+      const subStart = subStartTime ? new Date(subStartTime) : eventStart;
+      const subEnd = subEndTime ? new Date(subEndTime) : eventEnd;
 
       const payload = {
         title: title.trim(),
         slug: (slug || title).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
         tagline: tagline.trim() || undefined,
         description: description.trim(),
-        organizationName: organizationName.trim() || 'Apex Enterprise Platform',
+        organizationName: organizationName.trim() || 'ATLYX Platform',
         bannerUrl: bannerUrl.trim() || null,
         minTeamSize: Number(minTeamSize),
         maxTeamSize: Number(maxTeamSize),
@@ -423,8 +408,8 @@ export default function AdminCreateHackathonPage() {
         eventEndTime: eventEnd.toISOString(),
         subStartTime: subStart.toISOString(),
         subEndTime: subEnd.toISOString(),
-        judgingStartTime: judgingStart.toISOString(),
-        judgingEndTime: judgingEnd.toISOString(),
+        judgingStartTime: subEnd.toISOString(),
+        judgingEndTime: eventEnd.toISOString(),
         prizePool: Number(prizePool) || 0,
         currency,
         tracks: allTracks,
@@ -452,681 +437,937 @@ export default function AdminCreateHackathonPage() {
     }
   };
 
+  // Calculate current round total marks
+  const currentTotalMarks = (currentRound?.criteria || []).reduce(
+    (sum, c) => sum + Number(c.maxMarks || 0),
+    0
+  );
+
   return (
-    <div className="space-y-6 max-w-5xl mx-auto pb-16 select-none">
-      {/* Breadcrumb Bar Matching Site UI */}
-      <nav className="flex items-center space-x-2 text-xs text-[#64748b] font-medium">
-        <Link href="/" className="hover:text-[#2563eb] transition-colors">
+    <div className="space-y-6 max-w-7xl mx-auto pb-20 select-none font-sans">
+      {/* ======================================================== */}
+      {/* BREADCRUMB NAVIGATION */}
+      {/* ======================================================== */}
+      <nav className="flex items-center space-x-2 text-xs text-zinc-400 font-medium">
+        <Link href="/" className="hover:text-orange-600 transition-colors">
           Home
         </Link>
         <span>&rsaquo;</span>
-        <Link href="/admin/dashboard" className="hover:text-[#2563eb] transition-colors">
+        <Link href="/admin/dashboard" className="hover:text-orange-600 transition-colors">
           Admin
         </Link>
         <span>&rsaquo;</span>
-        <Link href="/admin/hackathons" className="hover:text-[#2563eb] transition-colors">
+        <Link href="/admin/hackathons" className="hover:text-orange-600 transition-colors">
           Hackathons
         </Link>
         <span>&rsaquo;</span>
-        <span className="text-[#0f172a] font-semibold">Create Hackathon</span>
+        <span className="text-zinc-800 font-semibold">Create Hackathon</span>
       </nav>
 
-      {/* Top Header Matching Site UI */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+      {/* ======================================================== */}
+      {/* TOP HEADER */}
+      {/* ======================================================== */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-zinc-100">
         <div>
           <Link
             href="/admin/hackathons"
-            className="inline-flex items-center text-xs font-semibold text-[#64748b] hover:text-[#2563eb] mb-2 transition-colors"
+            className="inline-flex items-center text-xs font-semibold text-zinc-500 hover:text-[#FA541C] mb-2 transition-colors group"
           >
-            <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+            <ArrowLeft className="w-3.5 h-3.5 mr-1 group-hover:-translate-x-0.5 transition-transform" />
             Back to Hackathon Management
           </Link>
-          <div className="flex items-start gap-3">
-            <div className="w-10 h-10 rounded-xl bg-[#eff6ff] flex items-center justify-center text-[#2563eb] flex-shrink-0 mt-0.5 border border-[#dbeafe]">
+          <div className="flex items-start gap-3.5">
+            <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-[#FA541C] to-[#E03A00] flex items-center justify-center text-white shadow-md shadow-orange-500/20 flex-shrink-0 mt-0.5">
               <Trophy className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0f172a] tracking-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-900 tracking-tight">
                 Create Hackathon
               </h1>
-              <p className="text-xs text-[#64748b] mt-1 font-normal">
-                Configure details, team criteria, and evaluation rounds for a new arena.
+              <p className="text-xs text-zinc-500 mt-1 font-normal">
+                Configure details, team criteria, and evaluation rounds for a new event.
               </p>
             </div>
           </div>
         </div>
+
+        <div className="flex items-center space-x-3 self-start sm:self-center">
+          <Link
+            href="/admin/hackathons"
+            className="px-4 py-2 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:border-zinc-300 hover:bg-zinc-50 rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
+          >
+            Cancel
+          </Link>
+
+          <button
+            type="submit"
+            form="hackathon-create-form"
+            disabled={saving}
+            className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-white bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#E03A00] hover:to-[#C83200] rounded-xl shadow-md shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer"
+          >
+            {saving ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                <span>Creating Event...</span>
+              </>
+            ) : (
+              <>
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Create Hackathon</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
+      {/* Error Message */}
       {error && (
-        <div className="p-4 bg-[#fef2f2] border border-[#fecaca] rounded-2xl text-xs text-[#dc2626] flex items-center space-x-2 shadow-xs">
-          <AlertCircle className="w-4 h-4 text-[#dc2626] flex-shrink-0" />
-          <span>{error}</span>
+        <div className="p-4 bg-rose-50 border border-rose-200 rounded-2xl text-xs text-rose-700 flex items-center space-x-2.5 shadow-xs animate-in fade-in slide-in-from-top-2 duration-200">
+          <AlertCircle className="w-4 h-4 text-rose-600 flex-shrink-0" />
+          <span className="font-semibold">{error}</span>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Main Form */}
+      <form id="hackathon-create-form" onSubmit={handleSubmit} className="space-y-6">
         {/* ======================================================== */}
-        {/* SECTION 1: EVENT DETAILS */}
+        {/* TWO-COLUMN CONFIGURATION GRID */}
         {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="border-b border-[#f1f5f9] pb-3">
-            <h2 className="text-base font-extrabold text-[#0f172a]">Event Details</h2>
-            <p className="text-xs text-[#64748b]">Core hackathon information, branding, and prize allocation.</p>
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#334155]">
-              Hackathon Title*
-            </label>
-            <input
-              type="text"
-              required
-              value={title}
-              onChange={(e) => handleTitleChange(e.target.value)}
-              placeholder="e.g. Apex Global AI Hackathon 2026"
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] font-medium transition-all placeholder:text-[#94a3b8]"
-            />
-          </div>
-
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#334155]">
-              Tagline
-            </label>
-            <input
-              type="text"
-              value={tagline}
-              onChange={(e) => setTagline(e.target.value)}
-              placeholder="e.g. Building Intelligent Agents for Tomorrow"
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] font-medium transition-all placeholder:text-[#94a3b8]"
-            />
-          </div>
-
-          {/* Integrated Prize Pool Option */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#334155] flex items-center space-x-1.5">
-              <span>Prize Pool</span>
-              <span className="text-[10px] font-normal text-[#64748b]">(Global platform reward incentive)</span>
-            </label>
-            <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-              <div className="sm:col-span-3 relative">
-                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-[#64748b]">
-                  {currency === 'USD' ? '$' : currency === 'INR' ? '₹' : currency === 'EUR' ? '€' : '£'}
-                </span>
-                <input
-                  type="number"
-                  min="0"
-                  value={prizePool}
-                  onChange={(e) => setPrizePool(e.target.value)}
-                  placeholder="e.g. 50000"
-                  className="w-full pl-8 pr-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] font-bold placeholder:text-[#94a3b8]"
-                />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
+          {/* ====================================================== */}
+          {/* ROW 1 - LEFT: EVENT DETAILS */}
+          {/* ====================================================== */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-5">
+            <div className="border-b border-zinc-100 pb-3 flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+                <FileText className="w-4 h-4 stroke-[2.2]" />
               </div>
               <div>
-                <select
-                  value={currency}
-                  onChange={(e) => setCurrency(e.target.value)}
-                  className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#334155] font-semibold"
-                >
-                  <option value="USD">USD ($)</option>
-                  <option value="INR">INR (₹)</option>
-                  <option value="EUR">EUR (€)</option>
-                  <option value="GBP">GBP (£)</option>
-                </select>
+                <h2 className="text-base font-extrabold text-zinc-900">Event Details</h2>
+                <p className="text-xs text-zinc-500 font-normal">Core hackathon information and branding.</p>
               </div>
             </div>
-            <p className="text-[11px] text-[#64748b]">
-              This total prize pool amount is showcased on competition cards and leaderboard rewards.
-            </p>
-          </div>
 
-          {/* Organizers List */}
-          <div className="space-y-2.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#334155]">
-                Organizers*
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700">
+                Hackathon Title <span className="text-rose-500">*</span>
               </label>
-              <button
-                type="button"
-                onClick={addOrganizer}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8] transition-colors"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add Organizer</span>
-              </button>
-            </div>
-
-            <div className="space-y-2.5">
-              {organizers.map((org, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center space-x-3 p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl"
-                >
-                  <div className="flex-1 space-y-1">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase">NAME*</span>
-                    <input
-                      type="text"
-                      required
-                      value={org.name}
-                      onChange={(e) => updateOrganizer(idx, 'name', e.target.value)}
-                      placeholder="e.g. Dr. Alex Mercer"
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
-                    />
-                  </div>
-                  <div className="flex-1 space-y-1">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase">CONTACT</span>
-                    <input
-                      type="text"
-                      value={org.contact}
-                      onChange={(e) => updateOrganizer(idx, 'contact', e.target.value)}
-                      placeholder="e.g. +1 555-0199 or alex@apex.edu"
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
-                    />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => removeOrganizer(idx)}
-                    disabled={organizers.length <= 1}
-                    className="self-end p-2 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors disabled:opacity-40"
-                    title="Remove Organizer"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Description with Functional Rich Text Toolbar */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#334155]">
-                Description* (min 20 characters)
-              </label>
-              <div className="flex items-center space-x-1 bg-[#f8fafc] border border-[#e2e8f0] rounded-lg p-0.5">
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('**', '**')}
-                  className="p-1 hover:bg-[#e2e8f0] rounded text-[#64748b] hover:text-[#0f172a] text-xs font-bold transition-colors"
-                  title="Bold (Markdown **text**)"
-                >
-                  <Bold className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('*', '*')}
-                  className="p-1 hover:bg-[#e2e8f0] rounded text-[#64748b] hover:text-[#0f172a] text-xs italic transition-colors"
-                  title="Italic (Markdown *text*)"
-                >
-                  <Italic className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handleFormatText('<u>', '</u>')}
-                  className="p-1 hover:bg-[#e2e8f0] rounded text-[#64748b] hover:text-[#0f172a] text-xs underline transition-colors"
-                  title="Underline (<u>text</u>)"
-                >
-                  <Underline className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-            <textarea
-              ref={descriptionRef}
-              required
-              rows={4}
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe the hackathon objectives, technical challenges, eligibility criteria, and submission rules..."
-              className="w-full p-3 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] placeholder:text-[#94a3b8]"
-            />
-            <div className="flex justify-end text-[10px] text-[#64748b]">
-              <span>{description.length} / 20 characters min</span>
-            </div>
-          </div>
-
-          {/* Banner Upload with Drag & Drop, Direct File Upload and Preview */}
-          <BannerUpload
-            bannerUrl={bannerUrl}
-            onChange={setBannerUrl}
-            title={title}
-            tagline={tagline}
-          />
-
-          {/* Organization Name */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#334155]">Organization Name</label>
-            <input
-              type="text"
-              value={organizationName}
-              onChange={(e) => setOrganizationName(e.target.value)}
-              placeholder="e.g. Apex Enterprise Institute"
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
-            />
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* SECTION 2: TEAM SETTINGS & RULES */}
-        {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
-            <Users className="w-4 h-4 text-[#2563eb]" />
-            <h2 className="text-base font-extrabold text-[#0f172a]">Team Settings & Rules</h2>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">Min Team Size</label>
-              <input
-                type="number"
-                min="1"
-                max={maxTeamSize}
-                value={minTeamSize}
-                onChange={(e) => {
-                  const val = Number(e.target.value);
-                  setMinTeamSize(val);
-                  if (val > maxTeamSize) setMaxTeamSize(val);
-                }}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">Max Team Size</label>
-              <input
-                type="number"
-                min={minTeamSize}
-                max="20"
-                value={maxTeamSize}
-                onChange={(e) => setMaxTeamSize(Number(e.target.value))}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">Max Teams Allowed (Overall)</label>
               <input
                 type="text"
-                value={maxTeamsAllowed}
-                onChange={(e) => setMaxTeamsAllowed(e.target.value)}
-                placeholder="e.g. 100 (Blank = Unlimited)"
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] placeholder:text-[#94a3b8]"
+                required
+                value={title}
+                onChange={(e) => handleTitleChange(e.target.value)}
+                placeholder="e.g. [QA E2E 2026] ATLYX AI Challenge 10"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-900 font-semibold transition-all hover:border-zinc-300"
               />
             </div>
-          </div>
-        </div>
 
-
-
-        {/* ======================================================== */}
-        {/* SECTION 4: EVALUATION ROUNDS */}
-        {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#f1f5f9] gap-2">
-            <div className="flex items-center space-x-2">
-              <Layers className="w-4 h-4 text-[#2563eb]" />
-              <div>
-                <h2 className="text-base font-extrabold text-[#0f172a]">Evaluation Rounds</h2>
-                <p className="text-xs text-[#64748b]">
-                  Define the sequence of evaluation rounds and their specific problem statements.
-                </p>
-              </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700">
+                Tagline
+              </label>
+              <input
+                type="text"
+                value={tagline}
+                onChange={(e) => setTagline(e.target.value)}
+                placeholder="e.g. Enterprise Quantum Computing & Cryptographic Verification"
+                className="w-full px-3.5 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-800 font-normal transition-all hover:border-zinc-300"
+              />
             </div>
 
-            <button
-              type="button"
-              onClick={addRound}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#2563eb] bg-[#eff6ff] border border-[#dbeafe] hover:bg-[#dbeafe]/50 rounded-xl shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add Round</span>
-            </button>
-          </div>
+            {/* Prize Pool & Currency */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-zinc-700 flex items-center space-x-1.5">
+                <span>Prize Pool</span>
+                <span className="text-[10px] font-normal text-zinc-400">(Global platform reward incentive)</span>
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
+                <div className="sm:col-span-3 relative">
+                  <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-xs font-bold text-zinc-400">
+                    {currency === 'USD' ? '$' : currency === 'INR' ? '₹' : currency === 'EUR' ? '€' : '£'}
+                  </span>
+                  <input
+                    type="number"
+                    min="0"
+                    value={prizePool}
+                    onChange={(e) => setPrizePool(e.target.value)}
+                    placeholder="75000"
+                    className="w-full pl-8 pr-3.5 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-900 font-bold hover:border-zinc-300 transition-all"
+                  />
+                </div>
+                <div>
+                  <select
+                    value={currency}
+                    onChange={(e) => setCurrency(e.target.value)}
+                    className="w-full px-3 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-700 font-semibold cursor-pointer hover:border-zinc-300 transition-all"
+                  >
+                    <option value="USD">USD ($)</option>
+                    <option value="INR">INR (₹)</option>
+                    <option value="EUR">EUR (€)</option>
+                    <option value="GBP">GBP (£)</option>
+                  </select>
+                </div>
+              </div>
+              <p className="text-[11px] text-zinc-400">
+                This total prize pool amount is showcased on competition cards and leaderboard rewards.
+              </p>
+            </div>
 
-          <div className="space-y-6">
-            {rounds.map((round, rIdx) => {
-              const totalMarks = round.criteria.reduce((sum, c) => sum + Number(c.maxMarks || 0), 0);
-
-              return (
-                <div
-                  key={rIdx}
-                  className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-5 relative shadow-2xs"
+            {/* Organizers List */}
+            <div className="space-y-2.5 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-zinc-700">
+                  Organizers <span className="text-rose-500">*</span>
+                </label>
+                <button
+                  type="button"
+                  onClick={addOrganizer}
+                  className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700 hover:scale-[1.02] active:scale-[0.98] transition-all"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-2.5 py-0.5 rounded-full border border-[#dbeafe]">
-                        Round {rIdx + 1}
-                      </span>
-                      {round.isFinal && (
-                        <span className="text-[10px] font-bold text-[#d97706] bg-[#fef3c7] px-2.5 py-0.5 rounded-full border border-[#fde68a]">
-                          FINALE
-                        </span>
-                      )}
-                    </div>
+                  <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                  <span>Add Organizer</span>
+                </button>
+              </div>
 
+              <div className="space-y-2.5">
+                {organizers.map((org, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center space-x-3 p-3 bg-zinc-50/70 border border-zinc-200/90 rounded-xl hover:border-zinc-300 transition-all"
+                  >
+                    <div className="flex-1 space-y-1">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">NAME</span>
+                      <input
+                        type="text"
+                        required
+                        value={org.name}
+                        onChange={(e) => updateOrganizer(idx, 'name', e.target.value)}
+                        placeholder="e.g. ATLYX Academic Lead"
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-900 font-medium"
+                      />
+                    </div>
+                    <div className="flex-1 space-y-1">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">CONTACT</span>
+                      <input
+                        type="text"
+                        value={org.contact}
+                        onChange={(e) => updateOrganizer(idx, 'contact', e.target.value)}
+                        placeholder="e.g. lead@atlyx.io"
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-900 font-medium"
+                      />
+                    </div>
                     <button
                       type="button"
-                      onClick={() => removeRound(rIdx)}
-                      disabled={rounds.length <= 1}
-                      className="p-1.5 text-[#dc2626] hover:bg-[#fee2e2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
-                      title="Delete Round"
+                      onClick={() => removeOrganizer(idx)}
+                      disabled={organizers.length <= 1}
+                      className="self-end p-2 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                      title="Remove Organizer"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
+                ))}
+              </div>
+            </div>
+          </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND NAME</span>
-                        <label className="flex items-center space-x-1.5 cursor-pointer">
-                          <span className="text-[10px] font-bold text-[#64748b] uppercase">FINAL ROUND</span>
-                          <input
-                            type="checkbox"
-                            checked={round.isFinal}
-                            onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
-                            className="rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
-                          />
-                        </label>
-                      </div>
-                      <input
-                        type="text"
-                        value={round.name}
-                        onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
-                        placeholder="e.g. The Qualifiers"
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#2563eb]"
-                      />
-                    </div>
+          {/* ====================================================== */}
+          {/* ROW 1 - RIGHT: BANNER IMAGE & DESCRIPTION */}
+          {/* ====================================================== */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-5">
+            <div className="border-b border-zinc-100 pb-3 flex items-center justify-between">
+              <div className="flex items-center space-x-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0">
+                  <ImageIcon className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-zinc-900">Banner Image</h2>
+                </div>
+              </div>
+              <span className="text-[11px] text-zinc-400 font-medium">
+                PNG, JPG, WEBP or SVG up to 5MB (Recommended 1200 &times; 400px)
+              </span>
+            </div>
 
-                    <div className="sm:col-span-2 space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND TYPE</span>
-                      <select
-                        value={round.roundType}
-                        onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-semibold"
-                      >
-                        <option value="Mock Hackathon">Mock Hackathon</option>
-                        <option value="Hackathon">Hackathon</option>
-                        <option value="Ideation">Ideation</option>
-                        <option value="Presentation">Presentation</option>
-                        <option value="Coding Challenge">Coding Challenge</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  {/* Start Date & End Date with formatted date display */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">START DATE & TIME</span>
-                      <input
-                        type="datetime-local"
-                        value={round.startDate}
-                        onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-                      />
-                      {round.startDate && (
-                        <span className="text-[10px] text-[#64748b] block">
-                          {formatDateDisplay(round.startDate)}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">END DATE & TIME</span>
-                      <input
-                        type="datetime-local"
-                        value={round.endDate}
-                        onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-                      />
-                      {round.endDate && (
-                        <span className="text-[10px] text-[#64748b] block">
-                          {formatDateDisplay(round.endDate)}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">SUBMISSION DEADLINE</span>
-                      <input
-                        type="datetime-local"
-                        value={round.submissionDeadline}
-                        onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-                      />
-                      {round.submissionDeadline && (
-                        <span className="text-[10px] text-[#64748b] block">
-                          {formatDateDisplay(round.submissionDeadline)}
-                        </span>
-                      )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">MAX TEAMS ALLOWED</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={round.maxTeamsAllowed}
-                        onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-2">
-                    <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider block">
-                      WHAT TO EVALUATE (REQUIRED SUBMISSIONS)
-                    </span>
-                    <p className="text-[11px] text-[#64748b]">
-                      Tick what teams must upload for {round.name}. Project title and description are always required.
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1">
-                      {[
-                        { key: 'github', label: 'GitHub link' },
-                        { key: 'ppt', label: 'PPT link' },
-                        { key: 'video', label: 'Video link' },
-                        { key: 'document', label: 'Document link' },
-                        { key: 'techStack', label: 'Tech stack' },
-                      ].map((item) => {
-                        const checked = (round.requiredSubmissions as any)[item.key];
-                        return (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => {
-                              const updatedReqs = {
-                                ...round.requiredSubmissions,
-                                [item.key]: !checked,
-                              };
-                              updateRound(rIdx, 'requiredSubmissions', updatedReqs);
-                            }}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center space-x-1.5 transition-all cursor-pointer ${
-                              checked
-                                ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-xs'
-                                : 'bg-white text-[#64748b] border-[#e2e8f0] hover:bg-[#f8fafc]'
-                            }`}
-                          >
-                            <span>{checked ? '✓' : '+'}</span>
-                            <span>{item.label}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-
-                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-1.5">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wider block">
-                      TERMS & CONDITIONS
-                    </span>
-                    <p className="text-[11px] text-[#64748b]">
-                      Shown to teams before they lock their problem statement. Each line becomes one bullet point. Leave empty to use the platform default rules.
-                    </p>
-                    <textarea
-                      rows={3}
-                      value={round.termsAndConditions}
-                      onChange={(e) => updateRound(rIdx, 'termsAndConditions', e.target.value)}
-                      placeholder="Specify terms, rules, and automatic disqualification criteria..."
-                      className="w-full p-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a]"
+            {/* Banner Preview with X button */}
+            <div className="space-y-3">
+              <div className="relative w-full h-36 sm:h-44 rounded-xl overflow-hidden border border-zinc-200 bg-zinc-950 shadow-inner group">
+                {bannerUrl ? (
+                  <>
+                    <img
+                      src={bannerUrl}
+                      alt="Hackathon Banner"
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-[1.01]"
                     />
+                    <button
+                      type="button"
+                      onClick={() => setBannerUrl('')}
+                      className="absolute top-3 right-3 w-7 h-7 rounded-full bg-zinc-900/80 hover:bg-zinc-900 text-white flex items-center justify-center backdrop-blur-sm transition-all hover:scale-110 shadow-md cursor-pointer"
+                      title="Remove Banner"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </>
+                ) : (
+                  <div className="w-full h-full flex flex-col items-center justify-center p-4 bg-gradient-to-r from-zinc-950 via-zinc-900 to-zinc-950 text-white">
+                    <div className="flex items-center space-x-2 mb-1">
+                      <div className="w-5 h-5 rounded-md bg-[#FA541C] flex items-center justify-center text-white text-[10px] font-black">
+                        A
+                      </div>
+                      <span className="font-extrabold tracking-wider text-xs">ATLYX</span>
+                    </div>
+                    <p className="text-[11px] text-zinc-400">COMPETITION ARENA</p>
+                    <p className="text-[10px] text-orange-400/80 mt-1">Upload an event banner to personalize</p>
                   </div>
+                )}
+              </div>
 
-                  {/* Marking Criteria */}
-                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-3">
-                    <div className="flex items-center justify-between pb-1 border-b border-[#f1f5f9]">
-                      <div>
-                        <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider flex items-center space-x-1">
-                          <Award className="w-3.5 h-3.5 mr-1" />
-                          JURY EVALUATION MARKING CRITERIA
-                        </span>
-                        <p className="text-[11px] text-[#64748b]">
-                          Configure evaluation criteria names, descriptions, and max marks for {round.name}.
-                        </p>
+              {/* Upload Dropzone */}
+              <div
+                onDragOver={(e) => {
+                  e.preventDefault();
+                  setBannerDragOver(true);
+                }}
+                onDragLeave={() => setBannerDragOver(false)}
+                onDrop={(e) => {
+                  e.preventDefault();
+                  setBannerDragOver(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                    handleBannerFile(e.dataTransfer.files[0]);
+                  }
+                }}
+                onClick={() => fileInputRef.current?.click()}
+                className={`border border-dashed rounded-xl py-3.5 px-4 text-center cursor-pointer transition-all duration-200 group ${
+                  bannerDragOver
+                    ? 'border-orange-500 bg-orange-50/30'
+                    : 'border-zinc-200 hover:border-orange-400 bg-zinc-50/60 hover:bg-orange-50/10'
+                }`}
+              >
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      handleBannerFile(e.target.files[0]);
+                    }
+                  }}
+                  accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                  className="hidden"
+                />
+                <div className="flex items-center justify-center space-x-1.5">
+                  <UploadCloud className="w-4 h-4 text-orange-500 group-hover:scale-110 transition-transform" />
+                  <span className="text-xs font-bold text-orange-600 hover:text-orange-700">
+                    Click to upload banner
+                  </span>
+                  <span className="text-xs text-zinc-500">or drag and drop</span>
+                </div>
+                <p className="text-[10px] text-zinc-400 mt-0.5">
+                  PNG, JPG, WEBP, or SVG up to 5MB (Recommended 1200 &times; 400px)
+                </p>
+              </div>
+            </div>
+
+            {/* Description with formatting toolbar and counter */}
+            <div className="space-y-1.5 pt-1">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-zinc-700">
+                  Description <span className="text-rose-500">*</span>{' '}
+                  <span className="font-normal text-zinc-400">(min 20 characters)</span>
+                </label>
+
+                {/* Toolbar */}
+                <div className="flex items-center space-x-0.5 bg-zinc-50 border border-zinc-200 rounded-lg p-0.5">
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('', '\n')}
+                    className="px-1.5 py-1 text-[11px] font-semibold text-zinc-600 hover:bg-zinc-200/70 rounded flex items-center gap-0.5"
+                  >
+                    <span>Paragraph</span>
+                    <ChevronDown className="w-3 h-3 text-zinc-400" />
+                  </button>
+                  <div className="w-px h-3.5 bg-zinc-200 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('**', '**')}
+                    className="p-1 hover:bg-zinc-200/70 rounded text-zinc-700 transition-colors"
+                    title="Bold"
+                  >
+                    <Bold className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('*', '*')}
+                    className="p-1 hover:bg-zinc-200/70 rounded text-zinc-700 transition-colors"
+                    title="Italic"
+                  >
+                    <Italic className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('<u>', '</u>')}
+                    className="p-1 hover:bg-zinc-200/70 rounded text-zinc-700 transition-colors"
+                    title="Underline"
+                  >
+                    <Underline className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="w-px h-3.5 bg-zinc-200 mx-0.5" />
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('\n- ')}
+                    className="p-1 hover:bg-zinc-200/70 rounded text-zinc-700 transition-colors"
+                    title="Bullet List"
+                  >
+                    <List className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('\n1. ')}
+                    className="p-1 hover:bg-zinc-200/70 rounded text-zinc-700 transition-colors"
+                    title="Numbered List"
+                  >
+                    <ListOrdered className="w-3.5 h-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => applyFormat('[', '](https://)')}
+                    className="p-1 hover:bg-zinc-200/70 rounded text-zinc-700 transition-colors"
+                    title="Link"
+                  >
+                    <Link2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              <textarea
+                ref={descTextareaRef}
+                required
+                rows={4}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                placeholder="Comprehensive multi-tier competitive hackathon focusing on Quantum Computing & Cryptographic Verification at enterprise production scale with full AI jury verification."
+                className="w-full p-3 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-900 leading-relaxed transition-all hover:border-zinc-300"
+              />
+
+              <div className="flex justify-end text-[11px] text-zinc-400">
+                <span>{description.length}/1000 characters</span>
+              </div>
+            </div>
+          </div>
+
+          {/* ====================================================== */}
+          {/* ROW 2 - LEFT: TEAM SETTINGS & RULES */}
+          {/* ====================================================== */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-4">
+            <div className="border-b border-zinc-100 pb-3 flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+                <Users className="w-4 h-4 stroke-[2.2]" />
+              </div>
+              <div>
+                <h2 className="text-base font-extrabold text-zinc-900">Team Settings &amp; Rules</h2>
+                <p className="text-xs text-zinc-500 font-normal">Define team size and participation limits.</p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700">Min Team Size</label>
+                <input
+                  type="number"
+                  min="1"
+                  max={maxTeamSize}
+                  value={minTeamSize}
+                  onChange={(e) => setMinTeamSize(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-bold hover:border-zinc-300 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700">Max Team Size</label>
+                <input
+                  type="number"
+                  min={minTeamSize}
+                  max="20"
+                  value={maxTeamSize}
+                  onChange={(e) => setMaxTeamSize(Number(e.target.value))}
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-bold hover:border-zinc-300 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700">Max Teams Allowed (Overall)</label>
+                <input
+                  type="text"
+                  value={maxTeamsAllowed}
+                  onChange={(e) => setMaxTeamsAllowed(e.target.value)}
+                  placeholder="100"
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-bold hover:border-zinc-300 transition-all"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* ====================================================== */}
+          {/* ROW 2 - RIGHT: IMPORTANT DETAILS */}
+          {/* ====================================================== */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-4">
+            <div className="border-b border-zinc-100 pb-3 flex items-start gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+                <Calendar className="w-4 h-4 stroke-[2.2]" />
+              </div>
+              <div>
+                <h2 className="text-base font-extrabold text-zinc-900">Important Details</h2>
+                <p className="text-xs text-zinc-500 font-normal">
+                  Set the overall registration and hackathon submission deadlines.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700">
+                  Registration Deadline <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={registrationDeadline}
+                  onChange={(e) => setRegistrationDeadline(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800 font-medium hover:border-zinc-300 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700">
+                  Event Start Date &amp; Time <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={eventStartTime}
+                  onChange={(e) => setEventStartTime(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800 font-medium hover:border-zinc-300 transition-all"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-zinc-700">
+                  Event End Date &amp; Time <span className="text-rose-500">*</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={eventEndTime}
+                  onChange={(e) => setEventEndTime(e.target.value)}
+                  className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800 font-medium hover:border-zinc-300 transition-all"
+                />
+              </div>
+            </div>
+
+            {/* Authoritative Submission Window configuration toggle */}
+            <div className="pt-2 border-t border-zinc-100">
+              <button
+                type="button"
+                onClick={() => setShowAdvancedWindow(!showAdvancedWindow)}
+                className="text-[11px] font-bold text-zinc-500 hover:text-orange-600 flex items-center gap-1 transition-colors"
+              >
+                <span>Submission Window (Server Authoritative Cutoff)</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform ${showAdvancedWindow ? 'rotate-180' : ''}`} />
+              </button>
+
+              {showAdvancedWindow && (
+                <div className="mt-3 p-3 bg-zinc-50 rounded-xl border border-zinc-200/80 space-y-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-zinc-500 uppercase">SUBMISSION OPENS</span>
+                      <input
+                        type="datetime-local"
+                        value={subStartTime}
+                        onChange={(e) => setSubStartTime(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <span className="text-[10px] font-bold text-rose-500 uppercase">SUBMISSION DEADLINE</span>
+                      <input
+                        type="datetime-local"
+                        value={subEndTime}
+                        onChange={(e) => setSubEndTime(e.target.value)}
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* ====================================================== */}
+          {/* ROW 3 - LEFT: EVALUATION ROUNDS */}
+          {/* ====================================================== */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-5">
+            <div className="border-b border-zinc-100 pb-3 flex items-center justify-between gap-2">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+                  <Layers className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-zinc-900">Evaluation Rounds</h2>
+                  <p className="text-xs text-zinc-500 font-normal">
+                    Define the sequence of evaluation rounds and their specific problem statements.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={addRound}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100/70 border border-orange-200/80 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Add Round</span>
+              </button>
+            </div>
+
+            {/* Rounds rendering */}
+            <div className="space-y-4">
+              {rounds.map((round, rIdx) => {
+                const isSelected = activeRoundIdx === rIdx;
+                const isCollapsed = roundCollapsed[rIdx];
+
+                return (
+                  <div
+                    key={rIdx}
+                    onClick={() => setActiveRoundIdx(rIdx)}
+                    className={`border rounded-2xl p-4.5 space-y-4 transition-all duration-200 ${
+                      isSelected
+                        ? 'border-orange-300 bg-zinc-50/60 ring-2 ring-orange-500/10 shadow-xs'
+                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/40'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRoundCollapsed((prev) => ({ ...prev, [rIdx]: !prev[rIdx] }));
+                          }}
+                          className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-800 hover:text-orange-600 transition-colors"
+                        >
+                          <ChevronDown
+                            className={`w-4 h-4 text-zinc-500 transition-transform ${
+                              isCollapsed ? '-rotate-90' : ''
+                            }`}
+                          />
+                          <span>Round {rIdx + 1}</span>
+                        </button>
+                        {round.isFinal && (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                            FINALE
+                          </span>
+                        )}
+                        {isSelected && (
+                          <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                            Active Round
+                          </span>
+                        )}
                       </div>
 
                       <button
                         type="button"
-                        onClick={() => addCriterion(rIdx)}
-                        className="inline-flex items-center gap-1 px-3 py-1 text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-xl shadow-xs transition-colors cursor-pointer"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          removeRound(rIdx);
+                        }}
+                        disabled={rounds.length <= 1}
+                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                        title="Delete Round"
                       >
-                        <Plus className="w-3 h-3 stroke-[2.5]" />
-                        <span>Add Criterion</span>
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
 
-                    <div className="space-y-3">
-                      {round.criteria.map((crit, cIdx) => (
-                        <div
-                          key={cIdx}
-                          className="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-2 relative"
-                        >
-                          <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
-                            <div className="sm:col-span-3 space-y-1">
-                              <span className="text-[9px] font-bold text-[#64748b] uppercase">CRITERION NAME</span>
-                              <input
-                                type="text"
-                                value={crit.name}
-                                onChange={(e) => updateCriterion(rIdx, cIdx, 'name', e.target.value)}
-                                placeholder="e.g. Technical Implementation"
-                                className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                              />
+                    {!isCollapsed && (
+                      <div className="space-y-4 pt-1">
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                          <div className="space-y-1">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                                ROUND NAME
+                              </span>
+                              <label className="flex items-center space-x-1 cursor-pointer">
+                                <span className="text-[10px] font-bold text-zinc-500 uppercase">
+                                  FINAL ROUND
+                                </span>
+                                <input
+                                  type="checkbox"
+                                  checked={round.isFinal}
+                                  onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
+                                  className="rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
+                                />
+                              </label>
                             </div>
-                            <div className="space-y-1">
-                              <span className="text-[9px] font-bold text-[#64748b] uppercase">MAX MARKS</span>
-                              <input
-                                type="text"
-                                inputMode="numeric"
-                                value={crit.maxMarks ?? ''}
-                                onChange={(e) => {
-                                  // Strip leading zeroes before digits (e.g. "015" -> "15", "05" -> "5")
-                                  const clean = e.target.value.replace(/[^0-9]/g, '').replace(/^0+(?=[0-9])/, '');
-                                  updateCriterion(rIdx, cIdx, 'maxMarks', clean);
-                                }}
-                                onBlur={() => {
-                                  const val = Number(crit.maxMarks);
-                                  if (!val || val < 1) {
-                                    updateCriterion(rIdx, cIdx, 'maxMarks', 10);
-                                  } else {
-                                    updateCriterion(rIdx, cIdx, 'maxMarks', val);
-                                  }
-                                }}
-                                className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg font-bold text-[#2563eb] focus:outline-none focus:border-[#2563eb]"
-                              />
-                            </div>
+                            <input
+                              type="text"
+                              value={round.name}
+                              onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
+                              placeholder="e.g. The Qualifiers"
+                              className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl font-bold text-zinc-900 focus:outline-none focus:border-orange-500"
+                            />
                           </div>
 
-                          <div className="space-y-1">
-                            <span className="text-[9px] font-bold text-[#64748b] uppercase">DESCRIPTION / GUIDE FOR JURY</span>
-                            <div className="flex items-center space-x-2">
-                              <input
-                                type="text"
-                                value={crit.description}
-                                onChange={(e) => updateCriterion(rIdx, cIdx, 'description', e.target.value)}
-                                placeholder="Guidelines for evaluators and AI scoring..."
-                                className="flex-1 px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                              />
-                              <button
-                                type="button"
-                                onClick={() => removeCriterion(rIdx, cIdx)}
-                                disabled={round.criteria.length <= 1}
-                                className="p-1 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
-                              >
-                                <Trash2 className="w-3.5 h-3.5" />
-                              </button>
-                            </div>
+                          <div className="sm:col-span-2 space-y-1">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              ROUND TYPE
+                            </span>
+                            <select
+                              value={round.roundType}
+                              onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
+                              className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-semibold cursor-pointer"
+                            >
+                              <option value="Mock Hackathon">Mock Hackathon</option>
+                              <option value="Hackathon">Hackathon</option>
+                              <option value="Ideation">Ideation</option>
+                              <option value="Presentation">Presentation</option>
+                              <option value="Coding Challenge">Coding Challenge</option>
+                            </select>
                           </div>
                         </div>
-                      ))}
-                    </div>
 
-                    <div className="p-3 bg-[#eff6ff] border border-[#dbeafe] rounded-xl flex items-center justify-between">
-                      <span className="text-xs font-bold text-[#2563eb] uppercase tracking-wider">
-                        TOTAL ROUND EVALUATION MARKS:
-                      </span>
-                      <span className="px-3 py-1 bg-white border border-[#bfdbfe] rounded-full text-xs font-bold text-[#2563eb] shadow-xs">
-                        {totalMarks} Marks
-                      </span>
-                    </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              START DATE &amp; TIME
+                            </span>
+                            <input
+                              type="datetime-local"
+                              value={round.startDate}
+                              onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              END DATE &amp; TIME
+                            </span>
+                            <input
+                              type="datetime-local"
+                              value={round.endDate}
+                              onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                            />
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              SUBMISSION DEADLINE
+                            </span>
+                            <input
+                              type="datetime-local"
+                              value={round.submissionDeadline}
+                              onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                            />
+                          </div>
+                          <div className="space-y-1">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              MAX TEAMS ALLOWED
+                            </span>
+                            <input
+                              type="number"
+                              min="1"
+                              value={round.maxTeamsAllowed}
+                              onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
+                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-bold"
+                            />
+                          </div>
+                        </div>
+
+                        {/* What to Evaluate (Required Submissions) */}
+                        <div className="space-y-2 pt-1">
+                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">
+                            WHAT TO EVALUATE (REQUIRED SUBMISSIONS)
+                          </span>
+                          <div className="flex flex-wrap gap-2">
+                            {[
+                              { key: 'github', label: 'GitHub link' },
+                              { key: 'ppt', label: 'PPT link' },
+                              { key: 'techStack', label: 'Tech stack' },
+                              { key: 'video', label: 'Video link' },
+                              { key: 'document', label: 'Document link' },
+                            ].map((item) => {
+                              const checked = (round.requiredSubmissions as any)[item.key];
+                              return (
+                                <button
+                                  key={item.key}
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    const updatedReqs = {
+                                      ...round.requiredSubmissions,
+                                      [item.key]: !checked,
+                                    };
+                                    updateRound(rIdx, 'requiredSubmissions', updatedReqs);
+                                  }}
+                                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center space-x-1.5 transition-all cursor-pointer ${
+                                    checked
+                                      ? 'bg-[#FA541C] text-white border-[#FA541C] shadow-xs'
+                                      : 'bg-white text-zinc-600 border-zinc-200 hover:border-orange-300 hover:bg-zinc-50'
+                                  }`}
+                                >
+                                  <span>{checked ? '✓' : '+'}</span>
+                                  <span>{item.label}</span>
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
-
-                  {/* Tracks & Challenge Questions for this specific round */}
-                  <div className="pt-2 border-t border-[#e2e8f0]">
-                    <TracksAndProblemsEditor
-                      embeddedInRound
-                      roundIndex={rIdx}
-                      roundName={round.name || `Round ${rIdx + 1}`}
-                      tracks={round.tracks || []}
-                      onChange={(newTracks) => updateRoundTracks(rIdx, newTracks)}
-                      onCopyFromPrevious={
-                        rIdx > 0 && (rounds[0]?.tracks?.length || 0) > 0
-                          ? () => copyTracksFromRound(0, rIdx)
-                          : undefined
-                      }
-                      previousRoundName={rIdx > 0 ? (rounds[0]?.name || 'Round 1') : undefined}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ======================================================== */}
-        {/* SECTION 4: IMPORTANT DETAILS */}
-        {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-[#2563eb]" />
-            <div>
-              <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
-              <p className="text-xs text-[#64748b]">
-                Set the overall registration deadline for participants. Round-specific dates and deadlines are managed in their respective rounds above.
-              </p>
+                );
+              })}
             </div>
           </div>
 
-          <div className="space-y-1.5 max-w-md">
-            <label className="text-xs font-bold text-[#334155]">Registration Deadline*</label>
-            <input
-              type="datetime-local"
-              required
-              value={registrationDeadline}
-              onChange={(e) => setRegistrationDeadline(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-            />
-            {registrationDeadline && (
-              <span className="text-[11px] font-medium text-[#2563eb] block pt-0.5">
-                {formatDateDisplay(registrationDeadline)}
+          {/* ====================================================== */}
+          {/* ROW 3 - RIGHT: JURY EVALUATION MARKING CRITERIA */}
+          {/* ====================================================== */}
+          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-5">
+            <div className="border-b border-zinc-100 pb-3 flex items-center justify-between gap-2">
+              <div className="flex items-start gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+                  <Award className="w-4 h-4 stroke-[2.2]" />
+                </div>
+                <div>
+                  <h2 className="text-base font-extrabold text-zinc-900">Jury Evaluation Marking Criteria</h2>
+                  <p className="text-xs text-zinc-500 font-normal">
+                    Define the evaluation criteria and maximum marks for each criterion.
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => addCriterion(activeRoundIdx)}
+                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100/70 border border-orange-200/80 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+              >
+                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                <span>Add Criterion</span>
+              </button>
+            </div>
+
+            {/* Criteria Cards */}
+            <div className="space-y-3">
+              {currentRound?.criteria.map((crit, cIdx) => (
+                <div
+                  key={cIdx}
+                  className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-2.5 hover:border-zinc-300 transition-all"
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                    <div className="sm:col-span-3 space-y-1">
+                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                        CRITERION NAME
+                      </span>
+                      <input
+                        type="text"
+                        value={crit.name}
+                        onChange={(e) => updateCriterion(activeRoundIdx, cIdx, 'name', e.target.value)}
+                        placeholder="e.g. Technical Execution"
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-900 font-semibold"
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                          MAX MARKS
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => removeCriterion(activeRoundIdx, cIdx)}
+                          disabled={currentRound.criteria.length <= 1}
+                          className="text-rose-500 hover:text-rose-700 disabled:opacity-20 cursor-pointer"
+                          title="Delete Criterion"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                      <input
+                        type="text"
+                        inputMode="numeric"
+                        value={crit.maxMarks ?? ''}
+                        onChange={(e) => {
+                          const clean = e.target.value.replace(/[^0-9]/g, '').replace(/^0+(?=[0-9])/, '');
+                          updateCriterion(activeRoundIdx, cIdx, 'maxMarks', clean);
+                        }}
+                        onBlur={() => {
+                          const val = Number(crit.maxMarks);
+                          if (!val || val < 1) {
+                            updateCriterion(activeRoundIdx, cIdx, 'maxMarks', 10);
+                          } else {
+                            updateCriterion(activeRoundIdx, cIdx, 'maxMarks', val);
+                          }
+                        }}
+                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg font-bold text-orange-600 focus:outline-none focus:border-orange-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                      DESCRIPTION / GUIDE FOR JURY
+                    </span>
+                    <input
+                      type="text"
+                      value={crit.description}
+                      onChange={(e) => updateCriterion(activeRoundIdx, cIdx, 'description', e.target.value)}
+                      placeholder="e.g. Code architecture and robustness"
+                      className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-800"
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Total Marks Bar */}
+            <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
+              <span className="text-xs font-bold text-blue-900 tracking-wider">
+                Total Round Evaluation Marks:
               </span>
-            )}
+              <span className="px-3 py-0.5 rounded-full text-xs font-bold text-blue-600 bg-white border border-blue-200 shadow-2xs">
+                {currentTotalMarks} Marks
+              </span>
+            </div>
           </div>
         </div>
 
-        {/* Bottom Actions */}
-        <div className="flex items-center justify-end space-x-3 pt-4 border-t border-[#e2e8f0]">
+        {/* ======================================================== */}
+        {/* ROW 4 - FULL WIDTH: TRACKS & QUESTIONS */}
+        {/* ======================================================== */}
+        <div className="w-full">
+          <TracksAndProblemsEditor
+            embeddedInRound
+            roundIndex={activeRoundIdx}
+            roundName={currentRound?.name || `Round ${activeRoundIdx + 1}`}
+            rounds={rounds.map(r => ({ name: r.name, isFinal: r.isFinal, roundType: r.roundType }))}
+            tracks={currentRound?.tracks || []}
+            onChange={(newTracks) => updateRoundTracks(activeRoundIdx, newTracks)}
+            onCopyFromPrevious={
+              activeRoundIdx > 0 && (rounds[0]?.tracks?.length || 0) > 0
+                ? () => copyTracksFromRound(0, activeRoundIdx)
+                : undefined
+            }
+            previousRoundName={activeRoundIdx > 0 ? (rounds[0]?.name || 'Round 1') : undefined}
+          />
+        </div>
+
+        {/* Bottom Actions Bar */}
+        <div className="flex items-center justify-end space-x-3 pt-6 border-t border-zinc-200">
           <Link
             href="/admin/hackathons"
-            className="px-5 py-2.5 text-xs font-semibold text-[#334155] bg-white border border-[#e2e8f0] hover:bg-[#f8fafc] rounded-xl transition-all"
+            className="px-5 py-2.5 text-xs font-semibold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-xl transition-all"
           >
             Cancel
           </Link>
@@ -1134,16 +1375,16 @@ export default function AdminCreateHackathonPage() {
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-[#2563eb] hover:bg-[#1d4ed8] rounded-xl shadow-xs transition-all disabled:opacity-60 cursor-pointer"
+            className="inline-flex items-center gap-2 px-6 py-2.5 text-xs font-bold text-white bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#E03A00] hover:to-[#C83200] rounded-xl shadow-md shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-60 cursor-pointer"
           >
             {saving ? (
               <>
                 <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Creating Hackathon...</span>
+                <span>Creating Event...</span>
               </>
             ) : (
               <>
-                <CheckCircle2 className="w-3.5 h-3.5" />
+                <Check className="w-3.5 h-3.5" />
                 <span>Create Hackathon</span>
               </>
             )}

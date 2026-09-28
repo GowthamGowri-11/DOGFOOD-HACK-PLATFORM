@@ -1,17 +1,14 @@
 export async function register() {
-  if (typeof process !== 'undefined' && process.versions?.node) {
+  if (process.env.NEXT_RUNTIME === 'nodejs') {
     try {
-      const dns = require('dns');
+      const dns = await import('dns');
       if (typeof dns.setDefaultResultOrder === 'function') {
         dns.setDefaultResultOrder('ipv4first');
       }
     } catch {
       // Ignore
     }
-  }
 
-
-  if (process.env.NEXT_RUNTIME === 'nodejs') {
     try {
       const { initWebSocketServer } = await import('@/server/websocket/ws-server');
       initWebSocketServer();

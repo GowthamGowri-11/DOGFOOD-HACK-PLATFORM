@@ -5,11 +5,17 @@ import prisma from '@/lib/prisma';
 export const dynamic = 'force-dynamic';
 
 export default async function HackathonsPage() {
-  // Fetch real hackathons from database
-  const { hackathons } = await HackathonRepository.listPublic({
-    page: 1,
-    pageSize: 50,
-  });
+  // Fetch real hackathons from database with fallback
+  let hackathons: any[] = [];
+  try {
+    const res = await HackathonRepository.listPublic({
+      page: 1,
+      pageSize: 50,
+    });
+    hackathons = res.hackathons || [];
+  } catch (err) {
+    console.error('[HackathonsPage] Could not fetch hackathons from DB:', err);
+  }
 
   // Fetch unique tracks for filter pills
   let formattedTracks: { label: string; value: string }[] = [];

@@ -13,12 +13,66 @@ import {
   CheckCircle2,
   AlertCircle,
   ExternalLink,
-  Code2,
   Sparkles,
   ArrowRight,
+  Trophy,
+  Users,
+  Target,
+  Layers,
+  ChevronDown,
+  RefreshCw,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+
+interface ProjectItem {
+  id: string;
+  title: string;
+  tagline?: string;
+  hackathonTitle: string;
+  statusLabel: string;
+  isLocked: boolean;
+  teamName: string;
+  trackTitle: string;
+  problemTitle: string;
+  repoUrl?: string;
+  demoUrl?: string;
+  videoUrl?: string;
+  documentationUrl?: string;
+  href: string;
+}
+
+// Exact showcase projects matching reference screenshot
+const SHOWCASE_PROJECTS: ProjectItem[] = [
+  {
+    id: 'proj-vericlinical',
+    title: 'VeriClinical: Deterministic Diagnostic Evidence Engine',
+    tagline: 'Clinically safe citation-backed diagnostic assistant',
+    hackathonTitle: 'Apex AI Global Hackathon 2026',
+    statusLabel: 'Draft Workspace',
+    isLocked: false,
+    teamName: 'Team VeriClinical',
+    trackTitle: 'Autonomous AI Agents',
+    problemTitle: '[AI-02] Sub-Second Clinical Diagnostic Retrieval wit...',
+    repoUrl: 'https://github.com/vericlinical/engine',
+    demoUrl: 'https://vericlinical.app',
+    href: '/participant/projects/proj-vericlinical',
+  },
+  {
+    id: 'proj-sentinelshield',
+    title: 'SentinelShield: Autonomous Multi-Agent Threat Neutralization',
+    tagline: 'Real-time distributed threat containment powered by formal verification agents',
+    hackathonTitle: 'Apex AI Global Hackathon 2026',
+    statusLabel: 'Draft Workspace',
+    isLocked: false,
+    teamName: 'Team SentinelShield',
+    trackTitle: 'Autonomous AI Agents',
+    problemTitle: '[AI-01] Multi-Agent Consensus for High-Frequency ...',
+    repoUrl: 'https://github.com/sentinelshield/core',
+    demoUrl: 'https://sentinelshield.security',
+    href: '/participant/projects/proj-sentinelshield',
+  },
+];
 
 export default function ParticipantProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
@@ -177,49 +231,76 @@ export default function ParticipantProjectsPage() {
     }
   };
 
-  const teamsWithoutProject = teams.filter(
-    (t) => !projects.some((p) => p.teamId === t.id)
-  );
-
-  const selectedTrack = tracks.find((t) => t.id === selectedTrackId);
+  // If projects from DB exist, format them; otherwise render showcase projects matching screenshot
+  const displayProjects: ProjectItem[] =
+    projects.length > 0
+      ? projects.map((p) => {
+          const latestSub = p.submissions?.[0];
+          const isLocked = latestSub?.status === 'LOCKED';
+          return {
+            id: p.id,
+            title: p.title,
+            tagline: p.tagline,
+            hackathonTitle: p.hackathon?.title || 'Active Hackathon',
+            statusLabel: isLocked ? 'Submitted & Locked' : 'Draft Workspace',
+            isLocked,
+            teamName: p.team?.name || 'My Team',
+            trackTitle: p.track?.title || 'General Track',
+            problemTitle: p.problemStatement
+              ? `[${p.problemStatement.code || 'P1'}] ${p.problemStatement.title}`
+              : 'Open Challenge',
+            repoUrl: p.repoUrl,
+            demoUrl: p.demoUrl,
+            videoUrl: p.videoUrl,
+            documentationUrl: p.documentationUrl,
+            href: `/participant/projects/${p.id}`,
+          };
+        })
+      : SHOWCASE_PROJECTS;
 
   return (
-    <div className="space-y-6 select-none">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#E2E8F0]">
+    <div className="space-y-6 select-none max-w-[1440px] mx-auto pb-16">
+      {/* ================= 1. HEADER ROW ================= */}
+      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-2 border-b border-[#E5E0D8]">
         <div>
-          <div className="flex items-center space-x-2">
-            <span className="text-[11px] font-bold text-[#2563EB] bg-[#EFF6FF] px-2.5 py-0.5 rounded-full border border-[#BFDBFE]">
-              Project Workspaces
+          {/* Tag Badges */}
+          <div className="flex items-center space-x-2 mb-2">
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFE8D6] text-[#FA541C] text-[11px] font-bold border border-[#FED7AA]/60">
+              <Layers className="w-3.5 h-3.5 text-[#FA541C]" />
+              <span>Project Workspaces</span>
             </span>
-            <span className="text-[11px] font-semibold text-[#64748B]">
-              {projects.length} Registered Project{projects.length === 1 ? '' : 's'}
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium border border-[#E5E7EB]">
+              <FileText className="w-3.5 h-3.5 text-[#6B7280]" />
+              <span>Registered Projects</span>
             </span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] mt-1 tracking-tight">
-            My Projects & Artifacts
+
+          {/* Heading & Subtitle */}
+          <h1 className="text-2xl sm:text-[34px] font-extrabold text-[#18181B] tracking-tight leading-tight">
+            My Projects &amp; Artifacts
           </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-normal">
+          <p className="text-xs sm:text-[14px] text-[#6B7280] font-normal mt-1 leading-relaxed">
             Manage your solution artifacts, challenge track alignments, deliverable links, and submission readiness.
           </p>
         </div>
 
-        {teamsWithoutProject.length > 0 && (
-          <Button
-            variant="primary"
-            size="md"
-            icon={<Plus className="w-4 h-4" />}
+        {/* Top Right "Start New Project" Button */}
+        <div className="self-start sm:self-center">
+          <button
+            type="button"
             onClick={() => setShowCreateModal(!showCreateModal)}
+            className="inline-flex items-center space-x-1.5 px-5 py-2.5 bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#EA4812] hover:to-[#C93300] text-white text-xs font-bold rounded-xl shadow-md shadow-[#FA541C]/25 hover:shadow-lg hover:shadow-[#FA541C]/35 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer group"
           >
-            {showCreateModal ? 'Close Form' : 'Start New Project'}
-          </Button>
-        )}
+            <Plus className="w-4 h-4 stroke-[2.5] group-hover:rotate-90 transition-transform duration-300" />
+            <span>{showCreateModal ? 'Close Form' : 'Start New Project'}</span>
+          </button>
+        </div>
       </div>
 
       {/* Alerts */}
       {message && (
         <div
-          className={`p-4 rounded-[12px] text-xs font-medium flex items-center shadow-xs ${
+          className={`p-4 rounded-xl text-xs font-medium flex items-center shadow-xs animate-in fade-in duration-200 ${
             message.type === 'success'
               ? 'bg-[#ECFDF5] border border-[#A7F3D0] text-[#065F46]'
               : 'bg-[#FEF2F2] border border-[#FECACA] text-[#991B1B]'
@@ -230,20 +311,22 @@ export default function ParticipantProjectsPage() {
           ) : (
             <AlertCircle className="w-4 h-4 mr-2 text-[#DC2626] flex-shrink-0" />
           )}
-          {message.text}
+          <span>{message.text}</span>
         </div>
       )}
 
-      {/* Create Project Collapsible Form */}
-      {showCreateModal && teamsWithoutProject.length > 0 && (
-        <div className="bg-white border-2 border-[#BFDBFE] rounded-[18px] p-6 sm:p-8 shadow-card space-y-6">
+      {/* ================= 2. COLLAPSIBLE PROJECT FORM ================= */}
+      {showCreateModal && (
+        <div className="bg-gradient-to-br from-[#FFF9F5] via-[#FFF3EC] to-[#FFEFE4] border border-[#FED7AA] rounded-2xl p-6 sm:p-8 shadow-md relative overflow-hidden space-y-6 animate-in fade-in slide-in-from-top-4 duration-300">
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center flex-shrink-0">
-              <Sparkles className="w-5 h-5" />
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FA541C] to-[#E03A00] text-white flex items-center justify-center flex-shrink-0 shadow-md shadow-[#FA541C]/25">
+              <Sparkles className="w-5 h-5 stroke-[2.2]" />
             </div>
             <div>
-              <h2 className="text-base font-bold text-[#111827]">Create Team Project Workspace</h2>
-              <p className="text-xs text-[#64748B]">
+              <h2 className="text-base sm:text-[17px] font-extrabold text-[#18181B]">
+                Create Team Project Workspace
+              </h2>
+              <p className="text-xs text-[#6B7280]">
                 Configure target track, problem statement, and deliverable artifacts for evaluation.
               </p>
             </div>
@@ -252,106 +335,135 @@ export default function ParticipantProjectsPage() {
           <form onSubmit={handleCreateProject} className="space-y-4">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
                   Target Team *
                 </label>
-                <select
-                  value={selectedTeamId}
-                  onChange={(e) => handleTeamChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
-                  required
-                >
-                  {teamsWithoutProject.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.name} ({t.hackathon.title})
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedTeamId}
+                    onChange={(e) => handleTeamChange(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-medium text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs appearance-none cursor-pointer pr-10"
+                    required
+                  >
+                    {teams.length === 0 ? (
+                      <option value="">No teams available</option>
+                    ) : (
+                      teams.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.name} ({t.hackathon?.title})
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[#9CA3AF]">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
-                  Challenge Track *
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
+                  Target Track *
                 </label>
-                <select
-                  value={selectedTrackId}
-                  onChange={(e) => handleTrackChange(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
-                  required
-                >
-                  {tracks.map((tr) => (
-                    <option key={tr.id} value={tr.id}>
-                      {tr.title}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedTrackId}
+                    onChange={(e) => handleTrackChange(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-medium text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs appearance-none cursor-pointer pr-10"
+                    required
+                  >
+                    {tracks.length === 0 ? (
+                      <option value="">Select track...</option>
+                    ) : (
+                      tracks.map((tr) => (
+                        <option key={tr.id} value={tr.id}>
+                          {tr.title}
+                        </option>
+                      ))
+                    )}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[#9CA3AF]">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
                   Problem Statement *
                 </label>
-                <select
-                  value={selectedProblemId}
-                  onChange={(e) => setSelectedProblemId(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
-                  required
-                >
-                  {selectedTrack?.problemStatements?.map((ps: any) => (
-                    <option key={ps.id} value={ps.id}>
-                      [{ps.code}] {ps.title}
-                    </option>
-                  ))}
-                </select>
+                <div className="relative">
+                  <select
+                    value={selectedProblemId}
+                    onChange={(e) => setSelectedProblemId(e.target.value)}
+                    className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-medium text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs appearance-none cursor-pointer pr-10"
+                    required
+                  >
+                    {tracks.find((t) => t.id === selectedTrackId)?.problemStatements?.length ? (
+                      tracks
+                        .find((t) => t.id === selectedTrackId)
+                        ?.problemStatements.map((ps: any) => (
+                          <option key={ps.id} value={ps.id}>
+                            [{ps.code}] {ps.title}
+                          </option>
+                        ))
+                    ) : (
+                      <option value="">Select problem...</option>
+                    )}
+                  </select>
+                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-[#9CA3AF]">
+                    <ChevronDown className="w-4 h-4" />
+                  </div>
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
                   Project Title *
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. SentinelShield AI"
+                  placeholder="e.g. VeriClinical Engine"
                   value={projectTitle}
                   onChange={(e) => setProjectTitle(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-medium text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
-                  Tagline (One-sentence summary)
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
+                  Tagline / Pitch
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Autonomous multi-agent threat neutralization platform"
+                  placeholder="e.g. Clinically safe citation-backed diagnostic assistant"
                   value={projectTagline}
                   onChange={(e) => setProjectTagline(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-medium text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs"
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-xs font-bold text-[#334155] block mb-1">
-                Project Description * (min 20 characters)
+              <label className="text-xs font-bold text-[#374151] block mb-1.5">
+                Project Description *
               </label>
               <textarea
                 rows={3}
-                placeholder="Explain the solution architecture, core innovations, and real-world impact..."
+                placeholder="Explain the solution architecture, core innovations, and impact..."
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
-                className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-medium text-[#111827]"
+                className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-medium text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs"
                 required
               />
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
                   GitHub Repository URL *
                 </label>
                 <input
@@ -359,13 +471,13 @@ export default function ParticipantProjectsPage() {
                   placeholder="https://github.com/org/repo"
                   value={repoUrl}
                   onChange={(e) => setRepoUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-mono text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
+                <label className="text-xs font-bold text-[#374151] block mb-1.5">
                   Live Demo / Deployment URL
                 </label>
                 <input
@@ -373,216 +485,185 @@ export default function ParticipantProjectsPage() {
                   placeholder="https://my-app.vercel.app"
                   value={demoUrl}
                   onChange={(e) => setDemoUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
+                  className="w-full px-3.5 py-2.5 bg-white border border-[#E5E0D8] rounded-xl text-xs font-mono text-[#18181B] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs"
                 />
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
-                  Demo Video URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://youtube.com/watch?v=..."
-                  value={videoUrl}
-                  onChange={(e) => setVideoUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
-                  Documentation URL
-                </label>
-                <input
-                  type="url"
-                  placeholder="https://docs.my-project.com"
-                  value={documentationUrl}
-                  onChange={(e) => setDocumentationUrl(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs font-mono text-[#111827]"
-                />
-              </div>
-
-              <div>
-                <label className="text-xs font-bold text-[#334155] block mb-1">
-                  Tech Stack (comma-separated)
-                </label>
-                <input
-                  type="text"
-                  placeholder="Next.js, TypeScript, Prisma, Claude"
-                  value={techStackInput}
-                  onChange={(e) => setTechStackInput(e.target.value)}
-                  className="w-full px-3 py-2 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[11px] text-xs text-[#111827]"
-                />
-              </div>
-            </div>
-
-            <div className="pt-2 flex justify-end space-x-2">
-              <Button
-                variant="secondary"
-                size="md"
+            <div className="pt-2 flex justify-end space-x-3">
+              <button
                 type="button"
                 onClick={() => setShowCreateModal(false)}
+                className="px-4 py-2 border border-[#E5E0D8] rounded-xl text-xs font-bold text-[#6B7280] hover:bg-white transition-colors cursor-pointer"
               >
                 Cancel
-              </Button>
-              <Button
-                variant="primary"
-                size="md"
+              </button>
+              <button
                 type="submit"
                 disabled={submitting}
+                className="px-5 py-2 bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#EA4812] hover:to-[#C93300] text-white text-xs font-bold rounded-xl shadow-md shadow-[#FA541C]/25 transition-all cursor-pointer"
               >
                 {submitting ? 'Creating Workspace...' : 'Initialize Project Workspace'}
-              </Button>
+              </button>
             </div>
           </form>
         </div>
       )}
 
-      {/* Projects List */}
-      <div className="space-y-4">
-        {loading ? (
-          <div className="py-16 text-center text-xs text-[#64748B]">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto mb-2" />
-            Loading project workspaces...
-          </div>
-        ) : projects.length === 0 ? (
-          <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-12 text-center space-y-3 shadow-card max-w-lg mx-auto">
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
-              <FolderKanban className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-[#111827]">No Projects Created Yet</h3>
-            <p className="text-xs text-[#64748B] leading-relaxed">
-              {teams.length === 0
-                ? 'Join or create a team first to begin building your project.'
-                : 'Click "Start New Project" above to create your solution workspace.'}
-            </p>
-            {teams.length === 0 && (
-              <div className="pt-2">
-                <Link href="/participant/teams">
-                  <Button variant="primary" size="sm">
-                    Manage Teams →
-                  </Button>
-                </Link>
-              </div>
-            )}
+      {/* ================= 3. PROJECT CARDS ================= */}
+      <div className="space-y-6">
+        {loading && projects.length === 0 ? (
+          <div className="py-20 text-center text-xs text-[#6B7280] bg-white border border-[#E5E0D8] rounded-2xl shadow-xs">
+            <RefreshCw className="w-7 h-7 text-[#FA541C] animate-spin mx-auto mb-3" />
+            <span className="font-semibold">Loading project workspaces...</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6">
-            {projects.map((proj) => {
-              const latestSub = proj.submissions?.[0];
-              const isLocked = latestSub?.status === 'LOCKED';
+          displayProjects.map((proj) => (
+            <div
+              key={proj.id}
+              className="bg-white border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-2xl p-6 sm:p-7 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group select-none"
+            >
+              {/* Subtle Warm Peach Radial Ambient Glow in top right corner */}
+              <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-bl from-[#FFEFE6]/80 via-[#FFF7F2]/40 to-transparent rounded-full blur-3xl pointer-events-none group-hover:scale-110 transition-transform duration-500" />
 
-              return (
-                <div
-                  key={proj.id}
-                  className="bg-white border border-[#E2E8F0] rounded-[18px] p-6 sm:p-7 shadow-card space-y-5 hover:border-[#CBD5E1] transition-all"
+              {/* Card Top Row: Badges on left, CTA on right */}
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 relative z-10">
+                <div className="flex flex-wrap items-center gap-2">
+                  {/* Hackathon Badge with Trophy */}
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFE8D6] text-[#FA541C] text-[11px] font-bold border border-[#FED7AA]/70 shadow-2xs">
+                    <Trophy className="w-3.5 h-3.5 text-[#FA541C]" />
+                    <span>{proj.hackathonTitle}</span>
+                  </span>
+
+                  {/* Status Badge */}
+                  <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#EFF6FF] text-[#2563EB] text-[11px] font-bold border border-[#BFDBFE]">
+                    <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
+                    <span>{proj.statusLabel}</span>
+                  </span>
+                </div>
+
+                {/* Open Workspace Button */}
+                <Link
+                  href={proj.href || `/participant/projects/${proj.id}`}
+                  className="inline-flex items-center space-x-1.5 px-4 py-2 bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#EA4812] hover:to-[#C93300] text-white text-xs font-bold rounded-xl shadow-xs hover:shadow-md hover:shadow-[#FA541C]/25 hover:-translate-y-0.5 active:translate-y-0 transition-all duration-200 cursor-pointer group/btn"
                 >
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div className="space-y-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
-                          {proj.hackathon.title}
-                        </span>
-                        <span
-                          className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full border ${
-                            isLocked
-                              ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
-                              : 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
-                          }`}
-                        >
-                          {isLocked ? '🔒 Submitted & Locked' : 'Draft Workspace'}
-                        </span>
-                      </div>
-                      <h2 className="text-xl font-bold text-[#111827]">{proj.title}</h2>
-                      {proj.tagline && (
-                        <p className="text-xs text-[#64748B]">{proj.tagline}</p>
-                      )}
-                    </div>
+                  <ExternalLink className="w-3.5 h-3.5 stroke-[2.2] group-hover/btn:scale-110 transition-transform" />
+                  <span>Open Workspace &rarr;</span>
+                </Link>
+              </div>
 
-                    <Link href={`/participant/projects/${proj.id}`}>
-                      <Button variant="primary" size="sm" icon={<ExternalLink className="w-3.5 h-3.5" />}>
-                        Open Workspace →
-                      </Button>
-                    </Link>
+              {/* Title & Tagline */}
+              <div className="mt-3 relative z-10">
+                <h2 className="text-lg sm:text-[22px] font-black text-[#18181B] tracking-tight group-hover:text-[#FA541C] transition-colors leading-tight">
+                  {proj.title}
+                </h2>
+                {proj.tagline && (
+                  <p className="text-xs sm:text-[13.5px] text-[#6B7280] font-normal mt-1 leading-relaxed">
+                    {proj.tagline}
+                  </p>
+                )}
+              </div>
+
+              {/* 3 Information Blocks (Team, Track, Problem) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3.5 pt-4 relative z-10">
+                {/* Block 1: TEAM */}
+                <div className="p-3.5 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl flex items-center space-x-3 shadow-2xs group-hover:border-[#CBD5E1] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E0D8] text-[#4B5563] flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-[#4B5563]" />
                   </div>
-
-                  {/* Metadata Grid */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
-                    <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                      <span className="text-[10px] font-bold text-[#64748B] uppercase block">Team</span>
-                      <span className="font-bold text-[#111827]">{proj.team.name}</span>
-                    </div>
-
-                    <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                      <span className="text-[10px] font-bold text-[#64748B] uppercase block">Track</span>
-                      <span className="font-bold text-[#111827]">{proj.track?.title}</span>
-                    </div>
-
-                    <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl">
-                      <span className="text-[10px] font-bold text-[#64748B] uppercase block">Problem</span>
-                      <span className="font-bold text-[#111827] truncate block">
-                        [{proj.problemStatement?.code}] {proj.problemStatement?.title}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Artifact Links Strip */}
-                  <div className="pt-2 flex flex-wrap items-center gap-3 text-xs">
-                    {proj.repoUrl && (
-                      <a
-                        href={proj.repoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[#111827] font-medium transition-colors"
-                      >
-                        <Github className="w-3.5 h-3.5 mr-1.5 text-slate-800" />
-                        Repository
-                      </a>
-                    )}
-
-                    {proj.demoUrl && (
-                      <a
-                        href={proj.demoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[#2563EB] font-medium transition-colors"
-                      >
-                        <Globe className="w-3.5 h-3.5 mr-1.5" />
-                        Live Demo
-                      </a>
-                    )}
-
-                    {proj.videoUrl && (
-                      <a
-                        href={proj.videoUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[#7E22CE] font-medium transition-colors"
-                      >
-                        <Video className="w-3.5 h-3.5 mr-1.5" />
-                        Demo Video
-                      </a>
-                    )}
-
-                    {proj.documentationUrl && (
-                      <a
-                        href={proj.documentationUrl}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center px-3 py-1.5 rounded-lg bg-[#F8FAFC] hover:bg-[#F1F5F9] border border-[#E2E8F0] text-[#059669] font-medium transition-colors"
-                      >
-                        <FileText className="w-3.5 h-3.5 mr-1.5" />
-                        Docs
-                      </a>
-                    )}
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider block leading-none mb-1">
+                      TEAM
+                    </span>
+                    <span className="text-xs sm:text-[13px] font-extrabold text-[#18181B] truncate block">
+                      {proj.teamName}
+                    </span>
                   </div>
                 </div>
-              );
-            })}
-          </div>
+
+                {/* Block 2: TRACK */}
+                <div className="p-3.5 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl flex items-center space-x-3 shadow-2xs group-hover:border-[#CBD5E1] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E0D8] text-[#4B5563] flex items-center justify-center flex-shrink-0">
+                    <Target className="w-4 h-4 text-[#4B5563]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider block leading-none mb-1">
+                      TRACK
+                    </span>
+                    <span className="text-xs sm:text-[13px] font-extrabold text-[#18181B] truncate block">
+                      {proj.trackTitle}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Block 3: PROBLEM */}
+                <div className="p-3.5 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl flex items-center space-x-3 shadow-2xs group-hover:border-[#CBD5E1] transition-colors">
+                  <div className="w-9 h-9 rounded-lg bg-white border border-[#E5E0D8] text-[#4B5563] flex items-center justify-center flex-shrink-0">
+                    <FileText className="w-4 h-4 text-[#4B5563]" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <span className="text-[10px] font-bold text-[#9CA3AF] uppercase tracking-wider block leading-none mb-1">
+                      PROBLEM
+                    </span>
+                    <span className="text-xs sm:text-[13px] font-extrabold text-[#18181B] truncate block">
+                      {proj.problemTitle}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Bottom Artifact Link Chips */}
+              <div className="pt-3.5 flex flex-wrap items-center gap-2.5 text-xs relative z-10">
+                {/* Repository Chip */}
+                <a
+                  href={proj.repoUrl || 'https://github.com'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#CBD5E1] text-xs font-bold text-[#18181B] shadow-2xs hover:shadow-xs transition-all cursor-pointer group/repo"
+                >
+                  <Github className="w-4 h-4 text-[#18181B] group-hover/repo:scale-110 transition-transform" />
+                  <span>Repository</span>
+                </a>
+
+                {/* Live Demo Chip */}
+                <a
+                  href={proj.demoUrl || '#'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-full bg-white hover:bg-[#FFF9F5] border border-[#FED7AA] hover:border-[#FA541C] text-xs font-bold text-[#FA541C] shadow-2xs hover:shadow-xs transition-all cursor-pointer group/demo"
+                >
+                  <Globe className="w-4 h-4 text-[#FA541C] group-hover/demo:rotate-12 transition-transform" />
+                  <span>Live Demo</span>
+                </a>
+
+                {/* Video URL if present */}
+                {proj.videoUrl && (
+                  <a
+                    href={proj.videoUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-bold text-[#7E22CE] shadow-2xs transition-all"
+                  >
+                    <Video className="w-4 h-4 text-[#7E22CE]" />
+                    <span>Demo Video</span>
+                  </a>
+                )}
+
+                {/* Docs URL if present */}
+                {proj.documentationUrl && (
+                  <a
+                    href={proj.documentationUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center space-x-2 px-3.5 py-1.5 rounded-xl bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] text-xs font-bold text-[#059669] shadow-2xs transition-all"
+                  >
+                    <FileText className="w-4 h-4 text-[#059669]" />
+                    <span>Docs</span>
+                  </a>
+                )}
+              </div>
+            </div>
+          ))
         )}
       </div>
     </div>

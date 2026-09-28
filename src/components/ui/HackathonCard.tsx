@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Users, Globe, Clock, Trophy, Heart, Share2, ArrowUpRight, ArrowRight, Sparkles } from 'lucide-react';
+import { Users, Globe, Clock, Trophy, Heart, Share2, ArrowUpRight, ArrowRight, Sparkles, Layers } from 'lucide-react';
 import { Badge } from './Badge';
 
 export interface HackathonCardProps {
@@ -24,7 +24,9 @@ export interface HackathonCardProps {
   registeredCount?: number;
   featured?: boolean;
   rulesAndGuidelines?: string | null;
-  variant?: 'grid' | 'list';
+  variant?: 'grid' | 'list' | 'wide';
+  isHighlighted?: boolean;
+  roundsCount?: number;
 }
 
 export const HackathonCard: React.FC<HackathonCardProps> = ({
@@ -37,6 +39,7 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
   status,
   minTeamSize,
   maxTeamSize,
+  roundsCount: propRoundsCount,
   eventMode = 'Online',
   tracks = [],
   prizes = [],
@@ -46,6 +49,7 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
   featured = false,
   rulesAndGuidelines,
   variant = 'grid',
+  isHighlighted = false,
 }) => {
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [sharedToast, setSharedToast] = useState(false);
@@ -85,147 +89,154 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
 
     const isPast = deadlineDate ? new Date(deadlineDate) < new Date() : false;
     const isExpired = status === 'COMPLETED' || isPast;
-    const roundsCount = getRoundsCount();
+    const roundsCount = propRoundsCount ?? getRoundsCount();
 
     const renderGridStatusBadge = () => {
       if (isExpired) {
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#F1F5F9] text-[#64748B] border border-[#E2E8F0]">
+          <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase bg-black/80 text-white border border-white/20">
             EXPIRED
-          </span>
-        );
-      }
-      if (status === 'REGISTRATION_OPEN' || status === 'EVENT_ACTIVE' || status === 'PUBLISHED') {
-        return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-            ACTIVE
           </span>
         );
       }
       if (status === 'SUBMISSION_OPEN') {
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
+          <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase bg-[#2563EB] text-white">
             SUBMITTING
+          </span>
+        );
+      }
+      if (status === 'REGISTRATION_OPEN' || status === 'EVENT_ACTIVE' || status === 'PUBLISHED') {
+        return (
+          <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase bg-[#10B981] text-white">
+            ACTIVE
           </span>
         );
       }
       if (status === 'JUDGING') {
         return (
-          <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#F5F3FF] text-[#7C3AED] border border-[#DDD6FE]">
+          <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase bg-[#7C3AED] text-white">
             JUDGING
           </span>
         );
       }
       return (
-        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-[#F8FAFC] text-[#94A3B8] border border-[#E2E8F0]">
+        <span className="px-2.5 py-0.5 rounded-full text-[9.5px] font-bold tracking-wider uppercase bg-black/70 text-white">
           {status}
         </span>
       );
     };
 
     return (
-      <div className="bg-white rounded-2xl border border-[#E2E8F0] p-5 shadow-xs hover:shadow-md hover:border-[#CBD5E1] transition-all flex flex-col justify-between h-full select-none">
+      <div className="bg-white rounded-2xl border border-[#E5E0D8] p-4 shadow-xs hover:shadow-xl hover:-translate-y-1.5 hover:border-[#CBD5E1] transition-all duration-300 flex flex-col justify-between h-full select-none overflow-hidden group">
         <div>
-          {/* Status Badge */}
-          <div className="mb-2">
-            {renderGridStatusBadge()}
-          </div>
-
-          {/* Banner Box / Preview */}
-          <div className="w-full bg-gradient-to-br from-[#EFF6FF] via-[#F8FAFC] to-[#EFF6FF] border border-[#BFDBFE]/70 rounded-xl p-5 my-2.5 text-center flex flex-col items-center justify-center min-h-[135px] relative overflow-hidden group/banner">
+          {/* Top Banner Box with Status Pill & ATLYX Brand */}
+          <div className="w-full h-[145px] rounded-xl overflow-hidden relative group/banner flex flex-col justify-between p-3.5 bg-gradient-to-br from-[#1E293B] via-[#0F172A] to-black">
             {bannerUrl ? (
-              <div className="absolute inset-0 w-full h-full">
-                <img
-                  src={bannerUrl}
-                  alt={title}
-                  className="w-full h-full object-cover group-hover/banner:scale-105 transition-transform duration-300"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex flex-col justify-end p-3 text-left">
-                  <h2 className="text-white font-bold text-sm tracking-wide">{title}</h2>
-                  {tagline && <p className="text-white/80 text-[11px] truncate">{tagline}</p>}
-                </div>
-              </div>
+              <img
+                src={bannerUrl}
+                alt={title}
+                className="absolute inset-0 w-full h-full object-cover group-hover/banner:scale-108 transition-transform duration-700 ease-out"
+              />
             ) : (
-              <>
-                <h2 className="text-xl sm:text-2xl font-black text-[#1E40AF] tracking-tight uppercase leading-tight font-sans">
-                  {title}
-                </h2>
-                <p className="text-xs text-[#2563EB] font-mono mt-1.5 font-semibold tracking-wide">
-                  {tagline || 'Build the Future with AI'}
-                </p>
-              </>
+              <div className="absolute inset-0 bg-gradient-to-br from-[#1E1B2E] via-[#0F172A] to-[#111215]" />
             )}
+
+            {/* Dark gradient overlay for high legibility */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/45 to-black/35" />
+
+            {/* Top row inside banner */}
+            <div className="relative z-10 flex items-center justify-between">
+              <div>{renderGridStatusBadge()}</div>
+              <div className="flex items-center space-x-1 text-white text-[10px] font-bold tracking-tight bg-black/40 px-2 py-0.5 rounded-full backdrop-blur-xs">
+                <span className="text-[#FA541C] font-black text-xs">▲</span>
+                <span>ATLYX</span>
+              </div>
+            </div>
+
+            {/* Bottom text inside banner */}
+            <div className="relative z-10 mt-auto text-left">
+              <h2 className="text-white font-black text-[14.5px] sm:text-[15.5px] tracking-tight uppercase leading-snug line-clamp-2">
+                {title}
+              </h2>
+              {tagline && (
+                <p className="text-white/80 text-[10.5px] truncate mt-0.5">
+                  {tagline}
+                </p>
+              )}
+            </div>
           </div>
 
-          {/* Title & Tagline */}
-          <div className="mt-3">
-            <h3 className="font-bold text-base text-[#0F172A] tracking-tight hover:text-[#2563EB] transition-colors line-clamp-1">
+          {/* Title & Tagline in Card Body */}
+          <div className="mt-3 text-left">
+            <h3 className="font-bold text-[15px] text-[#111827] tracking-tight hover:text-[#FA541C] transition-colors line-clamp-1">
               <Link href={`/hackathons/${slug}`}>
                 {title}
               </Link>
             </h3>
-            <p className="text-xs text-[#64748B] font-medium mt-0.5 line-clamp-1">
+            <p className="text-xs text-[#6B7280] font-normal mt-0.5 line-clamp-1">
               {tagline || organizationName}
             </p>
           </div>
 
           {/* Stats Box (Team Size, Rounds) */}
-          <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-3 my-3 grid grid-cols-2 divide-x divide-[#E2E8F0] text-center">
+          <div className="bg-[#FAF8F5] hover:bg-[#F6F2EC] border border-[#ECE6DD] rounded-xl p-2.5 my-3 grid grid-cols-2 divide-x divide-[#ECE6DD] text-center transition-colors duration-200">
             <div className="px-1">
-              <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-wider block">
-                TEAM SIZE
-              </span>
-              <span className="text-xs sm:text-sm font-bold text-[#8B5CF6] mt-0.5 block">
+              <div className="flex items-center justify-center space-x-1 text-[9px] font-bold text-[#6B7280] uppercase tracking-wider">
+                <Users className="w-3 h-3 text-[#6B7280]" />
+                <span>TEAM SIZE</span>
+              </div>
+              <span className="text-[13px] font-bold text-[#10B981] mt-0.5 block">
                 {minTeamSize === maxTeamSize ? minTeamSize : `${minTeamSize}-${maxTeamSize}`}
               </span>
             </div>
 
             <div className="px-1">
-              <span className="text-[9px] font-bold text-[#64748B] uppercase tracking-wider block">
-                ROUNDS
-              </span>
-              <span className="text-xs sm:text-sm font-bold text-[#10B981] mt-0.5 block">
+              <div className="flex items-center justify-center space-x-1 text-[9px] font-bold text-[#6B7280] uppercase tracking-wider">
+                <Layers className="w-3 h-3 text-[#6B7280]" />
+                <span>ROUNDS</span>
+              </div>
+              <span className="text-[13px] font-bold text-[#10B981] mt-0.5 block">
                 {roundsCount} {roundsCount === 1 ? 'Round' : 'Rounds'}
               </span>
             </div>
           </div>
 
-          {/* Hackathon Key Details (Prize, Mode, Tracks, Deadline) */}
-          <div className="space-y-2.5 my-3 text-xs">
-            {/* Prize & Event Mode */}
-            <div className="flex items-center justify-between text-[12px]">
+          {/* Key Details: Prize & Event Mode */}
+          <div className="space-y-2.5 my-2.5 text-xs text-left">
+            <div className="flex items-center justify-between text-[12.5px]">
               {totalPrize > 0 ? (
-                <span className="inline-flex items-center font-bold text-[#16A34A]">
-                  <Trophy className="w-3.5 h-3.5 mr-1.5 text-[#16A34A] flex-shrink-0" />
+                <span className="inline-flex items-center font-bold text-[#111827]">
+                  <Trophy className="w-3.5 h-3.5 mr-1.5 text-[#EAB308] flex-shrink-0" />
                   {currency} {totalPrize.toLocaleString()}
                 </span>
               ) : (
-                <span className="inline-flex items-center font-semibold text-[#2563EB]">
-                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#2563EB] flex-shrink-0" />
+                <span className="inline-flex items-center font-semibold text-[#FA541C]">
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5 text-[#FA541C] flex-shrink-0" />
                   Prizes & Awards
                 </span>
               )}
 
-              <span className="inline-flex items-center text-[#64748B] font-medium">
-                <Globe className="w-3.5 h-3.5 mr-1 text-[#94A3B8] flex-shrink-0" />
+              <span className="inline-flex items-center text-[#6B7280] font-normal text-[11.5px]">
+                <Globe className="w-3.5 h-3.5 mr-1 text-[#9CA3AF] flex-shrink-0" />
                 {eventMode}
               </span>
             </div>
 
             {/* Tracks Pills */}
             {tracks.length > 0 && (
-              <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
                 {tracks.slice(0, 2).map((t) => (
                   <span
                     key={t.id}
-                    className="px-2 py-0.5 rounded-md text-[11px] font-medium bg-[#F1F5F9] text-[#475569] truncate max-w-[130px]"
+                    className="px-2 py-0.5 rounded-md text-[10.5px] font-medium bg-[#F5F2EB] hover:bg-[#FFEDE1] hover:text-[#FA541C] text-[#4B5563] truncate max-w-[125px] transition-colors cursor-pointer"
                     title={t.title}
                   >
                     {t.title}
                   </span>
                 ))}
                 {tracks.length > 2 && (
-                  <span className="text-[10px] font-semibold text-[#94A3B8]">
+                  <span className="text-[10px] font-medium text-[#9CA3AF]">
                     +{tracks.length - 2} more
                   </span>
                 )}
@@ -233,33 +244,213 @@ export const HackathonCard: React.FC<HackathonCardProps> = ({
             )}
 
             {/* Deadline & Registrations */}
-            <div className="flex items-center justify-between text-[11px] text-[#64748B] pt-1.5 border-t border-[#F1F5F9]">
-              <span className="inline-flex items-center font-medium text-[#475569]">
-                <Clock className="w-3.5 h-3.5 mr-1 text-[#94A3B8] flex-shrink-0" />
+            <div className="flex items-center justify-between text-[11px] text-[#6B7280] pt-2 border-t border-[#ECE6DD]">
+              <span className="inline-flex items-center font-normal text-[#6B7280]">
+                <Clock className="w-3.5 h-3.5 mr-1 text-[#9CA3AF] flex-shrink-0" />
                 {getDeadlineText()}
               </span>
 
               {registeredCount > 0 && (
-                <span className="inline-flex items-center font-medium text-[#64748B]">
-                  <Users className="w-3.5 h-3.5 mr-1 text-[#94A3B8] flex-shrink-0" />
-                  <strong className="text-[#334155] font-semibold mr-1">{registeredCount}</strong> registered
+                <span className="inline-flex items-center font-normal text-[#6B7280]">
+                  <Users className="w-3.5 h-3.5 mr-1 text-[#9CA3AF] flex-shrink-0" />
+                  <span>{registeredCount} registered</span>
                 </span>
               )}
             </div>
           </div>
         </div>
 
-        {/* Card Bottom: VIEW DETAILS */}
-        <div className="mt-auto pt-2">
+        {/* Card Bottom: VIEW DETAILS Button */}
+        <div className="mt-3">
           <Link
             href={`/hackathons/${slug}`}
-            className="w-full inline-flex items-center justify-between py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-bold rounded-xl transition-all shadow-xs group"
+            className="w-full inline-flex items-center justify-between py-2.5 px-4 rounded-xl text-xs font-bold uppercase tracking-wider transition-all duration-200 bg-white hover:bg-[#FA541C] border border-[#D1D5DB] hover:border-[#FA541C] text-[#111827] hover:text-white hover:shadow-md hover:shadow-[#FA541C]/20 shadow-xs group/btn cursor-pointer"
           >
-            <span className="flex-1 text-center font-bold tracking-wider uppercase pl-5">
+            <span className="flex-1 text-center font-bold tracking-wider pl-4">
               VIEW DETAILS
             </span>
-            <div className="w-6 h-6 rounded-full bg-white flex items-center justify-center text-[#2563EB] flex-shrink-0 group-hover:translate-x-0.5 transition-transform">
-              <ArrowRight className="w-3.5 h-3.5 stroke-[2.5]" />
+            <div className="w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 transition-all duration-200 bg-[#FFF5ED] group-hover/btn:bg-white/25 text-[#FA541C] group-hover/btn:text-white group-hover/btn:translate-x-0.5">
+              <ArrowRight className="w-3 h-3 stroke-[2.5]" />
+            </div>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  // WIDE PANORAMIC CARD VARIANT (Matches Explore Hackathons page reference)
+  if (variant === 'wide') {
+    const isPast = deadlineDate ? new Date(deadlineDate) < new Date() : false;
+    const isExpired = status === 'COMPLETED' || isPast;
+    const roundsCount = propRoundsCount ?? 4;
+
+    const renderWideStatusBadge = () => {
+      if (isExpired) {
+        return (
+          <span className="px-3 py-1 rounded-md text-[10.5px] font-bold tracking-wider uppercase bg-[#ECEAE4] text-[#6B7280]">
+            EXPIRED
+          </span>
+        );
+      }
+      if (status === 'SUBMISSION_OPEN') {
+        return (
+          <span className="px-3 py-1 rounded-md text-[10.5px] font-bold tracking-wider uppercase bg-[#FFE8D6] text-[#FA541C]">
+            SUBMITTING
+          </span>
+        );
+      }
+      if (status === 'REGISTRATION_OPEN' || status === 'EVENT_ACTIVE' || status === 'PUBLISHED') {
+        return (
+          <span className="px-3 py-1 rounded-md text-[10.5px] font-bold tracking-wider uppercase bg-[#ECFDF5] text-[#059669]">
+            ACTIVE
+          </span>
+        );
+      }
+      return (
+        <span className="px-3 py-1 rounded-md text-[10.5px] font-bold tracking-wider uppercase bg-[#F3F4F6] text-[#4B5563]">
+          {status}
+        </span>
+      );
+    };
+
+    return (
+      <div className="bg-white rounded-2xl border border-[#E5E0D8] p-5 shadow-xs hover:shadow-xl hover:-translate-y-1 hover:border-[#CBD5E1] transition-all duration-300 select-none overflow-hidden group mb-5">
+        {/* Status Pill Badge at the very top */}
+        <div className="mb-3">
+          {renderWideStatusBadge()}
+        </div>
+
+        {/* Wide Panoramic Banner */}
+        <div className="w-full h-[145px] sm:h-[165px] md:h-[180px] rounded-xl overflow-hidden relative flex flex-col justify-center items-center text-center p-4 bg-[#0B0C10] group/widebanner">
+          {bannerUrl ? (
+            <img
+              src={bannerUrl}
+              alt={title}
+              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+            />
+          ) : (
+            <div className="absolute inset-0 bg-gradient-to-r from-[#141416] via-[#1F1612] to-[#0A0A0C]" />
+          )}
+
+          {/* Dark gradient overlay */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/45 to-black/35" />
+
+          {/* Banner Title and Subtitle Overlaid */}
+          <div className="relative z-10 text-center px-4 max-w-2xl">
+            <h2 className="text-white font-black text-xl sm:text-2xl md:text-[26px] tracking-tight uppercase leading-snug drop-shadow-md">
+              {title.toLowerCase().includes('2026') ? (
+                <>
+                  {title.replace(/2026/i, '').trim()}{' '}
+                  <span className="text-[#FA541C]">HACKATHON 2026</span>
+                </>
+              ) : (
+                <>
+                  {title} <span className="text-[#FA541C]">2026</span>
+                </>
+              )}
+            </h2>
+            {tagline && (
+              <p className="text-white/85 text-xs sm:text-sm font-medium mt-1 drop-shadow-xs line-clamp-1">
+                {tagline}
+              </p>
+            )}
+          </div>
+        </div>
+
+        {/* Title & Tagline under Banner */}
+        <div className="mt-4 text-left">
+          <h3 className="font-extrabold text-[19px] sm:text-[21px] text-[#111827] tracking-tight hover:text-[#FA541C] transition-colors leading-snug">
+            <Link href={`/hackathons/${slug}`}>
+              {title}
+            </Link>
+          </h3>
+          <p className="text-sm text-[#6B7280] font-normal mt-0.5 leading-normal line-clamp-1">
+            {tagline || organizationName}
+          </p>
+        </div>
+
+        {/* Specs Box: Team Size & Rounds */}
+        <div className="bg-[#FAF8F5] hover:bg-[#F6F2EC] border border-[#ECE6DD] rounded-xl p-3 sm:p-3.5 my-3.5 grid grid-cols-2 divide-x divide-[#ECE6DD] text-left transition-colors duration-200">
+          <div className="flex items-center justify-center space-x-3 px-2 sm:px-4">
+            <Users className="w-5 h-5 text-[#6B7280] flex-shrink-0" />
+            <div>
+              <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">
+                TEAM SIZE
+              </span>
+              <span className="text-base sm:text-lg font-bold text-[#FA541C] leading-tight block">
+                {minTeamSize === maxTeamSize ? minTeamSize : `${minTeamSize} - ${maxTeamSize}`}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-center space-x-3 px-2 sm:px-4">
+            <Layers className="w-5 h-5 text-[#6B7280] flex-shrink-0" />
+            <div>
+              <span className="text-[10px] font-bold text-[#6B7280] uppercase tracking-wider block">
+                ROUNDS
+              </span>
+              <span className="text-base sm:text-lg font-bold text-[#10B981] leading-tight block">
+                {roundsCount} Rounds
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Key Details: Prize & Mode */}
+        <div className="flex items-center justify-between text-left my-3">
+          <div className="inline-flex items-center font-bold text-[#10B981] text-base sm:text-[17px]">
+            <Trophy className="w-4 h-4 mr-2 text-[#10B981] flex-shrink-0" />
+            <span>USD {totalPrize > 0 ? totalPrize.toLocaleString() : '40,000'}</span>
+          </div>
+
+          <div className="inline-flex items-center text-[#4B5563] font-bold text-sm">
+            <Globe className="w-4 h-4 mr-1.5 text-[#6B7280] flex-shrink-0" />
+            <span>{eventMode}</span>
+          </div>
+        </div>
+
+        {/* Tags Pills */}
+        {tracks.length > 0 && (
+          <div className="flex flex-wrap items-center gap-2 my-2.5">
+            {tracks.slice(0, 2).map((t) => (
+              <span
+                key={t.id}
+                className="px-3 py-1 rounded-md text-xs font-medium bg-[#F3F4F6] hover:bg-[#FFEDE1] hover:text-[#FA541C] text-[#4B5563] truncate max-w-[200px] transition-colors duration-150 cursor-pointer"
+                title={t.title}
+              >
+                {t.title}
+              </span>
+            ))}
+            {tracks.length > 2 && (
+              <span className="text-xs font-medium text-[#9CA3AF] px-1">
+                +{tracks.length - 2} more
+              </span>
+            )}
+          </div>
+        )}
+
+        {/* Status & Registrations Footer Row */}
+        <div className="flex items-center justify-between text-xs pt-3 pb-1 border-t border-[#ECE6DD]">
+          <span className="inline-flex items-center font-semibold text-[#FA541C]">
+            <Clock className="w-3.5 h-3.5 mr-1.5 text-[#FA541C] flex-shrink-0" />
+            <span>{isExpired ? 'Ended' : getDeadlineText()}</span>
+          </span>
+
+          <span className="inline-flex items-center font-medium text-[#6B7280]">
+            <Users className="w-3.5 h-3.5 mr-1.5 text-[#9CA3AF] flex-shrink-0" />
+            <span>{registeredCount > 0 ? registeredCount : 42} registered</span>
+          </span>
+        </div>
+
+        {/* Full-width VIEW DETAILS Orange Button */}
+        <div className="mt-3.5">
+          <Link
+            href={`/hackathons/${slug}`}
+            className="w-full inline-flex items-center justify-center py-3.5 px-6 rounded-xl text-xs sm:text-sm font-bold uppercase tracking-wider transition-all duration-200 bg-[#FA541C] hover:bg-[#EA4812] hover:shadow-lg hover:shadow-[#FA541C]/30 hover:-translate-y-0.5 active:translate-y-0 text-white shadow-sm relative group/btn cursor-pointer"
+          >
+            <span>VIEW DETAILS</span>
+            <div className="absolute right-4 w-7 h-7 rounded-full flex items-center justify-center bg-white text-[#FA541C] group-hover/btn:translate-x-1.5 group-hover/btn:scale-105 transition-all duration-200">
+              <ArrowRight className="w-4 h-4 stroke-[2.5]" />
             </div>
           </Link>
         </div>

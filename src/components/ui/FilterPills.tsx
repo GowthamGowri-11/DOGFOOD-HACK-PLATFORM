@@ -96,29 +96,29 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
   const activeCount = Object.values(selectedFilters).filter(Boolean).length;
 
   return (
-    <div className="flex items-center space-x-2 py-2 overflow-x-auto no-scrollbar relative">
+    <div className="flex items-center space-x-2 py-1 overflow-x-auto no-scrollbar relative">
       {/* Primary Filters Button */}
       <button
         onClick={() => {
           if (openDropdown === 'all') setOpenDropdown(null);
           else setOpenDropdown('all');
         }}
-        className={`flex items-center space-x-2 h-[38px] px-3.5 rounded-[19px] text-[13px] font-medium border transition-colors select-none whitespace-nowrap ${
+        className={`flex items-center space-x-2 h-[36px] px-3.5 rounded-xl text-xs font-semibold border transition-all duration-200 select-none whitespace-nowrap cursor-pointer hover:-translate-y-0.5 active:scale-95 ${
           activeCount > 0
-            ? 'bg-[#EFF6FF] text-[#2563EB] border-[#3B82F6]'
-            : 'bg-white text-[#334155] border-[#CBD5E1] hover:border-[#94A3B8]'
+            ? 'bg-[#FFEDE1] text-[#FA541C] border-[#FED7AA] shadow-xs'
+            : 'bg-white text-[#18181B] border-[#E5E0D8] hover:border-[#CBD5E1] hover:shadow-2xs'
         }`}
       >
         <SlidersHorizontal className="w-3.5 h-3.5" />
         <span>Filters</span>
         {activeCount > 0 && (
-          <span className="w-4 h-4 rounded-full bg-[#2563EB] text-white text-[11px] flex items-center justify-center font-bold">
+          <span className="w-4 h-4 rounded-full bg-[#FA541C] text-white text-[10px] flex items-center justify-center font-bold">
             {activeCount}
           </span>
         )}
       </button>
 
-      {/* Individual Filter Pills */}
+      {/* Individual Filter Dropdowns */}
       {filterGroups.map((group) => {
         const currentValue = selectedFilters[group.id];
         const currentOption = group.options.find((o) => o.value === currentValue);
@@ -128,42 +128,42 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
           <div key={group.id} className="relative">
             <button
               onClick={() => setOpenDropdown(openDropdown === group.id ? null : group.id)}
-              className={`flex items-center space-x-1.5 h-[38px] px-3.5 rounded-[19px] text-[13px] font-medium border transition-colors select-none whitespace-nowrap ${
+              className={`flex items-center space-x-1.5 h-[36px] px-3.5 rounded-xl text-xs font-medium border transition-all duration-200 select-none whitespace-nowrap cursor-pointer hover:-translate-y-0.5 active:scale-95 ${
                 hasSelection
-                  ? 'bg-[#EFF6FF] text-[#2563EB] border-[#3B82F6] font-semibold'
-                  : 'bg-white text-[#334155] border-[#CBD5E1] hover:border-[#94A3B8]'
+                  ? 'bg-[#FFEDE1] text-[#FA541C] border-[#FED7AA] font-semibold shadow-xs'
+                  : 'bg-white text-[#18181B] border-[#E5E0D8] hover:border-[#CBD5E1] hover:shadow-2xs'
               }`}
             >
               <span>{hasSelection ? currentOption?.label : group.label}</span>
               <ChevronDown
-                className={`w-3.5 h-3.5 text-[#64748B] transition-transform ${
-                  openDropdown === group.id ? 'rotate-180' : ''
+                className={`w-3.5 h-3.5 text-[#6B7280] transition-transform duration-200 ${
+                  openDropdown === group.id ? 'rotate-180 text-[#FA541C]' : ''
                 }`}
               />
             </button>
 
             {/* Dropdown Menu */}
             {openDropdown === group.id && (
-              <div className="absolute top-full mt-1.5 left-0 z-50 w-52 bg-white rounded-xl border border-[#E2E8F0] shadow-md py-1 text-xs animate-in fade-in duration-100">
-                <div className="px-3 py-1.5 font-bold text-[#64748B] text-[10px] uppercase tracking-wider border-b border-[#F1F5F9]">
+              <div className="absolute top-full mt-1.5 left-0 z-50 w-52 bg-white rounded-xl border border-[#E5E0D8] shadow-lg py-1 text-xs animate-in fade-in slide-in-from-top-1 duration-150">
+                <div className="px-3 py-1.5 font-bold text-[#6B7280] text-[10px] uppercase tracking-wider border-b border-[#F4EFEA]">
                   {group.label}
                 </div>
                 <div className="max-h-60 overflow-y-auto py-1">
-                  {group.options.map((opt) => {
-                    const isSelected = selectedFilters[group.id] === opt.value || (!selectedFilters[group.id] && opt.value === '');
+                  {group.options.map((option) => {
+                    const isSelected = currentValue === option.value || (!currentValue && option.value === '');
                     return (
                       <button
-                        key={opt.value}
+                        key={option.value}
                         onClick={() => {
-                          onFilterChange(group.id, opt.value);
+                          onFilterChange(group.id, option.value);
                           setOpenDropdown(null);
                         }}
-                        className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-[#F8FAFC] transition-colors ${
-                          isSelected ? 'font-semibold text-[#2563EB] bg-[#EFF6FF]' : 'text-[#334155]'
+                        className={`w-full flex items-center justify-between px-3 py-2 text-left transition-colors duration-150 hover:bg-[#FAF8F5] cursor-pointer ${
+                          isSelected ? 'font-bold text-[#FA541C] bg-[#FFF5ED]' : 'text-[#374151]'
                         }`}
                       >
-                        <span className="truncate">{opt.label}</span>
-                        {isSelected && <Check className="w-3.5 h-3.5 text-[#2563EB]" />}
+                        <span className="truncate">{option.label}</span>
+                        {isSelected && <Check className="w-3.5 h-3.5 text-[#FA541C] flex-shrink-0" />}
                       </button>
                     );
                   })}
@@ -178,9 +178,9 @@ export const FilterPills: React.FC<FilterPillsProps> = ({
       {activeCount > 0 && onClearAll && (
         <button
           onClick={onClearAll}
-          className="flex items-center space-x-1 h-[38px] px-3 rounded-[19px] text-[12.5px] font-medium text-[#DC2626] hover:bg-[#FEF2F2] transition-colors select-none whitespace-nowrap"
+          className="flex items-center space-x-1 h-[36px] px-3 rounded-xl text-xs font-semibold text-[#DC2626] hover:bg-[#FEF2F2] transition-colors select-none whitespace-nowrap cursor-pointer"
         >
-          <X className="w-3 h-3" />
+          <X className="w-3.5 h-3.5" />
           <span>Clear</span>
         </button>
       )}

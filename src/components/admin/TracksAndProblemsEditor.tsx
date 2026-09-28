@@ -36,13 +36,14 @@ export interface TrackItem {
   description?: string;
   colorHex: string;
   displayOrder?: number;
+  roundIndex?: number; // Which evaluation round this track belongs to (-1 or undefined = all rounds)
   problemStatements: ProblemStatementItem[];
 }
 
 export interface EvaluationRoundInfo {
   name: string;
-  isFinal: boolean;
-  roundType: string;
+  isFinal?: boolean;
+  roundType?: string;
 }
 
 export interface TracksAndProblemsEditorProps {
@@ -77,6 +78,13 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
   onCopyFromPrevious,
   previousRoundName,
 }) => {
+  const availableRounds = rounds && rounds.length > 0
+    ? rounds
+    : [
+        { name: 'The Qualifiers', isFinal: false, roundType: 'Mock Hackathon' },
+        { name: 'Finale', isFinal: true, roundType: 'Hackathon' },
+      ];
+
   const [collapsedTracks, setCollapsedTracks] = useState<Record<number, boolean>>({});
 
   const toggleCollapse = (idx: number) => {
@@ -275,7 +283,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
       {/* Section Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#F1F5F9] gap-3">
         <div className="flex items-center space-x-2.5">
-          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] flex items-center justify-center shadow-xs shrink-0">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-xl bg-orange-50 border border-orange-200 text-[#FA541C] flex items-center justify-center shadow-xs shrink-0">
             <Layers className="w-4 h-4 sm:w-5 sm:h-5" />
           </div>
           <div>
@@ -285,7 +293,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                   ? `Tracks & Questions — ${roundName || (roundIndex !== undefined ? `Round ${roundIndex + 1}` : 'Round')}`
                   : 'Tracks & Problem Statements'}
               </h3>
-              <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-[#EFF6FF] text-[#2563EB] rounded-full border border-[#BFDBFE]">
+              <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-orange-50 text-[#FA541C] rounded-full border border-orange-200">
                 {tracks.length} {tracks.length === 1 ? 'Track' : 'Tracks'}
               </span>
               <span className="px-2 py-0.5 text-[10px] sm:text-[11px] font-bold bg-[#F1F5F9] text-[#475569] rounded-full border border-[#E2E8F0]">
@@ -305,7 +313,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
             <button
               type="button"
               onClick={onCopyFromPrevious}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#4338ca] bg-[#eef2ff] border border-[#c7d2fe] hover:bg-[#e0e7ff] rounded-xl transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-orange-700 bg-orange-50 border border-orange-200 hover:bg-orange-100 rounded-xl transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98]"
               title={`Copy tracks from ${previousRoundName}`}
             >
               <Copy className="w-3.5 h-3.5" />
@@ -317,7 +325,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
             <button
               type="button"
               onClick={loadEnterprisePreset}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] hover:bg-[#D1FAE5] rounded-xl transition-colors shadow-xs"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-[#059669] bg-[#ECFDF5] border border-[#A7F3D0] hover:bg-[#D1FAE5] rounded-xl transition-all shadow-xs hover:scale-[1.02] active:scale-[0.98]"
             >
               <Sparkles className="w-3.5 h-3.5" />
               <span>Template Tracks</span>
@@ -327,7 +335,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
           <button
             type="button"
             onClick={addTrack}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-white bg-[#2563EB] hover:bg-[#1D4ED8] rounded-xl shadow-xs transition-colors"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-white bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#E03A00] hover:to-[#C83200] rounded-xl shadow-xs transition-all hover:scale-[1.02] active:scale-[0.98]"
           >
             <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
             <span>Add Track</span>
@@ -436,6 +444,24 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
 
                 {/* Track Right Controls */}
                 <div className="flex items-center space-x-2.5">
+                  {/* Round Selector for Track */}
+                  <div className="flex items-center space-x-1.5 bg-white border border-[#E2E8F0] rounded-xl px-2.5 py-1 shadow-2xs hover:border-orange-300 transition-colors">
+                    <Layers className="w-3.5 h-3.5 text-[#FA541C] shrink-0" />
+                    <span className="text-[10px] font-bold text-[#64748B] uppercase hidden sm:inline">Round:</span>
+                    <select
+                      value={track.roundIndex !== undefined ? track.roundIndex : -1}
+                      onChange={(e) => updateTrack(trackIdx, 'roundIndex', Number(e.target.value))}
+                      className="text-xs font-bold text-zinc-800 bg-transparent focus:outline-none cursor-pointer"
+                    >
+                      <option value={-1}>All Rounds</option>
+                      {availableRounds.map((r, rIdx) => (
+                        <option key={rIdx} value={rIdx}>
+                          Round {rIdx + 1}: {r.name || `Round ${rIdx + 1}`}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
                   {/* Color Selector */}
                   <div className="flex items-center space-x-1 bg-white border border-[#E2E8F0] rounded-xl p-1 shadow-2xs">
                     {PRESET_COLORS.map((c) => (
@@ -470,7 +496,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                   <button
                     type="button"
                     onClick={() => removeTrack(trackIdx)}
-                    className="p-1.5 text-[#DC2626] hover:bg-[#FEF2F2] rounded-lg transition-colors"
+                    className="p-1.5 text-[#DC2626] hover:bg-[#FEF2F2] rounded-lg transition-colors cursor-pointer"
                     title="Remove Track"
                   >
                     <Trash2 className="w-4 h-4" />
@@ -499,7 +525,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                   <div className="pt-2 border-t border-[#F1F5F9] space-y-3">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center space-x-1.5">
-                        <FileText className="w-3.5 h-3.5 text-[#2563EB]" />
+                        <FileText className="w-3.5 h-3.5 text-[#FA541C]" />
                         <span className="text-xs font-bold text-[#0F172A]">
                           Problem Statements in {track.title || `Track ${trackIdx + 1}`}
                         </span>
@@ -508,7 +534,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                       <button
                         type="button"
                         onClick={() => addProblemStatement(trackIdx)}
-                        className="inline-flex items-center gap-1 text-xs font-bold text-[#2563EB] hover:text-[#1D4ED8] bg-[#EFF6FF] px-2.5 py-1 rounded-lg border border-[#BFDBFE] transition-colors"
+                        className="inline-flex items-center gap-1 text-xs font-bold text-orange-600 hover:text-orange-700 bg-orange-50 hover:bg-orange-100/70 px-2.5 py-1 rounded-lg border border-orange-200 transition-all hover:scale-[1.02] active:scale-[0.98]"
                       >
                         <Plus className="w-3 h-3 stroke-[2.5]" />
                         <span>Add Problem Statement</span>
@@ -524,7 +550,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                         <button
                           type="button"
                           onClick={() => addProblemStatement(trackIdx)}
-                          className="text-xs font-bold text-[#2563EB] hover:underline"
+                          className="text-xs font-bold text-orange-600 hover:underline"
                         >
                           + Add the first problem statement
                         </button>
@@ -554,13 +580,13 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                                       e.target.value.toUpperCase()
                                     )
                                   }
-                                  placeholder="AI-01"
-                                  className="w-full px-2.5 py-1 text-xs bg-white border border-[#E2E8F0] rounded-lg font-mono font-bold text-[#2563EB] focus:outline-none focus:border-[#2563EB]"
+                                  placeholder="PS-10-01"
+                                  className="w-full px-2.5 py-1 text-xs bg-white border border-[#E2E8F0] rounded-lg font-mono font-bold text-orange-600 focus:outline-none focus:border-orange-500"
                                 />
                               </div>
 
                               {/* Title */}
-                              <div className="sm:col-span-8 space-y-1">
+                              <div className="sm:col-span-5 space-y-1">
                                 <span className="text-[9px] font-bold text-[#64748B] uppercase">
                                   PROBLEM STATEMENT TITLE*
                                 </span>
@@ -576,9 +602,36 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                                       e.target.value
                                     )
                                   }
-                                  placeholder="e.g. Autonomous Clinical Diagnostic Agent"
-                                  className="w-full px-2.5 py-1 text-xs bg-white border border-[#E2E8F0] rounded-lg font-bold text-[#0F172A] focus:outline-none focus:border-[#2563EB]"
+                                  placeholder="e.g. Quantum Computing & Cryptographic Verification"
+                                  className="w-full px-2.5 py-1 text-xs bg-white border border-[#E2E8F0] rounded-lg font-bold text-[#0F172A] focus:outline-none focus:border-orange-500"
                                 />
+                              </div>
+
+                              {/* Round Assignment Dropdown */}
+                              <div className="sm:col-span-3 space-y-1">
+                                <span className="text-[9px] font-bold text-[#64748B] uppercase flex items-center gap-1">
+                                  <Layers className="w-2.5 h-2.5 text-[#FA541C]" />
+                                  <span>ASSIGNED ROUND</span>
+                                </span>
+                                <select
+                                  value={prob.roundIndex !== undefined ? prob.roundIndex : -1}
+                                  onChange={(e) =>
+                                    updateProblemStatement(
+                                      trackIdx,
+                                      probIdx,
+                                      'roundIndex',
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                  className="w-full px-2 py-1 text-xs bg-white border border-[#E2E8F0] rounded-lg font-bold text-zinc-800 focus:outline-none focus:border-orange-500 cursor-pointer transition-colors hover:border-orange-300"
+                                >
+                                  <option value={-1}>All Rounds</option>
+                                  {availableRounds.map((r, rIdx) => (
+                                    <option key={rIdx} value={rIdx}>
+                                      Round {rIdx + 1}: {r.name || `Round ${rIdx + 1}`}
+                                    </option>
+                                  ))}
+                                </select>
                               </div>
 
                               {/* Actions / Visibility */}
@@ -593,7 +646,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                                       !prob.isPublic
                                     )
                                   }
-                                  className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-colors ${
+                                  className={`p-1.5 rounded-lg text-xs font-semibold flex items-center gap-1 border transition-all hover:scale-[1.02] active:scale-[0.98] cursor-pointer ${
                                     prob.isPublic
                                       ? 'bg-[#ECFDF5] text-[#047857] border-[#A7F3D0]'
                                       : 'bg-[#F1F5F9] text-[#64748B] border-[#E2E8F0]'
@@ -601,9 +654,9 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                                   title={prob.isPublic ? 'Visible to participants' : 'Draft / Hidden'}
                                 >
                                   {prob.isPublic ? (
-                                    <Globe className="w-3.5 h-3.5" />
+                                    <Globe className="w-3.5 h-3.5 text-emerald-600" />
                                   ) : (
-                                    <Lock className="w-3.5 h-3.5" />
+                                    <Lock className="w-3.5 h-3.5 text-zinc-400" />
                                   )}
                                   <span className="text-[10px]">
                                     {prob.isPublic ? 'Public' : 'Draft'}
@@ -613,7 +666,7 @@ export const TracksAndProblemsEditor: React.FC<TracksAndProblemsEditorProps> = (
                                 <button
                                   type="button"
                                   onClick={() => removeProblemStatement(trackIdx, probIdx)}
-                                  className="p-1.5 text-[#DC2626] hover:bg-[#FEF2F2] rounded-lg transition-colors"
+                                  className="p-1.5 text-[#DC2626] hover:bg-[#FEF2F2] rounded-lg transition-colors cursor-pointer"
                                   title="Delete Problem Statement"
                                 >
                                   <Trash2 className="w-3.5 h-3.5" />

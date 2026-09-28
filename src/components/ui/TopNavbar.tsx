@@ -16,6 +16,7 @@ import {
   LogOut,
   Trophy,
   Menu,
+  LayoutDashboard,
 } from 'lucide-react';
 import { LiveStatusBadge } from './LiveStatusBadge';
 
@@ -203,7 +204,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       searchResults.projects.length > 0);
 
   return (
-    <header className="h-[72px] bg-white border-b border-[#E2E8F0] px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 select-none">
+    <header className="h-[70px] bg-[#FAF8F5] border-b border-[#ECE6DD] px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 select-none">
       {/* LEFT: Mobile toggle & Breadcrumb */}
       <div className="flex items-center space-x-3">
         {onToggleSidebar && (
@@ -216,39 +217,25 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         )}
 
-        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center space-x-1.5 text-[14px] text-[#64748B]">
-          {breadcrumbItems.slice(0, 3).map((item, idx) => (
-            <React.Fragment key={item.href}>
-              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-[#94A3B8]" />}
-              {idx === breadcrumbItems.length - 1 ? (
-                <span className="font-semibold text-[#111827] max-w-[160px] truncate">
-                  {item.label}
-                </span>
-              ) : (
-                <Link
-                  href={item.href}
-                  className="hover:text-[#2563EB] transition-colors max-w-[120px] truncate font-normal"
-                >
-                  {item.label}
-                </Link>
-              )}
-            </React.Fragment>
-          ))}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center space-x-1.5 text-[14px]">
+          <span className="font-semibold text-[#18181B] text-[15px]">
+            {pathname === '/' ? 'Home' : (breadcrumbItems[breadcrumbItems.length - 1]?.label || 'Home')}
+          </span>
         </nav>
       </div>
 
-      {/* CENTER: Prominent Centered Global Search (400–420px wide, 44px high, rounded 22px) */}
-      <div className="flex-1 max-w-[420px] mx-4 relative">
+      {/* CENTER: Prominent Centered Global Search (rounded-full pill matching screenshot) */}
+      <div className="flex-1 max-w-[480px] mx-4 relative">
         <form onSubmit={handleSearchSubmit} className="relative w-full">
           <div className="relative flex items-center">
-            <Search className="w-4 h-4 text-[#94A3B8] absolute left-4 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#9CA3AF] absolute left-4 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               onFocus={() => setSearchFocused(true)}
               placeholder="Search Hackathons, Tracks, Projects..."
-              className="w-full h-[44px] pl-11 pr-4 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] focus:border-[#2563EB] rounded-[22px] text-[14px] text-[#111827] placeholder-[#94A3B8] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#2563EB]/15 shadow-[0_1px_2px_rgba(15,23,42,0.03)]"
+              className="w-full h-[40px] pl-11 pr-4 bg-white border border-[#E5E0D8] hover:border-[#D1D5DB] focus:border-[#FA541C] rounded-full text-[13.5px] text-[#111827] placeholder-[#9CA3AF] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#FA541C]/15 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
             />
             {searchQuery && (
               <button
@@ -406,13 +393,15 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         )}
 
         {!authLoading && !currentUser && (
-          /* Guest: Show Get Started Button */
+          /* Guest: Show Get Started Button with Rich Glow & Interactive Animations */
           <Link
             href="/login"
-            className="inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold rounded-xl shadow-xs transition-all hover:shadow"
+            className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FA541C] via-[#FF6636] to-[#E03A00] hover:from-[#FF5722] hover:via-[#FA541C] hover:to-[#D4380D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_4px_14px_rgba(250,84,28,0.30)] hover:shadow-[0_6px_22px_rgba(250,84,28,0.48)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 whitespace-nowrap cursor-pointer overflow-hidden flex-shrink-0"
           >
-            <span>Get Started</span>
-            <ArrowRight className="w-3.5 h-3.5" />
+            {/* Ambient Shimmer / Sheen Sweep */}
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none" />
+            <span className="relative z-10 font-bold tracking-wide">Get Started</span>
+            <ArrowRight className="relative z-10 w-4 h-4 stroke-[2.5] group-hover:translate-x-1.5 transition-transform duration-200 flex-shrink-0" />
           </Link>
         )}
 
@@ -462,10 +451,36 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                   </p>
                 </div>
 
-                {/* Nav links: Profile & Settings */}
+                {/* Nav links: Role Workspace, Profile & Settings */}
                 <div className="py-2 space-y-1">
+                  {/* Role-Specific Workspace Link */}
                   <Link
-                    href={currentUser.role === 'JUDGE' ? '/judge/profile' : '/participant/settings'}
+                    href={
+                      currentUser.role?.toUpperCase() === 'ADMIN'
+                        ? '/admin/dashboard'
+                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
+                        ? '/organizer/dashboard'
+                        : currentUser.role?.toUpperCase() === 'JUDGE'
+                        ? '/judge/dashboard'
+                        : '/participant/dashboard'
+                    }
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#FA541C] hover:bg-[#FFF5ED] font-bold text-xs transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-[#FA541C]" />
+                    <span>
+                      {currentUser.role?.toUpperCase() === 'ADMIN'
+                        ? 'Admin Workspace'
+                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
+                        ? 'Organizer Workspace'
+                        : currentUser.role?.toUpperCase() === 'JUDGE'
+                        ? 'Judge Workspace'
+                        : 'Participant Workspace'}
+                    </span>
+                  </Link>
+
+                  <Link
+                    href={currentUser.role?.toUpperCase() === 'JUDGE' ? '/judge/profile' : '/participant/settings'}
                     onClick={() => setProfileDropdownOpen(false)}
                     className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
                   >
