@@ -30,7 +30,6 @@ import { AuditService } from '@/server/services/audit.service';
 import { SubmissionValidator } from '@/server/services/submission-validator.service';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
-import { KPICard } from '@/components/ui/KPICard';
 
 export const dynamic = 'force-dynamic';
 
@@ -100,438 +99,436 @@ export default async function ParticipantDashboard() {
   const primaryProject = projects.find((p) => p.hackathonId === primaryHackathon?.id) || projects[0] || null;
   const primarySubmission = submissions.find((s) => s.projectId === primaryProject?.id) || null;
 
-  // Pipeline Completion Calculation
-  const hasRegistration = !!primaryRegistration;
-  const hasTeam = !!primaryTeam && primaryTeam.members.length >= (primaryHackathon?.minTeamSize || 1);
-  const hasTrackAndPS = !!primaryProject?.trackId && !!primaryProject?.problemId;
-  const validationResult = primaryProject && primaryHackathon
-    ? SubmissionValidator.validateProjectForSubmission(primaryProject as any, primaryHackathon as any)
-    : { isValid: false, errors: [] };
-  const hasValidArtifacts = validationResult.isValid;
-  const hasSubmitted = primarySubmission?.status === 'SUBMITTED' || primarySubmission?.status === 'LOCKED';
-
-  const completedStepsCount = [
-    hasRegistration,
-    hasTeam,
-    hasTrackAndPS,
-    hasValidArtifacts,
-    hasSubmitted,
-  ].filter(Boolean).length;
-
-  const pipelinePercentage = completedStepsCount * 20;
-
-  // Pipeline steps definition
-  const pipelineSteps = [
-    { step: '1', title: 'Registration', status: hasRegistration ? 'completed' : 'pending' },
-    { step: '2', title: 'Team Formed', status: hasTeam ? 'completed' : hasRegistration ? 'in_progress' : 'pending' },
-    { step: '3', title: 'Track & Problem', status: hasTrackAndPS ? 'completed' : hasTeam ? 'in_progress' : 'pending' },
-    { step: '4', title: 'Deliverables', status: hasValidArtifacts ? 'completed' : hasTrackAndPS ? 'in_progress' : 'pending' },
-    { step: '5', title: 'Submit & Lock', status: hasSubmitted ? 'completed' : hasValidArtifacts ? 'in_progress' : 'pending' },
-  ];
-
-  const publishedResultsCount = projects.filter((p: any) => p.hackathon?.status === 'RESULTS_PUBLISHED' && p.submissions?.some((s: any) => s.status === 'LOCKED')).length;
-
   return (
-    <div className="space-y-8 select-none">
-      {/* 1. Header */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 pb-6 border-b border-[#E2E8F0]">
-        <div>
-          <div className="flex items-center space-x-2 text-xs font-semibold text-[#64748B] mb-1">
-            <span>Participant Workspace</span>
-            <span>•</span>
-            <Badge variant="blue">Builder Arena</Badge>
-          </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[#111827] tracking-tight">
-            Good morning, {session.fullName}
-          </h1>
-          <p className="text-xs sm:text-sm text-[#64748B] mt-0.5 font-normal">
-            Track your active competitions, team formation, solution builds, and verified credentials.
-          </p>
-        </div>
-
-        <div className="flex items-center space-x-2.5">
-          <Link href="/hackathons">
-            <Button variant="secondary" size="md">
-              Explore Hackathons
-            </Button>
-          </Link>
-          <Link href="/participant/teams">
-            <Button variant="primary" size="md" icon={<Plus className="w-4 h-4" />}>
-              Create / Join Team
-            </Button>
-          </Link>
-        </div>
-      </div>
-
-      {/* 2. Interactive Workflow Pipeline Progress Tracker */}
-      <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[18px] p-6 shadow-card space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Sparkles className="w-4 h-4 text-[#2563EB]" />
-            <h2 className="text-sm font-bold text-[#111827]">Competition Submission Pipeline</h2>
-            {primaryHackathon && (
-              <span className="text-xs text-[#64748B] font-medium hidden sm:inline">
-                ({primaryHackathon.title})
-              </span>
-            )}
-          </div>
-          <span
-            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border ${
-              pipelinePercentage === 100
-                ? 'bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]'
-                : pipelinePercentage >= 60
-                ? 'bg-[#EFF6FF] text-[#2563EB] border-[#BFDBFE]'
-                : 'bg-[#FFFBEB] text-[#D97706] border-[#FDE68A]'
-            }`}
-          >
-            {pipelinePercentage}% Ready to Submit
-          </span>
-        </div>
-
-        {/* 5-Step Pipeline Steps */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 pt-1">
-          {pipelineSteps.map((item) => (
-            <div
-              key={item.step}
-              className={`p-3 rounded-xl border flex items-center space-x-2.5 ${
-                item.status === 'completed'
-                  ? 'bg-white border-[#A7F3D0] text-[#047857]'
-                  : item.status === 'in_progress'
-                  ? 'bg-white border-[#BFDBFE] text-[#1D4ED8]'
-                  : 'bg-white border-[#E2E8F0] text-[#64748B]'
-              }`}
-            >
-              <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${
-                  item.status === 'completed'
-                    ? 'bg-[#ECFDF5] text-[#059669]'
-                    : item.status === 'in_progress'
-                    ? 'bg-[#EFF6FF] text-[#2563EB]'
-                    : 'bg-[#F1F5F9] text-[#94A3B8]'
-                }`}
-              >
-                {item.status === 'completed' ? '✓' : item.step}
-              </div>
-              <div className="truncate">
-                <span className="block text-xs font-bold text-[#111827] truncate">
-                  {item.title}
-                </span>
-                <span className="text-[10px] text-[#64748B]">
-                  {item.status === 'completed'
-                    ? 'Verified'
-                    : item.status === 'in_progress'
-                    ? 'In Progress'
-                    : 'Pending'}
-                </span>
-              </div>
+    <div className="space-y-6 select-none max-w-[1400px] mx-auto pb-8">
+      {/* 1. PARTICIPANT HERO BANNER */}
+      <div className="relative overflow-hidden rounded-[18px] bg-gradient-to-r from-[#F8FAFC] via-[#F1F5F9] to-[#E2E8F0] border border-[#E2E8F0] shadow-sm">
+        <div className="flex flex-col lg:flex-row items-stretch justify-between min-h-[160px]">
+          {/* Left Content Area */}
+          <div className="p-6 sm:p-8 flex-1 flex flex-col justify-center z-10 space-y-3">
+            <div>
+              <h1 className="text-2xl sm:text-3xl font-bold text-[#0F172A] tracking-tight flex items-center gap-2">
+                <span>Welcome Back,</span>
+                <span className="text-[#2563EB]">{session.fullName}</span>
+                <span className="text-2xl">👋</span>
+              </h1>
+              <p className="text-sm text-[#64748B] mt-1 max-w-xl font-normal">
+                Track your journey, complete milestones and make an impact.
+              </p>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* 3. Metrics Overview Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <KPICard
-          label="Registered Events"
-          value={registrations.length}
-          icon={<Trophy className="w-4 h-4" />}
-          badge={registrations.length > 0 ? 'Active' : 'None'}
-        />
-        <KPICard
-          label="My Teams"
-          value={teams.length}
-          icon={<Users className="w-4 h-4" />}
-          subtext={primaryTeam ? `${primaryTeam.name} (${primaryTeam.members.length} Members)` : 'No active team'}
-        />
-        <KPICard
-          label="Projects & Submissions"
-          value={projects.length}
-          icon={<FileCheck className="w-4 h-4" />}
-          trend={{
-            value: hasSubmitted ? 'Submitted' : projects.length > 0 ? 'Draft' : 'Not Started',
-            isPositive: hasSubmitted,
-          }}
-        />
-        <KPICard
-          label="Verified Credentials"
-          value={certificates.length}
-          icon={<ShieldCheck className="w-4 h-4" />}
-          subtext={`${certificates.length} Issued Certificate${certificates.length === 1 ? '' : 's'}`}
-        />
-      </div>
-
-      {/* 4. Active Hackathon & Solution Workspace */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold text-[#111827]">Active Participation & Projects</h2>
-          <Link href="/participant/hackathons" className="text-xs font-semibold text-[#2563EB] hover:underline">
-            View All Registered Hackathons →
-          </Link>
-        </div>
-
-        {registrations.length === 0 ? (
-          <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-8 text-center space-y-3 shadow-card">
-            <div className="w-12 h-12 rounded-2xl bg-[#EFF6FF] text-[#2563EB] flex items-center justify-center mx-auto">
-              <Trophy className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-[#111827]">You Haven&apos;t Registered for Any Hackathons</h3>
-            <p className="text-xs text-[#64748B] max-w-md mx-auto">
-              Explore open hackathons, view challenge tracks and problem statements, and register to begin competing.
-            </p>
-            <div className="pt-2">
+            {/* CTAs */}
+            <div className="flex flex-wrap items-center gap-3 pt-1">
               <Link href="/hackathons">
-                <Button variant="primary" size="sm">
-                  Explore Hackathons
+                <Button variant="primary" size="md" className="bg-[#2563EB] hover:bg-[#1D4ED8] text-white shadow-sm font-medium px-5 rounded-xl">
+                  Explore Hackathons &rarr;
+                </Button>
+              </Link>
+              <Link href="/projects">
+                <Button variant="secondary" size="md" className="bg-white border-[#CBD5E1] text-[#334155] hover:bg-[#F8FAFC] font-medium px-4 rounded-xl">
+                  View Project Showcase
                 </Button>
               </Link>
             </div>
           </div>
-        ) : (
-          <div className="space-y-4">
-            {registrations.map((reg) => {
-              const h = reg.hackathon;
-              const team = teams.find((t) => t.hackathonId === h.id);
-              const project = projects.find((p) => p.hackathonId === h.id);
-              const submission = submissions.find((s) => s.projectId === project?.id);
-              const isLocked = submission?.status === 'LOCKED';
 
-              return (
-                <div key={reg.id} className="bg-white border border-[#E2E8F0] rounded-[16px] p-6 shadow-card space-y-5">
-                  <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
-                    <div>
-                      <div className="flex items-center space-x-2 text-xs text-[#64748B] mb-1">
-                        <span className="font-semibold text-[#334155]">Registered Event</span>
-                        <span>•</span>
-                        <Badge
-                          variant={
-                            h.status === 'RESULTS_PUBLISHED'
-                              ? 'emerald'
-                              : h.status === 'JUDGING'
-                              ? 'purple'
-                              : h.status === 'SUBMISSION_OPEN'
-                              ? 'blue'
-                              : 'slate'
-                          }
-                        >
-                          {h.status.replace(/_/g, ' ')}
-                        </Badge>
+          {/* Right Hero Graphic / Architectural Perspective */}
+          <div className="relative hidden md:block w-[380px] lg:w-[460px] overflow-hidden flex-shrink-0">
+            <img
+              src="/atlyx-hero-banner.jpg"
+              alt="ATLYX Arena"
+              className="absolute inset-0 w-full h-full object-cover object-center"
+            />
+            {/* Gradient Overlay for seamless blending */}
+            <div className="absolute inset-0 bg-gradient-to-r from-[#F8FAFC] via-transparent to-black/30" />
+            <div className="absolute right-5 bottom-4 text-right z-10">
+              <span className="text-xs font-semibold uppercase tracking-widest text-white/90 drop-shadow-md">
+                Ideas today, Impact tomorrow.
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. TWO-COLUMN SECTION: Your Registered Hackathon & Hackathon Journey */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+        {/* LEFT: Your Registered Hackathon Card (5 Cols) */}
+        <div className="lg:col-span-5 bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4">
+          <div>
+            <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 rounded-full bg-[#2563EB]" />
+                <h2 className="text-sm font-bold text-[#0F172A] tracking-tight uppercase">
+                  Your Registered Hackathon
+                </h2>
+              </div>
+              {primaryRegistration && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                  ✓ Confirmed
+                </span>
+              )}
+            </div>
+
+            {primaryHackathon ? (
+              <div className="mt-4 space-y-3">
+                {/* Hackathon Image & Info */}
+                <div className="flex items-center space-x-3.5">
+                  <div className="w-16 h-16 rounded-xl overflow-hidden bg-[#F1F5F9] border border-[#E2E8F0] flex-shrink-0 relative">
+                    {primaryHackathon.bannerUrl ? (
+                      <img
+                        src={primaryHackathon.bannerUrl}
+                        alt={primaryHackathon.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-[#2563EB] text-white font-bold text-lg">
+                        {primaryHackathon.title.substring(0, 2).toUpperCase()}
                       </div>
-                      <h3 className="text-xl font-bold text-[#111827]">{h.title}</h3>
-                    </div>
-
-                    <div className="flex items-center space-x-2">
-                      {project && (
-                        <Link href={`/participant/projects/${project.id}`}>
-                          <Button variant="outline" size="sm" icon={<ExternalLink className="w-3.5 h-3.5" />}>
-                            Project Workspace
-                          </Button>
-                        </Link>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-base font-bold text-[#0F172A] truncate">
+                      {primaryHackathon.title}
+                    </h3>
+                    <p className="text-xs text-[#64748B] truncate mt-0.5">
+                      {primaryHackathon.organizer?.organizationName || primaryHackathon.organizer?.user?.fullName || 'Apex Frontier Systems'}
+                    </p>
+                    <div className="flex flex-wrap items-center gap-1.5 mt-2">
+                      <span className="text-[11px] font-medium text-[#475569] bg-[#F8FAFC] border border-[#E2E8F0] px-2 py-0.5 rounded-md flex items-center gap-1">
+                        <span>📅</span>
+                        <span>{new Date(primaryHackathon.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} – {new Date(primaryHackathon.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                      </span>
+                      <span className="text-[11px] font-medium text-[#2563EB] bg-[#EFF6FF] border border-[#BFDBFE] px-2 py-0.5 rounded-md">
+                        {primaryHackathon.mode || 'Online'}
+                      </span>
+                      {primaryHackathon.tracks?.[0] && (
+                        <span className="text-[11px] font-medium text-[#475569] bg-[#F1F5F9] px-2 py-0.5 rounded-md truncate max-w-[120px]">
+                          {primaryHackathon.tracks[0].title}
+                        </span>
                       )}
-                      <Link href={`/hackathons/${h.slug}`}>
-                        <Button variant="secondary" size="sm">
-                          Event Details
-                        </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="py-8 text-center space-y-2">
+                <Trophy className="w-8 h-8 text-[#94A3B8] mx-auto" />
+                <p className="text-sm font-medium text-[#64748B]">No active registration</p>
+                <Link href="/hackathons">
+                  <Button variant="primary" size="sm" className="mt-2 bg-[#2563EB] text-white">
+                    Explore Hackathons
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </div>
+
+          {primaryHackathon && (
+            <div className="pt-3 border-t border-[#F1F5F9]">
+              <Link href={`/hackathons/${primaryHackathon.slug || primaryHackathon.id}`}>
+                <Button variant="secondary" size="sm" className="w-full justify-between text-xs font-semibold text-[#2563EB] bg-[#EFF6FF] hover:bg-[#DBEAFE] border-[#BFDBFE] rounded-xl">
+                  <span>View Hackathon Details</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+
+        {/* RIGHT: Hackathon Journey Timeline (7 Cols) */}
+        <div className="lg:col-span-7 bg-white border border-[#E2E8F0] rounded-[18px] p-5 sm:p-6 shadow-sm flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <div className="flex items-center space-x-2">
+              <div className="w-2 h-2 rounded-full bg-[#2563EB]" />
+              <h2 className="text-sm font-bold text-[#0F172A] tracking-tight uppercase">
+                Hackathon Journey
+              </h2>
+            </div>
+            {primaryHackathon && (
+              <Link
+                href={`/hackathons/${primaryHackathon.slug || primaryHackathon.id}#timeline`}
+                className="text-xs font-semibold text-[#2563EB] hover:underline flex items-center gap-1"
+              >
+                <span>View Timeline</span>
+                <ArrowRight className="w-3 h-3" />
+              </Link>
+            )}
+          </div>
+
+          {/* Timeline Nodes */}
+          <div className="relative py-2">
+            {/* Connecting line */}
+            <div className="absolute top-5 left-4 right-4 h-0.5 bg-[#E2E8F0] -z-0 hidden sm:block" />
+
+            <div className="grid grid-cols-2 sm:grid-cols-6 gap-3 sm:gap-1 text-center relative z-10">
+              {/* Step 1: Registration Confirmed */}
+              <div className="flex flex-col items-center space-y-1.5">
+                <div className="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  ✓
+                </div>
+                <div className="text-[11px] font-bold text-[#0F172A] leading-tight">
+                  Registration Confirmed
+                </div>
+                <div className="text-[10px] text-[#64748B]">Feb 28</div>
+              </div>
+
+              {/* Step 2: Idea Submission */}
+              <div className="flex flex-col items-center space-y-1.5">
+                <div className="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  ✓
+                </div>
+                <div className="text-[11px] font-bold text-[#0F172A] leading-tight">
+                  Idea Submission
+                </div>
+                <div className="text-[10px] text-[#64748B]">Mar 01</div>
+              </div>
+
+              {/* Step 3: Evaluation & Shortlisting */}
+              <div className="flex flex-col items-center space-y-1.5">
+                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                  3
+                </div>
+                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
+                  Evaluation & Shortlisting
+                </div>
+                <div className="text-[10px] text-[#94A3B8]">Mar 05</div>
+              </div>
+
+              {/* Step 4: Development Phase */}
+              <div className="flex flex-col items-center space-y-1.5">
+                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                  4
+                </div>
+                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
+                  Development Phase
+                </div>
+                <div className="text-[10px] text-[#94A3B8]">Mar 08 – 25</div>
+              </div>
+
+              {/* Step 5: Final Submission */}
+              <div className="flex flex-col items-center space-y-1.5">
+                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                  5
+                </div>
+                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
+                  Final Submission
+                </div>
+                <div className="text-[10px] text-[#94A3B8]">Mar 26</div>
+              </div>
+
+              {/* Step 6: Final Presentation */}
+              <div className="flex flex-col items-center space-y-1.5">
+                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                  6
+                </div>
+                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
+                  Final Presentation
+                </div>
+                <div className="text-[10px] text-[#94A3B8]">Mar 28 – 30</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-3 bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl flex items-center justify-between text-xs">
+            <div className="flex items-center space-x-2 text-[#334155]">
+              <span className="font-semibold text-[#0F172A]">Current Phase:</span>
+              <span className="text-[#2563EB] font-bold">Idea Submission & Verification</span>
+            </div>
+            <span className="text-[11px] font-medium text-[#64748B]">Stage 2 of 6</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 3. METRIC CARDS & NEXT MILESTONE ROW */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+        {/* Metric 1: My Teams */}
+        <Link href="/participant/teams" className="group">
+          <div className="h-full bg-white border border-[#E2E8F0] group-hover:border-[#2563EB] rounded-[16px] p-5 shadow-sm transition-all flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                <Users className="w-4 h-4 text-[#2563EB]" />
+                <span>My Teams</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#2563EB] group-hover:translate-x-0.5 transition-transform" />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-[#0F172A]">{teams.length}</div>
+              <p className="text-xs text-[#64748B] truncate mt-0.5">
+                {primaryTeam ? `${primaryTeam.name} (${primaryTeam.members?.length || 1} Members)` : 'No active team'}
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Metric 2: My Projects */}
+        <Link href="/participant/projects" className="group">
+          <div className="h-full bg-white border border-[#E2E8F0] group-hover:border-[#2563EB] rounded-[16px] p-5 shadow-sm transition-all flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                <FolderKanban className="w-4 h-4 text-[#2563EB]" />
+                <span>My Projects</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#2563EB] group-hover:translate-x-0.5 transition-transform" />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-[#0F172A]">{projects.length}</div>
+              <p className="text-xs text-[#64748B] truncate mt-0.5">
+                {primaryProject ? primaryProject.title : 'Not Started'}
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Metric 3: My Submissions */}
+        <Link href="/participant/submissions" className="group">
+          <div className="h-full bg-white border border-[#E2E8F0] group-hover:border-[#2563EB] rounded-[16px] p-5 shadow-sm transition-all flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                <FileCheck className="w-4 h-4 text-[#2563EB]" />
+                <span>My Submissions</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#2563EB] group-hover:translate-x-0.5 transition-transform" />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-[#0F172A]">{submissions.length}</div>
+              <p className="text-xs text-[#64748B] truncate mt-0.5">
+                {primarySubmission ? primarySubmission.status : 'No Submissions Yet'}
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Metric 4: My Certificates */}
+        <Link href="/participant/certificates" className="group">
+          <div className="h-full bg-white border border-[#E2E8F0] group-hover:border-[#2563EB] rounded-[16px] p-5 shadow-sm transition-all flex flex-col justify-between space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                <Award className="w-4 h-4 text-[#2563EB]" />
+                <span>My Certificates</span>
+              </div>
+              <ArrowRight className="w-4 h-4 text-[#94A3B8] group-hover:text-[#2563EB] group-hover:translate-x-0.5 transition-transform" />
+            </div>
+            <div>
+              <div className="text-2xl font-extrabold text-[#0F172A]">{certificates.length}</div>
+              <p className="text-xs text-[#64748B] truncate mt-0.5">
+                {certificates.length > 0 ? `${certificates.length} Issued` : 'No Certificates Yet'}
+              </p>
+            </div>
+          </div>
+        </Link>
+
+        {/* Card 5: Next Milestone Card */}
+        <div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-[16px] p-5 shadow-sm flex flex-col justify-between space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] font-bold text-[#1E40AF] uppercase tracking-wider">
+              Next Milestone
+            </span>
+            <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-[#DBEAFE] text-[#1D4ED8]">
+              2 days left
+            </span>
+          </div>
+
+          <div>
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-[#2563EB]" />
+              <span className="text-sm font-bold text-[#0F172A]">Idea Submission</span>
+            </div>
+            <p className="text-xs text-[#64748B] mt-0.5">Mar 10, 11:59 PM</p>
+          </div>
+
+          <Link href="/participant/submissions" className="pt-1">
+            <Button variant="primary" size="sm" className="w-full bg-[#2563EB] hover:bg-[#1D4ED8] text-white text-xs font-semibold py-1.5 rounded-xl">
+              Submit Idea &rarr;
+            </Button>
+          </Link>
+        </div>
+      </div>
+
+      {/* 4. MY REGISTRATIONS & ACTIVITY SECTION */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left: My Registrations List (8 Cols) */}
+        <div className="lg:col-span-8 bg-white border border-[#E2E8F0] rounded-[18px] p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight uppercase flex items-center gap-2">
+              <Trophy className="w-4 h-4 text-[#2563EB]" />
+              <span>My Registrations</span>
+            </h2>
+            <Link href="/hackathons" className="text-xs font-semibold text-[#2563EB] hover:underline">
+              Explore More &rarr;
+            </Link>
+          </div>
+
+          {registrations.length === 0 ? (
+            <div className="py-8 text-center text-sm text-[#64748B]">
+              No hackathons registered yet.
+            </div>
+          ) : (
+            <div className="divide-y divide-[#F1F5F9]">
+              {registrations.map((reg) => (
+                <div key={reg.id} className="py-3.5 flex items-center justify-between hover:bg-[#F8FAFC] px-2 rounded-xl transition-colors">
+                  <div className="flex items-center space-x-3 truncate">
+                    <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] flex items-center justify-center font-bold text-sm flex-shrink-0">
+                      {reg.hackathon.title.substring(0, 2).toUpperCase()}
+                    </div>
+                    <div className="truncate">
+                      <Link href={`/hackathons/${reg.hackathon.slug || reg.hackathon.id}`} className="font-semibold text-sm text-[#0F172A] hover:text-[#2563EB] truncate block">
+                        {reg.hackathon.title}
                       </Link>
+                      <div className="flex items-center space-x-2 text-xs text-[#64748B] mt-0.5">
+                        <span>{reg.hackathon.mode || 'Online'}</span>
+                        <span>•</span>
+                        <span>{new Date(reg.hackathon.startDate).toLocaleDateString()}</span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Project Details Subsection */}
-                  {project ? (
-                    <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 space-y-3">
-                      <div className="flex items-center justify-between text-xs">
-                        <span className="font-semibold text-[#334155]">
-                          Project: <strong>{project.title}</strong>
-                        </span>
-                        <span
-                          className={`text-[11px] font-bold px-2 py-0.5 rounded border ${
-                            isLocked
-                              ? 'text-[#059669] bg-[#ECFDF5] border-[#A7F3D0]'
-                              : 'text-[#2563EB] bg-[#EFF6FF] border-[#BFDBFE]'
-                          }`}
-                        >
-                          {isLocked ? '🔒 Submitted & Locked' : 'Draft In Progress'}
-                        </span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-4 text-xs text-[#64748B]">
-                        {team && (
-                          <span className="inline-flex items-center">
-                            <Users className="w-3.5 h-3.5 mr-1.5 text-[#2563EB]" />
-                            Team: <strong>{team.name}</strong> ({team.members.length} Members)
-                          </span>
-                        )}
-                        {project.track && (
-                          <span className="inline-flex items-center">
-                            <FolderKanban className="w-3.5 h-3.5 mr-1.5 text-[#7E22CE]" />
-                            Track: <strong>{project.track.title}</strong>
-                          </span>
-                        )}
-                        {project.repoUrl && (
-                          <a
-                            href={project.repoUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center text-[#2563EB] hover:underline"
-                          >
-                            <Github className="w-3.5 h-3.5 mr-1" />
-                            Repository
-                          </a>
-                        )}
-                      </div>
-                    </div>
-                  ) : team ? (
-                    <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div>
-                        <span className="text-xs font-bold text-[#334155] block">Team Formed: {team.name}</span>
-                        <span className="text-xs text-[#64748B]">
-                          You haven&apos;t created a project yet for this team. Select a track and problem statement to start building.
-                        </span>
-                      </div>
-                      <Link href="/participant/projects">
-                        <Button variant="primary" size="sm" icon={<Plus className="w-3.5 h-3.5" />}>
-                          Create Project
-                        </Button>
-                      </Link>
-                    </div>
-                  ) : (
-                    <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-                      <div>
-                        <span className="text-xs font-bold text-[#334155] block">Registration Confirmed</span>
-                        <span className="text-xs text-[#64748B]">
-                          Create or join a team to select challenges and submit your solution.
-                        </span>
-                      </div>
-                      <Link href="/participant/teams">
-                        <Button variant="primary" size="sm" icon={<Users className="w-3.5 h-3.5" />}>
-                          Form / Join Team
-                        </Button>
-                      </Link>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-
-      {/* 5. Quick Links Grid: Teams, Certificates, Attendance */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Teams card */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-              My Teams
-            </span>
-            <Users className="w-4 h-4 text-[#2563EB]" />
-          </div>
-          <h4 className="text-base font-bold text-[#111827]">
-            {teams.length > 0 ? `${teams.length} Active Team${teams.length === 1 ? '' : 's'}` : 'No Team Yet'}
-          </h4>
-          <p className="text-xs text-[#64748B]">
-            {primaryTeam
-              ? `Invite Code: ${primaryTeam.inviteCode}`
-              : 'Create a team or join using an invite code.'}
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/participant/teams"
-              className="text-xs font-semibold text-[#2563EB] hover:underline inline-flex items-center"
-            >
-              <span>Manage Team Rosters</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Certificates card */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-              Certificates
-            </span>
-            <Award className="w-4 h-4 text-[#059669]" />
-          </div>
-          <h4 className="text-base font-bold text-[#111827]">
-            {certificates.length > 0
-              ? `${certificates.length} Issued Credential${certificates.length === 1 ? '' : 's'}`
-              : 'No Certificates Yet'}
-          </h4>
-          <p className="text-xs text-[#64748B]">
-            Cryptographically signed and employer-verifiable digital certificates.
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/participant/certificates"
-              className="text-xs font-semibold text-[#059669] hover:underline inline-flex items-center"
-            >
-              <span>View & Verify Certificates</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Attendance Check-in card */}
-        <div className="bg-white border border-[#E2E8F0] rounded-[16px] p-5 shadow-card space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
-              Attendance
-            </span>
-            <QrCode className="w-4 h-4 text-[#D97706]" />
-          </div>
-          <h4 className="text-base font-bold text-[#111827]">
-            {attendanceRecords.length} Checked-In Sessions
-          </h4>
-          <p className="text-xs text-[#64748B]">
-            {activeSessionsCount > 0
-              ? `${activeSessionsCount} active check-in session${activeSessionsCount === 1 ? '' : 's'} available now.`
-              : 'Enter session codes or scan QR during workshops and keynotes.'}
-          </p>
-          <div className="pt-2">
-            <Link
-              href="/participant/attendance"
-              className="text-xs font-semibold text-[#D97706] hover:underline inline-flex items-center"
-            >
-              <span>Check-in Status</span>
-              <ArrowRight className="w-3.5 h-3.5 ml-1" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* 6. Recent Real Activity Timeline */}
-      {recentActivity.length > 0 && (
-        <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-6 shadow-card space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              <Activity className="w-4 h-4 text-[#2563EB]" />
-              <h3 className="text-base font-bold text-[#111827]">Your Recent Activity</h3>
-            </div>
-            <span className="text-xs text-[#64748B]">Authoritative audit log</span>
-          </div>
-
-          <div className="divide-y divide-[#F1F5F9]">
-            {recentActivity.map((act) => (
-              <div key={act.id} className="py-3 flex items-center justify-between text-xs">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-2 h-2 rounded-full bg-[#2563EB]" />
-                  <span className="font-semibold text-[#111827]">
-                    {act.action.replace(/_/g, ' ')}
-                  </span>
-                  {act.hackathon && (
-                    <span className="text-[#64748B]">
-                      on <strong>{act.hackathon.title}</strong>
+                  <div className="flex items-center space-x-3">
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                      {reg.status || 'Confirmed'}
                     </span>
-                  )}
+                    <Link href={`/hackathons/${reg.hackathon.slug || reg.hackathon.id}`}>
+                      <ArrowRight className="w-4 h-4 text-[#94A3B8] hover:text-[#2563EB]" />
+                    </Link>
+                  </div>
                 </div>
-                <span className="text-[#94A3B8]">
-                  {new Date(act.createdAt).toLocaleString()}
-                </span>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Right: Recent Activity Timeline (4 Cols) */}
+        <div className="lg:col-span-4 bg-white border border-[#E2E8F0] rounded-[18px] p-6 shadow-sm space-y-4">
+          <div className="flex items-center justify-between pb-3 border-b border-[#F1F5F9]">
+            <h2 className="text-sm font-bold text-[#0F172A] tracking-tight uppercase flex items-center gap-2">
+              <Activity className="w-4 h-4 text-[#2563EB]" />
+              <span>Recent Activity</span>
+            </h2>
+            <Link href="/participant/activity" className="text-xs font-semibold text-[#2563EB] hover:underline">
+              View All
+            </Link>
+          </div>
+
+          {recentActivity.length === 0 ? (
+            <div className="py-8 text-center text-xs text-[#94A3B8]">
+              No recent audit activity.
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {recentActivity.slice(0, 5).map((log: any) => (
+                <div key={log.id} className="text-xs flex items-start space-x-2.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#2563EB] mt-1.5 flex-shrink-0" />
+                  <div className="min-w-0 flex-1">
+                    <p className="font-semibold text-[#1E293B] truncate">{log.action}</p>
+                    <p className="text-[11px] text-[#64748B]">
+                      {new Date(log.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} • {log.resourceType || 'System'}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 }

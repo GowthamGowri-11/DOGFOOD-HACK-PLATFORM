@@ -150,15 +150,15 @@ export class SubmissionValidator {
     if (now < subStart) {
       errors.push({
         field: 'timing',
-        code: 'SUBMISSION_WINDOW_NOT_OPEN',
+        code: 'SUBMISSION_NOT_OPEN',
         message: 'Submissions for this hackathon have not opened yet.',
       });
     }
 
-    if (now > subEnd) {
+    if (now >= subEnd) {
       errors.push({
         field: 'timing',
-        code: 'SUBMISSION_WINDOW_CLOSED',
+        code: 'SUBMISSION_DEADLINE_PASSED',
         message: 'The submission deadline for this hackathon has passed.',
       });
     }

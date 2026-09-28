@@ -3,6 +3,10 @@ import { z } from 'zod';
 import { HackathonRepository } from '@/server/repositories/hackathon.repository';
 import { HackathonLifecycleService } from '@/server/services/hackathon-lifecycle.service';
 import { HackathonService } from '@/server/services/hackathon.service';
+import { SubmissionWindowService } from '@/server/services/submission-window.service';
+import { deadlineScheduler } from '@/server/services/deadline-scheduler.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 import { requireAuth, requireRole } from '@/server/permissions/guards';
 import { ResourceGuards } from '@/server/permissions/resource-guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
@@ -42,8 +46,9 @@ const updateHackathonSchema = z.object({
   judgingEndTime: z.string().datetime().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  bannerUrl: z.string().url().optional().or(z.literal('')).or(z.null()),
-  logoUrl: z.string().url().optional().or(z.literal('')).or(z.null()),
+  // Flexible URLs for uploaded banners/logos + prize fields from both branches
+  bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
   prizePool: z.number().optional().or(z.string()),
   currency: z.string().optional(),
   prizes: z.array(z.any()).optional(),
@@ -68,10 +73,12 @@ export async function GET(
     }
 
     const operationalStatus = HackathonLifecycleService.getOperationalStatus(hackathon);
+    const submissionWindow = SubmissionWindowService.getSubmissionWindowDetails(hackathon);
 
     return successResponse({
       hackathon,
       operationalStatus,
+      submissionWindow,
     });
   } catch (error: any) {
     const status = error.status || 500;
@@ -208,6 +215,38 @@ export async function PATCH(
       }
     }
 
+    const windowUpdated =
+      (data.subStartTime && new Date(data.subStartTime).getTime() !== new Date(current.subStartTime).getTime()) ||
+      (data.subEndTime && new Date(data.subEndTime).getTime() !== new Date(current.subEndTime).getTime());
+
+    if (windowUpdated) {
+      deadlineScheduler.invalidateHackathon(hackathonId);
+
+      await AuditService.log({
+        userId: session.id,
+        hackathonId,
+        action: 'SUBMISSION_WINDOW_UPDATED',
+        entityType: 'Hackathon',
+        entityId: hackathonId,
+        beforeState: { subStartTime: current.subStartTime, subEndTime: current.subEndTime },
+        afterState: { subStartTime: updated.subStartTime, subEndTime: updated.subEndTime },
+      });
+
+      await eventBus.publish({
+        type: 'SUBMISSION_WINDOW_UPDATED',
+        hackathonId,
+        rooms: [
+          RealtimeRoomBuilder.hackathon(hackathonId),
+          RealtimeRoomBuilder.organizer(hackathonId),
+        ],
+        payload: {
+          subStartTime: updated.subStartTime.toISOString(),
+          subEndTime: updated.subEndTime.toISOString(),
+          submissionWindow: SubmissionWindowService.getSubmissionWindowDetails(updated),
+        },
+      });
+    }
+
     await AuditService.log({
       userId: session.id,
       hackathonId,
@@ -228,7 +267,12 @@ export async function PATCH(
       // Ignore during test/static builds
     }
 
-    return successResponse({ hackathon: updated }, 'Hackathon updated successfully');
+    const submissionWindow = SubmissionWindowService.getSubmissionWindowDetails(updated);
+
+    return successResponse(
+      { hackathon: updated, submissionWindow },
+      'Hackathon updated successfully'
+    );
   } catch (error: any) {
     const status = error.status || 500;
     const code = error.code || 'INTERNAL_ERROR';

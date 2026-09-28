@@ -31,12 +31,39 @@ export async function GET(req: NextRequest) {
       orderBy: { createdAt: 'desc' },
     });
 
-    const activeHackathonId = hackathonId && hackathonId !== 'all'
-      ? hackathonId
-      : hackathons[0]?.id;
+    const isAll = hackathonId === 'all';
+    const activeHackathonId = isAll
+      ? 'all'
+      : (hackathonId || hackathons[0]?.id || 'all');
+
+    // Calculate accurate overall stats for the selected hackathon (independent of search filter)
+    const statsWhere: Prisma.TeamWhereInput = activeHackathonId !== 'all'
+      ? { hackathonId: activeHackathonId }
+      : {};
+
+    const allHackathonTeams = await prisma.team.findMany({
+      where: statsWhere,
+      select: {
+        id: true,
+        hackathon: { select: { minTeamSize: true } },
+        members: { select: { id: true } },
+      },
+    });
+
+    const totalCount = allHackathonTeams.length;
+    let registeredCount = 0;
+    let pendingCount = 0;
+    for (const t of allHackathonTeams) {
+      const minReq = t.hackathon?.minTeamSize ?? 2;
+      if (t.members.length >= minReq) {
+        registeredCount++;
+      } else {
+        pendingCount++;
+      }
+    }
 
     const baseWhere: Prisma.TeamWhereInput = {
-      ...(activeHackathonId ? { hackathonId: activeHackathonId } : {}),
+      ...(activeHackathonId !== 'all' ? { hackathonId: activeHackathonId } : {}),
       ...(search
         ? {
             OR: [
@@ -98,14 +125,9 @@ export async function GET(req: NextRequest) {
       const isRegistered = t.members.length >= minRequired;
       return {
         ...t,
-        status: isRegistered ? 'REGISTERED' : 'PENDING',
+        status: (isRegistered ? 'REGISTERED' : 'PENDING') as 'REGISTERED' | 'PENDING',
       };
     });
-
-    // Compute stats for the current hackathon
-    const totalCount = teamsWithStatus.length;
-    const registeredCount = teamsWithStatus.filter((t) => t.status === 'REGISTERED').length;
-    const pendingCount = teamsWithStatus.filter((t) => t.status === 'PENDING').length;
 
     // Apply status filter if not ALL
     let filteredTeams = teamsWithStatus;

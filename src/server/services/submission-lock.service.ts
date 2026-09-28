@@ -1,6 +1,7 @@
 import { ProjectRepository } from '@/server/repositories/project.repository';
 import { SubmissionRepository } from '@/server/repositories/submission.repository';
 import { SubmissionValidator } from '@/server/services/submission-validator.service';
+import { SubmissionWindowService } from '@/server/services/submission-window.service';
 import { SnapshotService } from '@/server/services/snapshot.service';
 import { AuditService } from '@/server/services/audit.service';
 import prisma from '@/lib/prisma';
@@ -11,7 +12,7 @@ export class SubmissionLockService {
   /**
    * Validates project submission criteria, builds the canonical snapshot, and freezes the submission.
    */
-  public static async submitAndLockProject(projectId: string, userId: string) {
+  public static async submitAndLockProject(projectId: string, userId: string, currentTime: Date = new Date()) {
     const project = await ProjectRepository.findById(projectId);
     if (!project) {
       throw { message: 'Project not found.', code: 'NOT_FOUND', status: 404 };
@@ -22,7 +23,10 @@ export class SubmissionLockService {
       throw { message: 'You are not authorized to submit for this team.', code: 'FORBIDDEN', status: 403 };
     }
 
-    // 1. Race Condition / Double Submit Guard
+    // 1. Authoritative Submission Window Timing Check
+    SubmissionWindowService.assertSubmissionWindowOpen(project.hackathon, currentTime);
+
+    // 2. Race Condition / Double Submit Guard
     const latest = await SubmissionRepository.findLatestByProjectId(projectId);
     if (latest && latest.status === 'LOCKED') {
       throw {
@@ -32,8 +36,8 @@ export class SubmissionLockService {
       };
     }
 
-    // 2. Authoritative Server-Side Validation Pipeline
-    const validation = SubmissionValidator.validateProjectForSubmission(project, project.hackathon);
+    // 3. Authoritative Server-Side Validation Pipeline
+    const validation = SubmissionValidator.validateProjectForSubmission(project, project.hackathon, currentTime);
     if (!validation.isValid) {
       throw {
         message: 'Project does not meet all required submission criteria.',

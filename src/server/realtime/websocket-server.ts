@@ -5,6 +5,7 @@ import { ResourceGuards } from '../permissions/resource-guards';
 import { UserSession } from '../../types';
 import { RealtimeEvent, ClientMessage, ServerMessage } from './event-types';
 import { eventBus } from './event-bus';
+import { deadlineScheduler } from '../services/deadline-scheduler.service';
 
 interface AuthenticatedSocket extends WebSocket {
   isAlive: boolean;
@@ -50,6 +51,9 @@ export class ApexWebSocketServer {
       eventBus.registerWebSocketBroadcaster((rooms, event) => {
         this.broadcastToRooms(rooms, event);
       });
+
+      // Start Deadline Monitoring Scheduler
+      deadlineScheduler.start(5000);
 
       console.log(`[ApexWebSocketServer] WebSocket server initialized on port ${typeof serverOrPort === 'number' ? serverOrPort : 'custom'}`);
     } catch (err: any) {
@@ -322,6 +326,7 @@ export class ApexWebSocketServer {
   }
 
   public close() {
+    deadlineScheduler.stop();
     if (this.heartbeatInterval) {
       clearInterval(this.heartbeatInterval);
       this.heartbeatInterval = null;

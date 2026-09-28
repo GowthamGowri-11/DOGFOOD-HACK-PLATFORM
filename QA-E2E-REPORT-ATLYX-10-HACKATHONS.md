@@ -5,7 +5,7 @@
 - **WebSocket URL**: `ws://localhost:3001`
 - **Database**: Canonical PostgreSQL via Prisma ORM
 - **Test Framework**: Multi-Role Automated Browser & REST Hybrid Engine
-- **Date & Time**: 2026-09-27T18:06:34.858Z
+- **Date & Time**: 2026-09-28T06:13:41.572Z
 - **Platform Identity**: **ATLYX — Competition Arena**
 
 ---
@@ -29,16 +29,16 @@
 
 | # | Hackathon Title | ID | Assigned Organizer | Status | Registration | Team Creation | Form Builder |
 |---|:---|:---|:---|:---|:---:|:---:|:---:|
-| 1 | **[QA E2E 2026] ATLYX AI Challenge 01** | `a574c9c6-3539-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 2 | **[QA E2E 2026] ATLYX AI Challenge 02** | `9b26db16-bec2-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 3 | **[QA E2E 2026] ATLYX AI Challenge 03** | `6c828e09-e9df-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 4 | **[QA E2E 2026] ATLYX AI Challenge 04** | `da165342-0b37-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 5 | **[QA E2E 2026] ATLYX AI Challenge 05** | `545b32ea-9eb8-...` | Organizer Beta | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 6 | **[QA E2E 2026] ATLYX AI Challenge 06** | `41e0fc7c-9996-...` | Organizer Beta | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 7 | **[QA E2E 2026] ATLYX AI Challenge 07** | `8fd8c6cf-a8a0-...` | Organizer Beta | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 8 | **[QA E2E 2026] ATLYX AI Challenge 08** | `9440e88f-461b-...` | Organizer Gamma | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 9 | **[QA E2E 2026] ATLYX AI Challenge 09** | `0d255906-8eed-...` | Organizer Gamma | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
-| 10 | **[QA E2E 2026] ATLYX AI Challenge 10** | `cd0dc4a6-973b-...` | Organizer Gamma | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 1 | **[QA E2E 2026] ATLYX AI Challenge 01** | `c84374aa-afc5-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 2 | **[QA E2E 2026] ATLYX AI Challenge 02** | `8fa5454d-108e-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 3 | **[QA E2E 2026] ATLYX AI Challenge 03** | `40faa534-cc1d-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 4 | **[QA E2E 2026] ATLYX AI Challenge 04** | `b11aafc3-4ecb-...` | Organizer Alpha | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 5 | **[QA E2E 2026] ATLYX AI Challenge 05** | `415eecf2-3c03-...` | Organizer Beta | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 6 | **[QA E2E 2026] ATLYX AI Challenge 06** | `b8779fd9-5b42-...` | Organizer Beta | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 7 | **[QA E2E 2026] ATLYX AI Challenge 07** | `b36af320-debb-...` | Organizer Beta | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 8 | **[QA E2E 2026] ATLYX AI Challenge 08** | `893a1bce-dbf5-...` | Organizer Gamma | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 9 | **[QA E2E 2026] ATLYX AI Challenge 09** | `4420bb95-0b8c-...` | Organizer Gamma | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
+| 10 | **[QA E2E 2026] ATLYX AI Challenge 10** | `1bbc468e-f4ff-...` | Organizer Gamma | `PUBLISHED / LIVE` | ✅ PASS | ✅ PASS (Zero Approval) | ✅ PASS |
 
 ---
 
@@ -84,7 +84,7 @@ ORGANIZER & ADMIN ROSTER REAL-TIME TELEMETRY (WebSocket + REST)
 - **Registration**: Direct registration without waiting queues.
 - **Team Creation**: Created `[QA E2E] ATLYX Team 01` with immediate leader assignment and **zero approval requirements**.
 - **Form Member Addition**: Submitted published form and onboarded `qa.teammate.alpha@atlyx.io` instantly.
-- **Invite Code Join**: Participant B entered code `QAE2-B0E250` and joined immediately.
+- **Invite Code Join**: Participant B entered code `QAE2-CAAA51` and joined immediately.
 - **One-Team-Per-Hackathon**: Prevented duplicate team creation in the same hackathon while allowing cross-hackathon teams.
 
 ### **D. REST + WebSocket Architecture (PASS)**
@@ -102,10 +102,10 @@ ORGANIZER & ADMIN ROSTER REAL-TIME TELEMETRY (WebSocket + REST)
 ## 6. Test Execution Metrics
 
 - **TOTAL TESTS EXECUTED**: `54`
-- **PASSED**: `54`
-- **FAILED**: `0`
+- **PASSED**: `53`
+- **FAILED**: `1`
 - **BLOCKED**: `0`
-- **PASS RATE**: `100.0%`
+- **PASS RATE**: `98.1%`
 
 ### **Bugs / Vulnerabilities Found**:
 - **CRITICAL**: `0`

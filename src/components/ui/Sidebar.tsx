@@ -68,7 +68,6 @@ const ORGANIZER_ITEMS: NavItem[] = [
   { label: 'Hackathons', href: '/organizer/hackathons', icon: Trophy },
   { label: 'Registrations', href: '/organizer/registrations', icon: Users },
   { label: 'Teams', href: '/organizer/teams', icon: Users },
-  { label: 'Projects', href: '/organizer/projects', icon: FolderKanban },
   { label: 'Submissions', href: '/organizer/submissions', icon: FileCheck },
   { label: 'Judges', href: '/organizer/judges', icon: UserCheck2 },
   { label: 'Assignments', href: '/organizer/assignments', icon: Scale },
@@ -85,11 +84,11 @@ const ORGANIZER_ITEMS: NavItem[] = [
 
 const JUDGE_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/judge/dashboard', icon: LayoutDashboard },
-  { label: 'My Assignments', href: '/judge/dashboard', icon: Scale },
-  { label: 'Projects', href: '/projects', icon: FolderKanban },
-  { label: 'Evaluations', href: '/judge/dashboard', icon: FileCheck },
+  { label: 'My Assignments', href: '/judge/assignments', icon: Scale },
+  { label: 'Pending Evaluations', href: '/judge/evaluations', icon: FileCheck },
+  { label: 'Completed Evaluations', href: '/judge/completed', icon: ShieldCheck },
   { label: 'Leaderboard', href: '/leaderboard', icon: Award },
-  { label: 'Profile & Settings', href: '/participant/settings', icon: UserCheck2 },
+  { label: 'Profile', href: '/judge/profile', icon: UserCheck2 },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [

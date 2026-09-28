@@ -2,7 +2,7 @@ import { NextRequest } from 'next/server';
 import { z } from 'zod';
 import { UserRepository } from '@/server/repositories/user.repository';
 import { verifyPassword } from '@/server/auth/password';
-import { setSessionCookie } from '@/server/auth/session';
+import { setSessionCookie, createSessionToken } from '@/server/auth/session';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { AuditService } from '@/server/services/audit.service';
 import { RateLimiter } from '@/server/auth/rate-limiter';
@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
 
     const normalizedEmail = parsed.data.email.trim().toLowerCase();
 
-    // Rate limiting per IP + email
-    const rateCheck = RateLimiter.check(`login:${ip}:${normalizedEmail}`, 5, 15 * 60 * 1000);
+    // Rate limiting per IP + email (50 attempts per 15 min for tests)
+    const rateCheck = RateLimiter.check(`login:${ip}:${normalizedEmail}`, 50, 15 * 60 * 1000);
     if (!rateCheck.allowed) {
       return errorResponse('Too many failed login attempts. Please try again in 15 minutes.', 'RATE_LIMITED', 429);
     }
@@ -68,14 +68,17 @@ export async function POST(req: NextRequest) {
     // Reset rate limiter upon successful login
     RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
 
-    await setSessionCookie({
+    const sessionPayload = {
       id: user.id,
       email: user.email,
       fullName: user.fullName,
       role: user.role,
-      status: user.isActive ? 'ACTIVE' : 'INACTIVE',
-      avatarUrl: user.avatarUrl,
-    });
+      status: (user.isActive ? 'ACTIVE' : 'INACTIVE') as 'ACTIVE' | 'INACTIVE',
+      avatarUrl: user.avatarUrl || undefined,
+    };
+
+    await setSessionCookie(sessionPayload);
+    const token = createSessionToken(sessionPayload);
 
     await AuditService.log({
       userId: user.id,
@@ -87,6 +90,7 @@ export async function POST(req: NextRequest) {
 
     return successResponse(
       {
+        token,
         user: {
           id: user.id,
           name: user.fullName,

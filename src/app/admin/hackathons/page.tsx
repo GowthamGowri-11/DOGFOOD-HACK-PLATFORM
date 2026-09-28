@@ -515,8 +515,8 @@ export default function AdminHackathonsPage() {
                     </p>
                   </div>
 
-                  {/* Stats Box (Team Size, Rounds, Prize Pool) */}
-                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3 my-3 grid grid-cols-3 divide-x divide-[#e2e8f0] text-center">
+                  {/* Stats Box (Team Size, Tracks, Rounds, Prize Pool) */}
+                  <div className="bg-[#f8fafc] border border-[#e2e8f0] rounded-xl p-3 my-3 grid grid-cols-4 divide-x divide-[#e2e8f0] text-center">
                     <div className="px-1">
                       <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-wider block">
                         TEAM SIZE
@@ -528,10 +528,19 @@ export default function AdminHackathonsPage() {
 
                     <div className="px-1">
                       <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-wider block">
+                        TRACKS
+                      </span>
+                      <span className="text-xs sm:text-sm font-bold text-[#8b5cf6] mt-0.5 block">
+                        {h.tracks?.length || 0} Tracks
+                      </span>
+                    </div>
+
+                    <div className="px-1">
+                      <span className="text-[9px] font-bold text-[#64748b] uppercase tracking-wider block">
                         ROUNDS
                       </span>
                       <span className="text-xs sm:text-sm font-bold text-[#059669] mt-0.5 block">
-                        {roundsCount} Rounds
+                        {roundsCount}
                       </span>
                     </div>
 

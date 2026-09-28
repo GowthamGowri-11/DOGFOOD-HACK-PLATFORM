@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
+import { SubmissionCountdown } from '@/components/realtime/SubmissionCountdown';
 
 export default function ProjectWorkspacePage() {
   const params = useParams();
@@ -34,6 +35,7 @@ export default function ProjectWorkspacePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [windowState, setWindowState] = useState<'UPCOMING' | 'SUBMISSION_OPEN' | 'SUBMISSION_CLOSED'>('SUBMISSION_OPEN');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Editable fields
@@ -259,6 +261,15 @@ export default function ProjectWorkspacePage() {
             </span>
           </div>
         </div>
+
+        {/* Submission Countdown Bar */}
+        <SubmissionCountdown
+          hackathonId={project.hackathon.id}
+          subStartTime={project.hackathon.subStartTime}
+          subEndTime={project.hackathon.subEndTime}
+          isLocked={isLocked}
+          onStateChange={(state) => setWindowState(state)}
+        />
 
         {/* Lock Notice */}
         {isLocked && latestSubmission && (
@@ -547,6 +558,24 @@ export default function ProjectWorkspacePage() {
                 <Lock className="w-5 h-5 text-[#059669] mx-auto mb-1" />
                 <span className="text-[#065F46] font-bold block">Submission Locked for Evaluation</span>
                 <span>Your project snapshot is frozen for jury review.</span>
+              </div>
+            ) : windowState === 'UPCOMING' ? (
+              <div className="space-y-3 pt-2">
+                <div className="p-3 bg-[#F8FAFC] rounded-xl border border-[#E2E8F0] text-center text-xs text-[#64748B] font-medium">
+                  ⏳ Submission has not opened yet.
+                </div>
+                <Button variant="primary" size="md" disabled={true} className="w-full">
+                  Submission Not Open
+                </Button>
+              </div>
+            ) : windowState === 'SUBMISSION_CLOSED' ? (
+              <div className="space-y-3 pt-2">
+                <div className="p-3 bg-[#FEF2F2] rounded-xl border border-[#FECACA] text-center text-xs text-[#DC2626] font-semibold">
+                  🔒 The submission deadline has passed.
+                </div>
+                <Button variant="primary" size="md" disabled={true} className="w-full">
+                  Submission Closed
+                </Button>
               </div>
             ) : (
               <div className="space-y-3 pt-2">

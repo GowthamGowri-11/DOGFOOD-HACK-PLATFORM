@@ -76,7 +76,7 @@ export async function POST(
 
     if (singleCriterion) {
       // Find current rubric or create one if none exists
-      let currentRubric = await RubricRepository.findCurrentByHackathon(hackathonId);
+      let currentRubric: any = await RubricRepository.findCurrentByHackathon(hackathonId);
 
       if (!currentRubric) {
         currentRubric = await RubricRepository.create({
@@ -98,7 +98,7 @@ export async function POST(
         const isLocked = await RubricRepository.isLockedByEvaluations(currentRubric.id);
         if (isLocked) {
           // Clone and create next version
-          const existingCriteria = currentRubric.criteria.map((c) => ({
+          const existingCriteria = currentRubric.criteria.map((c: any) => ({
             title: c.title,
             description: c.description,
             weightPercentage: c.weightPercentage,
@@ -147,7 +147,10 @@ export async function POST(
           action: 'RUBRIC_UPDATED',
           entityType: 'Rubric',
           entityId: currentRubric.id,
-          afterState: { criterionAdded: singleCriterion.title, totalCriteria: currentRubric.criteria.length },
+          afterState: {
+            criterionAdded: singleCriterion.title,
+            totalCriteria: currentRubric.criteria?.length || 0,
+          },
         });
       }
 

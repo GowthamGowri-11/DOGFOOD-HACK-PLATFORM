@@ -1,25 +1,30 @@
 import prisma from '../src/lib/prisma';
+import bcrypt from 'bcryptjs';
 
-async function seedBuildathonTeams() {
+async function seedEnterpriseTeams() {
   const organizer = await prisma.user.findFirst({ where: { role: 'ORGANIZER' } });
   const orgId = organizer?.id || (await prisma.user.findFirst())?.id || 'usr_organizer_001';
 
+  const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
+
+  // Upsert/Update the Hackathon to "Apex Enterprise Hackathon 2026" (No "buildathon" wording!)
   const hackathon = await prisma.hackathon.upsert({
     where: { id: 'hack_buildathon_2026' },
     update: {
-      title: 'BUILDATHON 2026',
-      slug: 'buildathon-2026',
-      tagline: 'Build the Future with AI',
+      title: 'Apex Enterprise Hackathon 2026',
+      slug: 'apex-enterprise-hackathon-2026',
+      tagline: 'Scale Frontier Intelligence & Autonomous Cloud Systems',
+      description: 'The premier enterprise innovation competition where top engineering teams build cutting-edge intelligence systems.',
       status: 'EVENT_ACTIVE',
       minTeamSize: 2,
       maxTeamSize: 4,
     },
     create: {
       id: 'hack_buildathon_2026',
-      title: 'BUILDATHON 2026',
-      slug: 'buildathon-2026',
-      tagline: 'Build the Future with AI',
-      description: 'The premier enterprise buildathon where innovative student engineering meets frontier intelligence.',
+      title: 'Apex Enterprise Hackathon 2026',
+      slug: 'apex-enterprise-hackathon-2026',
+      tagline: 'Scale Frontier Intelligence & Autonomous Cloud Systems',
+      description: 'The premier enterprise innovation competition where top engineering teams build cutting-edge intelligence systems.',
       organizationName: 'Apex Enterprise Arena',
       organizerId: orgId,
       status: 'EVENT_ACTIVE',
@@ -35,155 +40,218 @@ async function seedBuildathonTeams() {
       judgingEndTime: new Date('2026-08-20T18:00:00Z'),
     },
   });
-  console.log('Hackathon ready:', hackathon.title);
 
+  console.log('Hackathon updated to:', hackathon.title);
+
+  // Ensure default track and problem statement
+  const track = await prisma.track.upsert({
+    where: { hackathonId_slug: { hackathonId: hackathon.id, slug: 'ai-enterprise' } },
+    update: { title: 'Enterprise AI & Autonomous Systems' },
+    create: {
+      hackathonId: hackathon.id,
+      title: 'Enterprise AI & Autonomous Systems',
+      slug: 'ai-enterprise',
+      colorHex: '#2563EB',
+    },
+  });
+
+  const problem = await prisma.problemStatement.upsert({
+    where: { hackathonId_code: { hackathonId: hackathon.id, code: 'ENT-01' } },
+    update: { title: 'High-Throughput Autonomous AI Agent Architectures' },
+    create: {
+      hackathonId: hackathon.id,
+      trackId: track.id,
+      code: 'ENT-01',
+      title: 'High-Throughput Autonomous AI Agent Architectures',
+      description: 'Design and deploy scalable autonomous agent frameworks for mission-critical enterprise workflows.',
+    },
+  });
+
+  // Helper to ensure user exists
   async function ensureUser(fullName: string, email: string) {
     const existing = await prisma.user.findFirst({ where: { email } });
-    if (existing) return existing;
+    if (existing) {
+      if (existing.fullName !== fullName) {
+        return prisma.user.update({
+          where: { id: existing.id },
+          data: { fullName },
+        });
+      }
+      return existing;
+    }
     return prisma.user.create({
       data: {
         fullName,
         email,
-        passwordHash: 'dummy_hash_for_seed',
+        passwordHash: defaultPasswordHash,
         role: 'PARTICIPANT',
         isActive: true,
       },
     });
   }
 
-  const teamsData = [
+  // Clear previous teams for this hackathon so we replace them cleanly
+  await prisma.teamMember.deleteMany({
+    where: { team: { hackathonId: hackathon.id } },
+  });
+  await prisma.project.deleteMany({
+    where: { hackathonId: hackathon.id },
+  });
+  await prisma.team.deleteMany({
+    where: { hackathonId: hackathon.id },
+  });
+  console.log('Cleaned old teams for hackathon.');
+
+  // Modern, high-caliber enterprise teams
+  const newTeamsData = [
     {
-      name: 'INFINITE VOID',
-      leader: { name: 'ELAYANITHISH D', email: 'elayanithish.d@hackathon.dev' },
+      name: 'Aura Systems',
+      leader: { name: 'Sarah Jenkins', email: 'sarah.jenkins@enterprise-ai.io' },
       members: [
-        { name: 'Sri CS', email: 'sri.cs@hackathon.dev' },
-        { name: 'V Dharika', email: 'v.dharika@hackathon.dev' },
-        { name: 'Divyadharshini D', email: 'divyadharshini.d@hackathon.dev' },
+        { name: 'David Park', email: 'david.park@enterprise-ai.io' },
+        { name: 'Priya Patel', email: 'priya.patel@enterprise-ai.io' },
+        { name: 'Marcus Chen', email: 'marcus.chen@enterprise-ai.io' },
       ],
-      createdAt: new Date('2026-08-11T15:32:00Z'),
-      code: 'INV-VOID-9921',
+      createdAt: new Date('2026-08-11T10:30:00Z'),
+      code: 'INV-AURA-9021',
+      projectTitle: 'AuraGraph: Enterprise High-Throughput RAG Architecture',
     },
     {
-      name: 'HOGWARTS',
-      leader: { name: 'MANNAM GANESHBABU', email: 'mannam.ganeshbabu@hackathon.dev' },
+      name: 'Synapse Labs',
+      leader: { name: 'Alex Rivera', email: 'alex.rivera@synapselabs.tech' },
       members: [
-        { name: 'Vijesh', email: 'vijesh@hackathon.dev' },
-        { name: 'M. DINESH MADHAVAN', email: 'dinesh.madhavan@hackathon.dev' },
+        { name: 'Elena Rostova', email: 'elena.rostova@synapselabs.tech' },
+        { name: 'Kenji Sato', email: 'kenji.sato@synapselabs.tech' },
       ],
-      createdAt: new Date('2026-08-14T15:21:00Z'),
-      code: 'INV-HOGW-4412',
+      createdAt: new Date('2026-08-12T14:15:00Z'),
+      code: 'INV-SYNP-4421',
+      projectTitle: 'SynapseGuard: Autonomous Zero-Trust Agent Swarm',
     },
     {
-      name: 'BINARY BRAINS',
-      leader: { name: '59 - VASANTHA KUMARAN D', email: 'vasantha.kumaran@hackathon.dev' },
+      name: 'Apex Sentinel',
+      leader: { name: 'Liam Montgomery', email: 'liam.m@sentinel-defense.org' },
       members: [
-        { name: '036-SAKTHIVEL', email: 'sakthivel@hackathon.dev' },
-        { name: 'MUKESH R', email: 'mukesh.r@hackathon.dev' },
-        { name: 'Mohamed Thoufeeq', email: 'mohamed.thoufeeq@hackathon.dev' },
+        { name: 'Chloe Zhao', email: 'chloe.zhao@sentinel-defense.org' },
+        { name: 'Jordan Taylor', email: 'jordan.t@sentinel-defense.org' },
+        { name: 'Maya Lin', email: 'maya.lin@sentinel-defense.org' },
       ],
-      createdAt: new Date('2026-08-12T14:29:00Z'),
-      code: 'INV-BINB-7718',
+      createdAt: new Date('2026-08-13T09:20:00Z'),
+      code: 'INV-SENT-8812',
+      projectTitle: 'SentinelCloud: Kubernetes Security Anomaly Engine',
     },
     {
-      name: 'RETROSPEC AI',
-      leader: { name: 'ASWIN N', email: 'aswin.n@hackathon.dev' },
+      name: 'Cognitive Flow',
+      leader: { name: 'Nathan Wright', email: 'nathan.wright@cogflow.ai' },
       members: [
-        { name: 'Sanjay D', email: 'sanjay.d@hackathon.dev' },
-        { name: 'MELVIN JESSAN', email: 'melvin.jessan@hackathon.dev' },
-        { name: 'R.S HARIHARAN', email: 'rs.hariharan@hackathon.dev' },
+        { name: 'Sofia Rossi', email: 'sofia.rossi@cogflow.ai' },
+        { name: 'Carlos Gomez', email: 'carlos.gomez@cogflow.ai' },
       ],
-      createdAt: new Date('2026-08-14T09:47:00Z'),
-      code: 'INV-RETR-2201',
+      createdAt: new Date('2026-08-13T16:45:00Z'),
+      code: 'INV-COGN-3319',
+      projectTitle: 'FlowMesh: Distributed Agent Task Coordination Framework',
     },
     {
-      name: 'TEAM EPSILON',
-      leader: { name: 'NITHEESH V S', email: 'nitheesh.vs@hackathon.dev' },
+      name: 'Vanguard Core',
+      leader: { name: 'Benjamin Hayes', email: 'ben.hayes@vanguard-sec.io' },
       members: [
-        { name: 'Saravana kumar', email: 'saravana.kumar@hackathon.dev' },
+        { name: 'Amara Okafor', email: 'amara.okafor@vanguard-sec.io' },
       ],
-      createdAt: new Date('2026-08-15T22:27:00Z'),
-      code: 'INV-EPSI-6643',
+      createdAt: new Date('2026-08-14T11:10:00Z'),
+      code: 'INV-VANG-7740',
+      projectTitle: 'VanguardVault: Real-time Cryptographic Audit Engine',
     },
     {
-      name: 'CYBER NEXUS',
-      leader: { name: 'KAVIN PRASATH S', email: 'kavin.prasath@hackathon.dev' },
+      name: 'Polaris Intelligence',
+      leader: { name: 'Zoe Katsaros', email: 'zoe.k@polaris-ml.dev' },
       members: [
-        { name: 'ROHIT K', email: 'rohit.k@hackathon.dev' },
-        { name: 'SURENDHAR P', email: 'surendhar.p@hackathon.dev' },
+        { name: 'Noah Williams', email: 'noah.w@polaris-ml.dev' },
+        { name: 'Lucas Silva', email: 'lucas.silva@polaris-ml.dev' },
       ],
-      createdAt: new Date('2026-08-15T18:14:00Z'),
-      code: 'INV-NEXU-8821',
+      createdAt: new Date('2026-08-15T08:30:00Z'),
+      code: 'INV-POLA-5591',
+      projectTitle: 'PolarisVision: Multimodal Diagnostic Assistant',
     },
     {
-      name: 'NEURAL CATALYSTS',
-      leader: { name: 'DHARANI S', email: 'dharani.s@hackathon.dev' },
-      members: [], // Only 1 member -> PENDING
-      createdAt: new Date('2026-08-16T04:10:00Z'),
-      code: 'INV-NEUR-1109',
+      name: 'Nova Protocol',
+      leader: { name: 'Daniel Kim', email: 'daniel.kim@novaprotocol.net' },
+      members: [], // 1 member -> PENDING
+      createdAt: new Date('2026-08-15T19:40:00Z'),
+      code: 'INV-NOVA-1102',
     },
     {
-      name: 'QUANTUM PULSE',
-      leader: { name: 'AARAV SHARMA', email: 'aarav.sharma@hackathon.dev' },
-      members: [], // Only 1 member -> PENDING
-      createdAt: new Date('2026-08-16T05:45:00Z'),
-      code: 'INV-QPUL-3390',
+      name: 'DeepMatrix',
+      leader: { name: 'Rachel Green', email: 'rachel.green@deepmatrix.ai' },
+      members: [], // 1 member -> PENDING
+      createdAt: new Date('2026-08-16T04:15:00Z'),
+      code: 'INV-DMAT-2294',
     },
   ];
 
-  for (const t of teamsData) {
+  for (const t of newTeamsData) {
     const leaderUser = await ensureUser(t.leader.name, t.leader.email);
-    let team = await prisma.team.findFirst({
-      where: { hackathonId: hackathon.id, name: t.name },
+
+    const team = await prisma.team.create({
+      data: {
+        hackathonId: hackathon.id,
+        name: t.name,
+        inviteCode: t.code,
+        leaderId: leaderUser.id,
+        createdAt: t.createdAt,
+        updatedAt: t.createdAt,
+      },
     });
 
-    if (!team) {
-      team = await prisma.team.create({
-        data: {
-          hackathonId: hackathon.id,
-          name: t.name,
-          inviteCode: t.code,
-          leaderId: leaderUser.id,
-          createdAt: t.createdAt,
-          updatedAt: t.createdAt,
-        },
-      });
-    }
-
-    const existingLeaderMem = await prisma.teamMember.findFirst({
-      where: { teamId: team.id, userId: leaderUser.id },
+    // Add leader
+    await prisma.teamMember.create({
+      data: {
+        teamId: team.id,
+        userId: leaderUser.id,
+        isLeader: true,
+        joinedAt: t.createdAt,
+      },
     });
-    if (!existingLeaderMem) {
+
+    // Add other members
+    for (const m of t.members) {
+      const memberUser = await ensureUser(m.name, m.email);
       await prisma.teamMember.create({
         data: {
           teamId: team.id,
-          userId: leaderUser.id,
-          isLeader: true,
+          userId: memberUser.id,
+          isLeader: false,
           joinedAt: t.createdAt,
         },
       });
     }
 
-    for (const m of t.members) {
-      const memberUser = await ensureUser(m.name, m.email);
-      const existingMem = await prisma.teamMember.findFirst({
-        where: { teamId: team.id, userId: memberUser.id },
+    // Optionally create project if specified
+    if ((t as any).projectTitle) {
+      const slug = t.name.toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-project';
+      await prisma.project.create({
+        data: {
+          hackathonId: hackathon.id,
+          teamId: team.id,
+          trackId: track.id,
+          problemId: problem.id,
+          title: (t as any).projectTitle,
+          slug,
+          tagline: `Enterprise solution built by ${t.name}`,
+          description: `Enterprise-grade production architecture delivering high-throughput resilience and automated intelligence.`,
+          repoUrl: `https://github.com/apex-arena/${slug}`,
+          demoUrl: `https://${slug}.apex-arena.dev`,
+          techStack: ['TypeScript', 'Next.js', 'PyTorch', 'Docker'],
+          isPublished: true,
+        },
       });
-      if (!existingMem) {
-        await prisma.teamMember.create({
-          data: {
-            teamId: team.id,
-            userId: memberUser.id,
-            isLeader: false,
-            joinedAt: t.createdAt,
-          },
-        });
-      }
     }
   }
 
-  console.log('Seeded teams successfully!');
+  console.log('✅ Successfully seeded new enterprise teams without buildathon reference!');
 }
 
-seedBuildathonTeams()
+seedEnterpriseTeams()
   .catch(console.error)
-  .finally(() => process.exit(0));
+  .finally(async () => {
+    await prisma.$disconnect();
+    process.exit(0);
+  });

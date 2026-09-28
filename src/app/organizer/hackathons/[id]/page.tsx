@@ -17,6 +17,7 @@ import {
   ExternalLink,
   Layers,
   Award,
+  Clock,
   Bold,
   Italic,
   Underline,
@@ -115,10 +116,12 @@ export default function OrganizerEditHackathonPage({
     year4: { min: 0, max: 4 },
   });
 
-  // Important Dates
+  // Important Dates & Submission Window
   const [registrationDeadline, setRegistrationDeadline] = useState('');
   const [eventStartTime, setEventStartTime] = useState('');
   const [eventEndTime, setEventEndTime] = useState('');
+  const [subStartTime, setSubStartTime] = useState('');
+  const [subEndTime, setSubEndTime] = useState('');
 
   // Evaluation Rounds
   const [rounds, setRounds] = useState<EvaluationRound[]>([
@@ -181,6 +184,12 @@ export default function OrganizerEditHackathonPage({
         }
         if (h.eventEndTime) {
           setEventEndTime(new Date(h.eventEndTime).toISOString().slice(0, 16));
+        }
+        if (h.subStartTime) {
+          setSubStartTime(new Date(h.subStartTime).toISOString().slice(0, 16));
+        }
+        if (h.subEndTime) {
+          setSubEndTime(new Date(h.subEndTime).toISOString().slice(0, 16));
         }
 
         if (h.prizes && h.prizes.length > 0) {
@@ -330,6 +339,17 @@ export default function OrganizerEditHackathonPage({
     setSuccessMsg(null);
 
     try {
+      if (subStartTime && subEndTime) {
+        const start = new Date(subStartTime).getTime();
+        const end = new Date(subEndTime).getTime();
+        if (start >= end) {
+          setError('Submission deadline must be after submission opening time.');
+          setSaving(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+
       const cleanedOrganizers = organizers.filter((o) => o.name.trim() !== '');
 
       const extendedConfig = {
@@ -354,6 +374,8 @@ export default function OrganizerEditHackathonPage({
         regEndTime: registrationDeadline ? new Date(registrationDeadline).toISOString() : undefined,
         eventStartTime: eventStartTime ? new Date(eventStartTime).toISOString() : undefined,
         eventEndTime: eventEndTime ? new Date(eventEndTime).toISOString() : undefined,
+        subStartTime: subStartTime ? new Date(subStartTime).toISOString() : undefined,
+        subEndTime: subEndTime ? new Date(subEndTime).toISOString() : undefined,
         prizePool: Number(prizePool) || 0,
         currency,
         rulesAndGuidelines: JSON.stringify(extendedConfig),
@@ -367,7 +389,7 @@ export default function OrganizerEditHackathonPage({
 
       const data = await res.json();
       if (res.ok && data.success) {
-        setSuccessMsg('Hackathon details and evaluation configuration updated successfully!');
+        setSuccessMsg('Submission window and hackathon configuration saved successfully!');
         setTimeout(() => setSuccessMsg(null), 4000);
       } else {
         setError(data.error?.message || data.message || 'Failed to update hackathon');
@@ -907,6 +929,60 @@ export default function OrganizerEditHackathonPage({
                 className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
               />
             </div>
+          </div>
+
+          {/* Dedicated Authoritative Submission Window Configuration */}
+          <div className="pt-3 border-t border-[#f1f5f9] space-y-3">
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-[#2563eb]" />
+              <h3 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">
+                Submission Window Configuration (Server Authoritative)
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#334155] flex items-center justify-between">
+                  <span>Submission Opens*</span>
+                  <span className="text-[10px] text-[#64748b] font-normal">Participants can begin submitting</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={subStartTime}
+                  onChange={(e) => setSubStartTime(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#334155] flex items-center justify-between">
+                  <span>Submission Deadline*</span>
+                  <span className="text-[10px] text-[#dc2626] font-normal">Strict cutoff for all solutions</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={subEndTime}
+                  onChange={(e) => setSubEndTime(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                />
+              </div>
+            </div>
+
+            {subStartTime && subEndTime && (
+              <div className="p-3 bg-[#eff6ff] border border-[#dbeafe] rounded-xl text-xs text-[#1e40af] flex items-center justify-between">
+                <span>
+                  Configured Window: <strong>{new Date(subStartTime).toLocaleString()}</strong> to{' '}
+                  <strong>{new Date(subEndTime).toLocaleString()}</strong>
+                </span>
+                {new Date(subStartTime) >= new Date(subEndTime) && (
+                  <span className="text-[#dc2626] font-bold">
+                    ⚠️ Submission deadline must be after opening time.
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 

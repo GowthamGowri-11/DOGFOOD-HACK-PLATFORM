@@ -5,11 +5,30 @@ import prisma from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await requireRole(['JUDGE']);
+    const session = await requireRole(['JUDGE', 'ADMIN']);
     const { searchParams } = new URL(req.url);
-    const hackathonId = searchParams.get('hackathonId');
+    const hackathonParam = searchParams.get('hackathonId');
+    const hackathonId = hackathonParam && hackathonParam !== 'all' ? hackathonParam : undefined;
 
-    // Find all judge records for this user
+    // Fetch all hackathons with tracks for dynamic frontend selectors
+    const hackathons = await prisma.hackathon.findMany({
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        status: true,
+        tracks: {
+          select: {
+            id: true,
+            title: true,
+            colorHex: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Find judge records for this user
     const judges = await prisma.judge.findMany({
       where: {
         userId: session.id,
@@ -18,17 +37,28 @@ export async function GET(req: NextRequest) {
       select: { id: true, hackathonId: true },
     });
 
-    if (judges.length === 0) {
-      return successResponse({ assignments: [] });
+    let whereCondition: any;
+    if (judges.length > 0) {
+      whereCondition = {
+        judgeId: { in: judges.map((j) => j.id) },
+        ...(hackathonId ? { judge: { hackathonId } } : {}),
+      };
+    } else if (session.role === 'ADMIN') {
+      // In dev or preview mode, allow admin to view assignments across the event
+      whereCondition = hackathonId ? { judge: { hackathonId } } : {};
+    } else {
+      return successResponse({
+        assignments: [],
+        hackathons,
+        totalCount: 0,
+        completedCount: 0,
+        pendingCount: 0,
+      });
     }
-
-    const judgeIds = judges.map((j) => j.id);
 
     // STRICT JUDGE ISOLATION: A judge can ONLY view their own assigned projects & evaluations
     const assignments = await prisma.judgeAssignment.findMany({
-      where: {
-        judgeId: { in: judgeIds },
-      },
+      where: whereCondition,
       include: {
         judge: {
           select: {
@@ -70,7 +100,13 @@ export async function GET(req: NextRequest) {
       orderBy: { assignedAt: 'desc' },
     });
 
-    return successResponse({ assignments });
+    return successResponse({
+      assignments,
+      hackathons,
+      totalCount: assignments.length,
+      completedCount: assignments.filter((a) => a.evaluation?.status === 'SUBMITTED').length,
+      pendingCount: assignments.filter((a) => a.evaluation?.status !== 'SUBMITTED').length,
+    });
   } catch (error: any) {
     const status = error.status || 500;
     const code = error.code || 'INTERNAL_ERROR';

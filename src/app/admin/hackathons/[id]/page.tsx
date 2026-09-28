@@ -17,10 +17,13 @@ import {
   ExternalLink,
   Layers,
   Award,
+  Clock,
   Bold,
   Italic,
   Underline,
 } from 'lucide-react';
+import { BannerUpload } from '@/components/admin/BannerUpload';
+import { TracksAndProblemsEditor, TrackItem } from '@/components/admin/TracksAndProblemsEditor';
 
 interface OrganizerContact {
   id?: string;
@@ -31,7 +34,7 @@ interface OrganizerContact {
 interface CriterionItem {
   id?: string;
   name: string;
-  maxMarks: number;
+  maxMarks: number | string;
   description: string;
 }
 
@@ -55,17 +58,7 @@ interface EvaluationRound {
   criteria: CriterionItem[];
 }
 
-const DEPARTMENTS = [
-  'AI&DS - Artificial Intelligence & Data Science',
-  'AIML - Artificial Intelligence & Machine Learning',
-  'CSE - Computer Science & Engineering',
-  'IT - Information Technology',
-  'ECE - Electronics & Communication Engineering',
-  'EEE - Electrical & Electronics Engineering',
-  'MECH - Mechanical Engineering',
-  'CIVIL - Civil Engineering',
-  'General / Cross-Department',
-];
+
 
 export default function AdminEditHackathonPage({
   params,
@@ -96,27 +89,21 @@ export default function AdminEditHackathonPage({
     { name: '', contact: '' },
   ]);
 
-  // Departments
-  const [primaryDept, setPrimaryDept] = useState(DEPARTMENTS[0]);
-  const [collabDepts, setCollabDepts] = useState<string[]>([]);
 
-  // Team settings
+
   const [minTeamSize, setMinTeamSize] = useState<number>(2);
   const [maxTeamSize, setMaxTeamSize] = useState<number>(4);
   const [maxTeamsAllowed, setMaxTeamsAllowed] = useState<string>('100');
 
-  // Year criteria
-  const [yearCriteria, setYearCriteria] = useState({
-    year1: { min: 0, max: 4 },
-    year2: { min: 0, max: 4 },
-    year3: { min: 0, max: 4 },
-    year4: { min: 0, max: 4 },
-  });
+  // Tracks & Problem Statements
+  const [tracks, setTracks] = useState<TrackItem[]>([]);
 
-  // Important Dates
+  // Important Dates & Submission Window
   const [registrationDeadline, setRegistrationDeadline] = useState('');
   const [eventStartTime, setEventStartTime] = useState('');
   const [eventEndTime, setEventEndTime] = useState('');
+  const [subStartTime, setSubStartTime] = useState('');
+  const [subEndTime, setSubEndTime] = useState('');
 
   // Evaluation Rounds
   const [rounds, setRounds] = useState<EvaluationRound[]>([
@@ -174,11 +161,39 @@ export default function AdminEditHackathonPage({
         if (h.eventEndTime) {
           setEventEndTime(new Date(h.eventEndTime).toISOString().slice(0, 16));
         }
+        if (h.subStartTime) {
+          setSubStartTime(new Date(h.subStartTime).toISOString().slice(0, 16));
+        }
+        if (h.subEndTime) {
+          setSubEndTime(new Date(h.subEndTime).toISOString().slice(0, 16));
+        }
 
         if (h.prizes && h.prizes.length > 0) {
           const sum = h.prizes.reduce((acc: number, p: any) => acc + Number(p.amount || 0), 0);
           setPrizePool(sum);
           setCurrency(h.prizes[0].currency || 'USD');
+        }
+
+        if (h.tracks && Array.isArray(h.tracks)) {
+          setTracks(
+            h.tracks.map((t: any) => ({
+              id: t.id,
+              title: t.title,
+              slug: t.slug,
+              description: t.description || '',
+              colorHex: t.colorHex || '#2563EB',
+              displayOrder: t.displayOrder || 0,
+              problemStatements: (t.problemStatements || []).map((p: any) => ({
+                id: p.id,
+                code: p.code,
+                title: p.title,
+                description: p.description,
+                challengeDocUrl: p.challengeDocUrl || '',
+                isPublic: p.isPublic !== false,
+                displayOrder: p.displayOrder || 0,
+              })),
+            }))
+          );
         }
 
         if (h.rulesAndGuidelines) {
@@ -190,14 +205,10 @@ export default function AdminEditHackathonPage({
               setOrganizers([{ name: h.organizer.fullName, contact: h.organizer.email || '' }]);
             }
 
-            if (parsed.primaryDepartment) setPrimaryDept(parsed.primaryDepartment);
-            if (parsed.collaboratingDepartments && Array.isArray(parsed.collaboratingDepartments)) {
-              setCollabDepts(parsed.collaboratingDepartments);
-            }
+
             if (parsed.maxTeamsAllowed !== undefined) {
               setMaxTeamsAllowed(parsed.maxTeamsAllowed ? parsed.maxTeamsAllowed.toString() : '');
             }
-            if (parsed.yearCriteria) setYearCriteria(parsed.yearCriteria);
             if (parsed.rounds && Array.isArray(parsed.rounds)) setRounds(parsed.rounds);
             if (parsed.prizePool !== undefined && Number(parsed.prizePool) > 0) {
               setPrizePool(parsed.prizePool);
@@ -239,19 +250,7 @@ export default function AdminEditHackathonPage({
     setOrganizers(updated);
   };
 
-  const addCollabDept = () => {
-    setCollabDepts([...collabDepts, DEPARTMENTS[1]]);
-  };
 
-  const removeCollabDept = (index: number) => {
-    setCollabDepts(collabDepts.filter((_, i) => i !== index));
-  };
-
-  const updateCollabDept = (index: number, value: string) => {
-    const updated = [...collabDepts];
-    updated[index] = value;
-    setCollabDepts(updated);
-  };
 
   const addRound = () => {
     setRounds([
@@ -322,15 +321,29 @@ export default function AdminEditHackathonPage({
     setSuccessMsg(null);
 
     try {
+      if (subStartTime && subEndTime) {
+        const start = new Date(subStartTime).getTime();
+        const end = new Date(subEndTime).getTime();
+        if (start >= end) {
+          setError('Submission deadline must be after submission opening time.');
+          setSaving(false);
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+          return;
+        }
+      }
+
       const cleanedOrganizers = organizers.filter((o) => o.name.trim() !== '');
 
       const extendedConfig = {
         organizers: cleanedOrganizers,
-        primaryDepartment: primaryDept,
-        collaboratingDepartments: collabDepts,
         maxTeamsAllowed: maxTeamsAllowed ? Number(maxTeamsAllowed) : null,
-        yearCriteria,
-        rounds,
+        rounds: rounds.map(r => ({
+          ...r,
+          criteria: r.criteria.map(c => ({
+            ...c,
+            maxMarks: Number(c.maxMarks) || 10
+          }))
+        })),
         prizePool: Number(prizePool) || 0,
         currency,
       };
@@ -346,8 +359,11 @@ export default function AdminEditHackathonPage({
         regEndTime: registrationDeadline ? new Date(registrationDeadline).toISOString() : undefined,
         eventStartTime: eventStartTime ? new Date(eventStartTime).toISOString() : undefined,
         eventEndTime: eventEndTime ? new Date(eventEndTime).toISOString() : undefined,
+        subStartTime: subStartTime ? new Date(subStartTime).toISOString() : undefined,
+        subEndTime: subEndTime ? new Date(subEndTime).toISOString() : undefined,
         prizePool: Number(prizePool) || 0,
         currency,
+        tracks,
         rulesAndGuidelines: JSON.stringify(extendedConfig),
       };
 
@@ -359,7 +375,7 @@ export default function AdminEditHackathonPage({
 
       const data = await res.json();
       if (data.success) {
-        setSuccessMsg('Hackathon details and evaluation configuration updated successfully!');
+        setSuccessMsg('Submission window and hackathon configuration saved successfully!');
         setTimeout(() => setSuccessMsg(null), 4000);
       } else {
         setError(data.error?.message || 'Failed to update hackathon');
@@ -611,100 +627,13 @@ export default function AdminEditHackathonPage({
             />
           </div>
 
-          {/* Banner Preview */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-[#334155]">Banner Image Preview</label>
-            <div className="w-full bg-gradient-to-br from-[#eff6ff] to-[#f8fafc] border-2 border-dashed border-[#bfdbfe] rounded-2xl p-8 text-center flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden group">
-              {bannerUrl ? (
-                <div className="w-full h-36 relative rounded-xl overflow-hidden">
-                  <img src={bannerUrl} alt="Banner Preview" className="w-full h-full object-cover" />
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  <h3 className="text-2xl sm:text-3xl font-black text-[#1e40af] tracking-tight uppercase font-sans">
-                    {title || 'HACKATHON TITLE'}
-                  </h3>
-                  <p className="text-xs text-[#2563eb] font-mono font-semibold">
-                    {tagline || 'Tagline will appear here'}
-                  </p>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-1">
-              <span className="text-[11px] font-semibold text-[#64748b]">Banner Image URL (Optional)</span>
-              <input
-                type="url"
-                value={bannerUrl}
-                onChange={(e) => setBannerUrl(e.target.value)}
-                placeholder="https://images.unsplash.com/... or /banners/banner.png"
-                className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-          </div>
-
-          {/* Primary Department */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-[#334155]">
-              Primary Department*
-            </label>
-            <select
-              value={primaryDept}
-              onChange={(e) => setPrimaryDept(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-semibold"
-            >
-              {DEPARTMENTS.map((dept) => (
-                <option key={dept} value={dept}>
-                  {dept}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* Collaborating Departments */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-[#334155]">
-                Collaborating Departments
-              </label>
-              <button
-                type="button"
-                onClick={addCollabDept}
-                className="inline-flex items-center gap-1 text-xs font-bold text-[#2563eb] hover:text-[#1d4ed8]"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add Collab</span>
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {collabDepts.map((collab, idx) => (
-                <div
-                  key={idx}
-                  className="flex items-center space-x-2 p-2.5 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl"
-                >
-                  <select
-                    value={collab}
-                    onChange={(e) => updateCollabDept(idx, e.target.value)}
-                    className="flex-1 px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none text-[#0f172a] font-medium"
-                  >
-                    {DEPARTMENTS.map((d) => (
-                      <option key={d} value={d}>
-                        {d}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    type="button"
-                    onClick={() => removeCollabDept(idx)}
-                    className="p-1.5 text-[#dc2626] hover:bg-[#fef2f2] rounded-lg"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          {/* Banner Upload with Drag & Drop, Direct File Upload and Preview */}
+          <BannerUpload
+            bannerUrl={bannerUrl}
+            onChange={setBannerUrl}
+            title={title}
+            tagline={tagline}
+          />
         </div>
 
         {/* ======================================================== */}
@@ -752,61 +681,12 @@ export default function AdminEditHackathonPage({
               />
             </div>
           </div>
-
-          <div className="space-y-3 pt-2">
-            <label className="text-xs font-bold text-[#334155] block">
-              Team Member Criteria (Year-wise Restrictions)
-            </label>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-              {(['year1', 'year2', 'year3', 'year4'] as const).map((yr, idx) => {
-                const yearLabel = `Year ${idx + 1}`;
-                return (
-                  <div
-                    key={yr}
-                    className="p-3 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-2"
-                  >
-                    <div className="flex items-center justify-between pb-1 border-b border-[#e2e8f0]">
-                      <span className="text-xs font-bold text-[#0f172a]">{yearLabel}</span>
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-[#64748b] uppercase">AT LEAST (MIN)</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={yearCriteria[yr].min}
-                        onChange={(e) =>
-                          setYearCriteria({
-                            ...yearCriteria,
-                            [yr]: { ...yearCriteria[yr], min: Number(e.target.value) },
-                          })
-                        }
-                        className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[9px] font-bold text-[#64748b] uppercase">AT MOST (MAX)</span>
-                      <input
-                        type="number"
-                        min="0"
-                        value={yearCriteria[yr].max}
-                        onChange={(e) =>
-                          setYearCriteria({
-                            ...yearCriteria,
-                            [yr]: { ...yearCriteria[yr], max: Number(e.target.value) },
-                          })
-                        }
-                        className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                      />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
         </div>
+
+        {/* ======================================================== */}
+        {/* SECTION 3: TRACKS & PROBLEM STATEMENTS */}
+        {/* ======================================================== */}
+        <TracksAndProblemsEditor tracks={tracks} onChange={setTracks} />
 
         {/* ======================================================== */}
         {/* SECTION 3: IMPORTANT DETAILS */}
@@ -855,6 +735,60 @@ export default function AdminEditHackathonPage({
                 className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
               />
             </div>
+          </div>
+
+          {/* Dedicated Authoritative Submission Window Configuration */}
+          <div className="pt-3 border-t border-[#f1f5f9] space-y-3">
+            <div className="flex items-center space-x-2">
+              <Clock className="w-4 h-4 text-[#2563eb]" />
+              <h3 className="text-xs font-extrabold text-[#0f172a] uppercase tracking-wider">
+                Submission Window Configuration (Server Authoritative)
+              </h3>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#334155] flex items-center justify-between">
+                  <span>Submission Opens*</span>
+                  <span className="text-[10px] text-[#64748b] font-normal">Participants can begin submitting</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={subStartTime}
+                  onChange={(e) => setSubStartTime(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#334155] flex items-center justify-between">
+                  <span>Submission Deadline*</span>
+                  <span className="text-[10px] text-[#dc2626] font-normal">Strict cutoff for all solutions</span>
+                </label>
+                <input
+                  type="datetime-local"
+                  required
+                  value={subEndTime}
+                  onChange={(e) => setSubEndTime(e.target.value)}
+                  className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                />
+              </div>
+            </div>
+
+            {subStartTime && subEndTime && (
+              <div className="p-3 bg-[#eff6ff] border border-[#dbeafe] rounded-xl text-xs text-[#1e40af] flex items-center justify-between">
+                <span>
+                  Configured Window: <strong>{new Date(subStartTime).toLocaleString()}</strong> to{' '}
+                  <strong>{new Date(subEndTime).toLocaleString()}</strong>
+                </span>
+                {new Date(subStartTime) >= new Date(subEndTime) && (
+                  <span className="text-[#dc2626] font-bold">
+                    ⚠️ Submission deadline must be after opening time.
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -1084,10 +1018,22 @@ export default function AdminEditHackathonPage({
                             <div className="space-y-1">
                               <span className="text-[9px] font-bold text-[#64748b] uppercase">MAX MARKS</span>
                               <input
-                                type="number"
-                                min="1"
-                                value={crit.maxMarks}
-                                onChange={(e) => updateCriterion(rIdx, cIdx, 'maxMarks', Number(e.target.value))}
+                                type="text"
+                                inputMode="numeric"
+                                value={crit.maxMarks ?? ''}
+                                onChange={(e) => {
+                                  // Strip leading zeroes before digits (e.g. "015" -> "15", "05" -> "5")
+                                  const clean = e.target.value.replace(/[^0-9]/g, '').replace(/^0+(?=[0-9])/, '');
+                                  updateCriterion(rIdx, cIdx, 'maxMarks', clean);
+                                }}
+                                onBlur={() => {
+                                  const val = Number(crit.maxMarks);
+                                  if (!val || val < 1) {
+                                    updateCriterion(rIdx, cIdx, 'maxMarks', 10);
+                                  } else {
+                                    updateCriterion(rIdx, cIdx, 'maxMarks', val);
+                                  }
+                                }}
                                 className="w-full px-2.5 py-1 text-xs bg-white border border-[#e2e8f0] rounded-lg font-bold text-[#2563eb] focus:outline-none focus:border-[#2563eb]"
                               />
                             </div>

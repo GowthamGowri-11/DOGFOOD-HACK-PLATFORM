@@ -180,6 +180,49 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // Handle Tracks & Problem Statements
+    if (body.tracks && Array.isArray(body.tracks) && body.tracks.length > 0) {
+      for (let tIdx = 0; tIdx < body.tracks.length; tIdx++) {
+        const trackData = body.tracks[tIdx];
+        const resolvedTrackSlug = (trackData.slug || trackData.title)
+          .toLowerCase()
+          .trim()
+          .replace(/[^a-z0-9]+/g, '-')
+          .replace(/^-+|-+$/g, '') || `track-${tIdx + 1}`;
+
+        const createdTrack = await prisma.track.create({
+          data: {
+            hackathonId: hackathon.id,
+            title: trackData.title.trim(),
+            slug: `${resolvedTrackSlug}-${Math.random().toString(36).substring(2, 6)}`,
+            description: trackData.description?.trim() || null,
+            colorHex: trackData.colorHex || '#2563EB',
+            displayOrder: trackData.displayOrder ?? tIdx,
+          },
+        });
+
+        if (trackData.problemStatements && Array.isArray(trackData.problemStatements)) {
+          for (let pIdx = 0; pIdx < trackData.problemStatements.length; pIdx++) {
+            const psData = trackData.problemStatements[pIdx];
+            if (psData.title?.trim()) {
+              await prisma.problemStatement.create({
+                data: {
+                  hackathonId: hackathon.id,
+                  trackId: createdTrack.id,
+                  code: psData.code?.trim().toUpperCase() || `PS-${tIdx + 1}${pIdx + 1}`,
+                  title: psData.title.trim(),
+                  description: psData.description?.trim() || psData.title.trim(),
+                  challengeDocUrl: psData.challengeDocUrl?.trim() || null,
+                  isPublic: psData.isPublic !== false,
+                  displayOrder: psData.displayOrder ?? pIdx,
+                },
+              });
+            }
+          }
+        }
+      }
+    }
+
     // Audit log
     await AuditService.log({
       userId: session.id,

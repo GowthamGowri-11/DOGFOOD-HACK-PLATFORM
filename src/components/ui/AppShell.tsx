@@ -53,24 +53,24 @@ export const AppShell: React.FC<AppShellProps> = ({
           sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[270px]'
         }`}
       >
-        {/* Top Global Navbar (height: 72px, centered search, breadcrumb) */}
+        {/* Top Global Navbar (height: 70px, centered search, breadcrumb) */}
         <TopNavbar
           onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           userRole={currentRole}
         />
 
         {/* APPLICATION AREA: Center the primary content inside this application area */}
-        <main className="flex-1 w-full bg-[#FFFFFF] pt-[32px] pb-10 px-4 sm:px-6 lg:px-8">
-          <div className="max-w-[1070px] mx-auto">
+        <main className="flex-1 w-full bg-[#FFFFFF] pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+          <div className="max-w-[1400px] mx-auto">
             {/* Optional Unified Header Bar */}
             {(pageTitle || headerAction) && (
-              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-5 mb-5 border-b border-[#E2E8F0] gap-4">
+              <div className="flex flex-col sm:flex-row sm:items-baseline justify-between pb-5 mb-6 border-b border-[#E2E8F0] gap-4">
                 <div>
-                  <h1 className="text-[32px] sm:text-[38px] font-semibold text-[#111827] tracking-tight leading-[1.15]">
+                  <h1 className="text-[28px] sm:text-[34px] font-bold text-[#0F172A] tracking-tight leading-[1.2]">
                     {pageTitle}
                   </h1>
                   {pageSubtitle && (
-                    <p className="text-[14px] sm:text-[15px] text-[#64748B] mt-1.5 font-normal leading-[1.5]">
+                    <p className="text-[14px] sm:text-[15px] text-[#64748B] mt-1 font-normal leading-[1.5]">
                       {pageSubtitle}
                     </p>
                   )}
@@ -79,21 +79,21 @@ export const AppShell: React.FC<AppShellProps> = ({
               </div>
             )}
 
-            {/* Split layout: Main Content (~705px) + Right Featured Rail (~320px) with ~44px gap */}
+            {/* Split layout or Full Width */}
             {showFeaturedRail ? (
-              <div className="flex flex-col xl:flex-row items-start gap-8 xl:gap-[44px]">
-                {/* Main Content Area (~705px) */}
-                <div className="w-full xl:w-[705px] flex-1 min-w-0 space-y-5">
+              <div className="flex flex-col xl:flex-row items-start gap-6 xl:gap-8">
+                {/* Main Content Area */}
+                <div className="w-full xl:flex-1 min-w-0 space-y-6">
                   {children}
                 </div>
 
-                {/* Right Featured Rail (~320px) */}
+                {/* Right Featured Rail */}
                 <div className="w-full xl:w-[320px] flex-shrink-0">
                   <FeaturedRail items={featuredItems} />
                 </div>
               </div>
             ) : (
-              /* Full Width Workspaces (Organizer, Judge, Project Detail, Admin) */
+              /* Full Width Workspaces (Participant, Organizer, Judge, Leaderboard, Admin) */
               <div className="w-full space-y-6">{children}</div>
             )}
           </div>
