@@ -29,8 +29,8 @@ export class ApexRealtimeClient {
   private onReconnectCallbacks: Set<() => void> = new Set();
 
   constructor(options: RealtimeClientOptions = {}) {
-    this.maxReconnectAttempts = options.maxReconnectAttempts ?? 6;
-    this.initialReconnectDelay = options.initialReconnectDelay ?? 3000;
+    this.maxReconnectAttempts = options.maxReconnectAttempts ?? 3;
+    this.initialReconnectDelay = options.initialReconnectDelay ?? 5000;
     this.maxReconnectDelay = options.maxReconnectDelay ?? 30000;
     this.token = options.token;
 
@@ -213,7 +213,6 @@ export class ApexRealtimeClient {
 
   private scheduleReconnect(): void {
     if (this.reconnectAttempts >= this.maxReconnectAttempts) {
-      console.warn('[ApexRealtimeClient] Max reconnect attempts reached. Waiting for manual trigger.');
       return;
     }
 
@@ -287,12 +286,13 @@ export class ApexRealtimeClient {
   }
 }
 
-// Global client singleton
+// Global client singleton — does NOT auto-connect.
+// Consumers should call getRealtimeClient().connect() when ready.
 let globalRealtimeClient: ApexRealtimeClient | null = null;
 
 export function getRealtimeClient(): ApexRealtimeClient {
   if (!globalRealtimeClient) {
-    globalRealtimeClient = new ApexRealtimeClient({ autoConnect: true });
+    globalRealtimeClient = new ApexRealtimeClient({ autoConnect: false });
   }
   return globalRealtimeClient;
 }

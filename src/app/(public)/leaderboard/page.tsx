@@ -21,6 +21,7 @@ import {
 import { AppShell } from '@/components/ui/AppShell';
 import { Badge } from '@/components/ui/Badge';
 import { TeamScorecardModal } from '@/components/leaderboard/TeamScorecardModal';
+import { useWebSocket } from '@/hooks/useWebSocket';
 
 interface StandingItem {
   rank: number;
@@ -96,33 +97,45 @@ export default function PublicLeaderboardPage() {
     loadHackathons();
   }, []);
 
-  useEffect(() => {
-    async function fetchLeaderboard() {
-      if (!selectedHackathonId) return;
-      try {
-        setLoading(true);
-        setError(null);
-        const res = await fetch(`/api/v1/hackathons/${selectedHackathonId}/leaderboard`);
-        const json = await res.json();
+  const { subscribe } = useWebSocket(['leaderboard']);
 
-        if (!res.ok) {
-          throw new Error(json.error?.message || 'Leaderboard is not published yet.');
-        }
+  const fetchLeaderboard = React.useCallback(async () => {
+    if (!selectedHackathonId) return;
+    try {
+      setLoading(true);
+      setError(null);
+      const res = await fetch(`/api/v1/hackathons/${selectedHackathonId}/leaderboard`);
+      const json = await res.json();
 
-        setHackathonInfo(json.data.hackathon);
-        setStandings(json.data.standings || []);
-        setSelectedTrack('ALL'); // Reset track filter when switching events
-      } catch (err: any) {
-        setError(err.message);
-        setStandings([]);
-        setHackathonInfo(null);
-      } finally {
-        setLoading(false);
+      if (!res.ok) {
+        throw new Error(json.error?.message || 'Leaderboard is not published yet.');
       }
-    }
 
-    fetchLeaderboard();
+      setHackathonInfo(json.data.hackathon);
+      setStandings(json.data.standings || []);
+      setSelectedTrack('ALL'); // Reset track filter when switching events
+    } catch (err: any) {
+      setError(err.message);
+      setStandings([]);
+      setHackathonInfo(null);
+    } finally {
+      setLoading(false);
+    }
   }, [selectedHackathonId]);
+
+  useEffect(() => {
+    fetchLeaderboard();
+  }, [fetchLeaderboard]);
+
+  // Real-time WebSocket live updates
+  useEffect(() => {
+    const unsub = subscribe('leaderboard', () => {
+      fetchLeaderboard();
+    });
+    return () => {
+      if (unsub) unsub();
+    };
+  }, [subscribe, fetchLeaderboard]);
 
   // Extract unique tracks for filter
   const tracks = hackathonInfo?.tracks || [];
@@ -188,7 +201,6 @@ export default function PublicLeaderboardPage() {
 
   return (
     <AppShell
-      userRole="PARTICIPANT"
       pageTitle="Leaderboard & Official Standings"
       pageSubtitle="Calibrated jury rankings with Z-score variance normalization and audited scorecards."
     >

@@ -110,7 +110,6 @@ export const HackathonDiscovery: React.FC<HackathonDiscoveryProps> = ({
 
   return (
     <AppShell
-      userRole="PARTICIPANT"
       showFeaturedRail={true}
       pageTitle={dynamicTitle}
       pageSubtitle="Discover hackathons, challenge tracks, and live builder competitions."

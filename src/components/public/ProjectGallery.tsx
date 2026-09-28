@@ -80,7 +80,6 @@ export const ProjectGallery: React.FC<ProjectGalleryProps> = ({
 
   return (
     <AppShell
-      userRole="PARTICIPANT"
       showFeaturedRail={true}
       pageTitle="Project Showcase & Solutions"
       pageSubtitle="Explore cutting-edge prototypes, open-source repositories, and community-voted solutions."

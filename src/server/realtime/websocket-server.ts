@@ -83,6 +83,12 @@ export class ApexWebSocketServer {
         }
       }
 
+      // Automatically subscribe to public rooms
+      this.joinRoom(socket, 'general');
+      this.joinRoom(socket, 'announcements');
+      this.joinRoom(socket, 'leaderboard');
+      this.sendMessage(socket, { type: 'SYSTEM_CONNECT', status: 'CONNECTED', timestamp: new Date().toISOString() });
+
       // 2. Pong handler for heartbeat
       socket.on('pong', () => {
         socket.isAlive = true;
@@ -103,7 +109,7 @@ export class ApexWebSocketServer {
             return;
           }
 
-          const parsed: ClientMessage = JSON.parse(data.toString());
+          const parsed = JSON.parse(data.toString());
           await this.handleClientMessage(socket, parsed);
         } catch {
           this.sendMessage(socket, { type: 'ERROR', reason: 'Invalid JSON payload' });
@@ -148,15 +154,16 @@ export class ApexWebSocketServer {
     return null;
   }
 
-  private async handleClientMessage(socket: AuthenticatedSocket, msg: ClientMessage) {
-    if (msg.action === 'ping') {
+  private async handleClientMessage(socket: AuthenticatedSocket, msg: any) {
+    if (msg.action === 'ping' || msg.type === 'PING') {
       this.sendMessage(socket, { type: 'PONG', timestamp: new Date().toISOString() });
       return;
     }
 
-    if (msg.action === 'auth') {
-      if (msg.token) {
-        const session = verifySessionToken(msg.token);
+    if (msg.action === 'auth' || msg.type === 'AUTH') {
+      const token = msg.token || msg.data?.token;
+      if (token) {
+        const session = verifySessionToken(token);
         if (session) {
           socket.session = session;
           this.joinRoom(socket, `user:${session.id}`);
@@ -168,31 +175,48 @@ export class ApexWebSocketServer {
       return;
     }
 
-    if (msg.action === 'join') {
-      if (!msg.room) {
-        this.sendMessage(socket, { type: 'ERROR', reason: 'Room name is required' });
+    if (msg.action === 'join' || msg.type === 'SUBSCRIBE') {
+      const room = msg.room || msg.channel;
+      if (!room) {
+        this.sendMessage(socket, { type: 'ERROR', reason: 'Room or channel name is required' });
         return;
       }
 
-      const isAuthorized = await this.verifyRoomAccess(socket, msg.room);
+      const isAuthorized = await this.verifyRoomAccess(socket, room);
       if (isAuthorized) {
-        this.joinRoom(socket, msg.room);
-        this.sendMessage(socket, { type: 'ROOM_JOINED', room: msg.room });
+        this.joinRoom(socket, room);
+        this.sendMessage(socket, { type: 'ROOM_JOINED', room, channel: room });
       } else {
         this.sendMessage(socket, {
           type: 'ROOM_JOIN_DENIED',
-          room: msg.room,
+          room,
           reason: 'Unauthorized access to room',
         });
       }
       return;
     }
 
-    if (msg.action === 'leave') {
-      if (msg.room) {
-        this.leaveRoom(socket, msg.room);
-        this.sendMessage(socket, { type: 'ROOM_LEFT', room: msg.room });
+    if (msg.action === 'leave' || msg.type === 'UNSUBSCRIBE') {
+      const room = msg.room || msg.channel;
+      if (room) {
+        this.leaveRoom(socket, room);
+        this.sendMessage(socket, { type: 'ROOM_LEFT', room, channel: room });
       }
+      return;
+    }
+
+    if (msg.type === 'BROADCAST') {
+      const channel = msg.channel || msg.room || 'general';
+      const eventType = (msg.event || 'ANNOUNCEMENT') as any;
+      const eventData = msg.data || {};
+      this.broadcastToRooms([channel], {
+        eventId: `evt_${Date.now()}`,
+        type: eventType,
+        rooms: [channel],
+        channel,
+        payload: eventData,
+        timestamp: new Date().toISOString(),
+      });
       return;
     }
   }
@@ -201,6 +225,11 @@ export class ApexWebSocketServer {
    * Server-side authorization check before a socket can subscribe to a room.
    */
   public async verifyRoomAccess(socket: AuthenticatedSocket, room: string): Promise<boolean> {
+    // Public rooms (open to all visitors and guests)
+    if (['general', 'announcements', 'leaderboard', 'public'].includes(room) || room.startsWith('public:')) {
+      return true;
+    }
+
     const session = socket.session;
     if (!session) return false;
 

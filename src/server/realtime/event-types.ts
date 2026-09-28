@@ -44,7 +44,9 @@ export type RealtimeEventType =
   | 'AI_JURY_PROGRESS'
   | 'AI_JURY_COMPLETED'
   // Notifications
-  | 'NOTIFICATION_CREATED';
+  | 'NOTIFICATION_CREATED'
+  | 'ANNOUNCEMENT'
+  | 'PULSE';
 
 export interface RealtimeEvent<T = any> {
   eventId: string;
@@ -57,6 +59,7 @@ export interface RealtimeEvent<T = any> {
   actorId?: string;
   rooms: string[];
   payload: T;
+  channel?: string;
 }
 
 export interface ClientMessage {
@@ -66,9 +69,11 @@ export interface ClientMessage {
 }
 
 export interface ServerMessage<T = any> {
-  type: 'EVENT' | 'ROOM_JOINED' | 'ROOM_JOIN_DENIED' | 'ROOM_LEFT' | 'PONG' | 'AUTH_SUCCESS' | 'AUTH_ERROR' | 'ERROR';
+  type: 'EVENT' | 'ROOM_JOINED' | 'ROOM_JOIN_DENIED' | 'ROOM_LEFT' | 'PONG' | 'AUTH_SUCCESS' | 'AUTH_ERROR' | 'ERROR' | 'SYSTEM_CONNECT';
   event?: RealtimeEvent<T>;
   room?: string;
+  channel?: string;
+  status?: string;
   reason?: string;
   timestamp?: string;
 }
