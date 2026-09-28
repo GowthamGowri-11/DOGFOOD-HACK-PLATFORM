@@ -43,6 +43,11 @@ export type RealtimeEventType =
   | 'AI_JURY_STARTED'
   | 'AI_JURY_PROGRESS'
   | 'AI_JURY_COMPLETED'
+  // Mark Edit Events
+  | 'MARK_EDIT_REQUESTED'
+  | 'MARK_EDIT_APPROVED'
+  | 'MARK_EDIT_REJECTED'
+  | 'MARK_EDIT_EXECUTED'
   // Notifications
   | 'NOTIFICATION_CREATED'
   | 'ANNOUNCEMENT'
@@ -79,6 +84,10 @@ export interface ServerMessage<T = any> {
 }
 
 export class RealtimeRoomBuilder {
+  public static admin(): string {
+    return 'admin';
+  }
+
   public static hackathon(hackathonId: string): string {
     return `hackathon:${hackathonId}`;
   }

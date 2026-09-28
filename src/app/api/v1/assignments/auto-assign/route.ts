@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
 
 const autoAssignSchema = z.object({
-  hackathonId: z.string().uuid(),
+  hackathonId: z.string().min(1),
   judgesPerProject: z.number().int().min(1).max(10).default(2),
   prioritizeTrackExpertise: z.boolean().default(true),
 });

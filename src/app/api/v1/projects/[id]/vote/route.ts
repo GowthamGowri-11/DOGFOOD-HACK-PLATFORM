@@ -81,6 +81,15 @@ export async function POST(
 
     const totalVotes = await prisma.vote.count({ where: { projectId } });
 
+    // Invalidate leaderboard + gallery cache so vote counts stay in sync
+    const { deleteCache, deleteCachePattern, CACHE_KEYS } = await import('@/lib/cache');
+    await Promise.all([
+      deleteCache(CACHE_KEYS.LEADERBOARD(project.hackathonId)),
+      // Invalidate all gallery filter variants for this hackathon
+      deleteCachePattern(`cache:gallery:${project.hackathonId}:*`),
+      deleteCachePattern('cache:gallery:all:*'),
+    ]);
+
     await AuditService.log({
       userId: session.id,
       hackathonId: project.hackathonId,
@@ -134,7 +143,9 @@ export async function DELETE(
         },
       },
       include: {
-        project: { select: { hackathonId: true } },
+        project: {
+          select: { hackathonId: true },
+        },
       },
     });
 
@@ -154,6 +165,14 @@ export async function DELETE(
     });
 
     const totalVotes = await prisma.vote.count({ where: { projectId } });
+
+    // Invalidate leaderboard + gallery cache
+    const { deleteCache, deleteCachePattern, CACHE_KEYS } = await import('@/lib/cache');
+    await Promise.all([
+      deleteCache(CACHE_KEYS.LEADERBOARD(existingVote.project.hackathonId)),
+      deleteCachePattern(`cache:gallery:${existingVote.project.hackathonId}:*`),
+      deleteCachePattern('cache:gallery:all:*'),
+    ]);
 
     await AuditService.log({
       userId: session.id,

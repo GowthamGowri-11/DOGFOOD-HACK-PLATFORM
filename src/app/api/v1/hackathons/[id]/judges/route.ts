@@ -7,7 +7,7 @@ import { AuditService } from '@/server/services/audit.service';
 import { JudgeRepository } from '@/server/repositories/judge.repository';
 
 const addJudgeSchema = z.object({
-  userId: z.string().uuid().optional(),
+  userId: z.string().min(1).optional(),
   email: z.string().email().optional(),
   fullName: z.string().min(1).max(100).optional(),
   expertiseTracks: z.array(z.string()).default([]),

@@ -1,14 +1,19 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { HackathonRepository } from '@/server/repositories/hackathon.repository';
 import { HackathonLifecycleService } from '@/server/services/hackathon-lifecycle.service';
 import { HackathonService } from '@/server/services/hackathon.service';
 import { requireAuth, requireRole } from '@/server/permissions/guards';
+import { ResourceGuards } from '@/server/permissions/resource-guards';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { getCache, setCache, deleteCache, deleteCachePattern, CACHE_KEYS } from '@/lib/cache';
+
+/** Public hackathons list cache TTL: 60 seconds */
+const HACKATHONS_LIST_TTL = 60;
 
 export const dynamic = 'force-dynamic';
 
@@ -63,13 +68,12 @@ const createHackathonSchema = z.object({
   judgingEndTime: z.string().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  // Flexible for uploaded assets + prize fields from both branches
   bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
   logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
-  tracks: z.array(trackInputSchema).optional().default([]),
   prizePool: z.number().optional().or(z.string()),
   currency: z.string().default('USD'),
   prizes: z.array(z.any()).optional(),
+  tracks: z.array(trackInputSchema).optional().default([]),
 });
 
 export async function GET(req: NextRequest) {
@@ -83,6 +87,7 @@ export async function GET(req: NextRequest) {
     const pageSize = parseInt(searchParams.get('pageSize') || '20', 10);
 
     if (mine) {
+      // Auth-specific — never cache
       const session = await requireAuth();
       const result = await HackathonRepository.listAdminPaginated({
         search,
@@ -94,6 +99,26 @@ export async function GET(req: NextRequest) {
       return successResponse(result);
     }
 
+    // Build deterministic cache key from all public query params.
+    // Skip caching for search queries (too many unique keys).
+    const shouldCache = !search;
+    const cacheKey = [
+      CACHE_KEYS.HACKATHONS_PUBLIC(),
+      status || 'any',
+      trackSlug || 'any',
+      `p${page}`,
+      `s${pageSize}`,
+    ].join(':');
+
+    if (shouldCache) {
+      const cached = await getCache<object>(cacheKey);
+      if (cached !== null) {
+        const res = NextResponse.json({ success: true, data: cached });
+        res.headers.set('X-Cache', 'HIT');
+        return res;
+      }
+    }
+
     const result = await HackathonRepository.listPublic({
       search,
       status,
@@ -102,7 +127,13 @@ export async function GET(req: NextRequest) {
       pageSize,
     });
 
-    return successResponse(result);
+    if (shouldCache) {
+      await setCache(cacheKey, result, HACKATHONS_LIST_TTL);
+    }
+
+    const res = NextResponse.json({ success: true, data: result });
+    res.headers.set('X-Cache', 'MISS');
+    return res;
   } catch (error: any) {
     return errorResponse(error.message || 'Failed to list hackathons', 'INTERNAL_ERROR', 500);
   }
@@ -324,6 +355,9 @@ export async function POST(req: NextRequest) {
     } catch {
       // Ignore during build/tests
     }
+
+    // Invalidate public hackathons list cache
+    await deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`);
 
     return successResponse({ hackathon: created }, 'Hackathon created successfully', 201);
   } catch (error: any) {

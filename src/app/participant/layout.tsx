@@ -5,9 +5,5 @@ export default function ParticipantLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AppShell userRole="PARTICIPANT">
-      {children}
-    </AppShell>
-  );
+  return <AppShell userRole="PARTICIPANT">{children}</AppShell>;
 }

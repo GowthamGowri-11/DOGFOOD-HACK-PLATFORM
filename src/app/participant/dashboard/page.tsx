@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import {
   Trophy,
   Users,
@@ -36,7 +35,7 @@ export const dynamic = 'force-dynamic';
 export default async function ParticipantDashboard() {
   const session = await getSession();
   if (!session) {
-    redirect('/login?from=/participant/dashboard');
+    return <div className="p-8 text-sm text-slate-500">Unable to load session.</div>;
   }
 
   // 1. Fetch all real data in parallel with error resilience

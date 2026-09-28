@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
     const providedPassword = parsed.data.password;
 
     // Rate limiting per IP + email (50 attempts per 15 min for tests)
-    const rateCheck = RateLimiter.check(`login:${ip}:${normalizedEmail}`, 50, 15 * 60 * 1000);
+    const rateCheck = await RateLimiter.check(`login:${ip}:${normalizedEmail}`, 50, 15 * 60 * 1000);
     if (!rateCheck.allowed) {
       return errorResponse('Too many failed login attempts. Please try again in 15 minutes.', 'RATE_LIMITED', 429);
     }
@@ -153,7 +153,7 @@ export async function POST(req: NextRequest) {
       }
 
       // Reset rate limiter upon successful login
-      RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
+      await RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
 
       const sessionPayload = {
         id: user.id,
@@ -192,7 +192,7 @@ export async function POST(req: NextRequest) {
 
     // 2. If DB lookup failed or user not in DB, but matches a known demo fixture user
     if (demoFixture && isDemoPassword) {
-      RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
+      await RateLimiter.reset(`login:${ip}:${normalizedEmail}`);
 
       const sessionPayload = {
         id: demoFixture.id,

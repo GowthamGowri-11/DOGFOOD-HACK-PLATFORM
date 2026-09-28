@@ -14,6 +14,7 @@ import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+import { deleteCache, deleteCachePattern, CACHE_KEYS } from '@/lib/cache';
 
 const updateHackathonSchema = z.object({
   title: z.string().min(3).optional(),
@@ -46,7 +47,6 @@ const updateHackathonSchema = z.object({
   judgingEndTime: z.string().datetime().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
-  // Flexible URLs for uploaded banners/logos + prize fields from both branches
   bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
   logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
   prizePool: z.number().optional().or(z.string()),
@@ -267,6 +267,12 @@ export async function PATCH(
       // Ignore during test/static builds
     }
 
+    // Invalidate Redis caches: detail + all public list variants
+    await Promise.all([
+      deleteCache(CACHE_KEYS.HACKATHON(hackathonId)),
+      deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`),
+    ]);
+
     const submissionWindow = SubmissionWindowService.getSubmissionWindowDetails(updated);
 
     return successResponse(
@@ -327,6 +333,12 @@ export async function DELETE(
     } catch {
       // Ignore during test/static builds
     }
+
+    // Invalidate Redis caches
+    await Promise.all([
+      deleteCache(CACHE_KEYS.HACKATHON(hackathonId)),
+      deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`),
+    ]);
 
     return successResponse(null, 'Hackathon deleted successfully');
   } catch (error: any) {

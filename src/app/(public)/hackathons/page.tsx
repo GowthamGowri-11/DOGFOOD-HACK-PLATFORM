@@ -46,7 +46,7 @@ export default async function HackathonsPage() {
     subEndTime: h.subEndTime,
     tracks: h.tracks?.map((t: any) => ({ id: t.id, title: t.title, slug: t.slug, colorHex: t.colorHex })),
     prizes: h.prizes?.map((p: any) => ({ amount: Number(p.amount), currency: p.currency, title: p.title })),
-    registeredCount: h._count?.registrations || 42,
+    registeredCount: h._count?.registrations ?? 0,
   }));
 
   return (

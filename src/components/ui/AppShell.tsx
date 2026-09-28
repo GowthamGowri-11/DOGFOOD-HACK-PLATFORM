@@ -95,12 +95,82 @@ export const AppShell: React.FC<AppShellProps> = ({
     setCurrentRole('PARTICIPANT');
   };
 
+  const applySessionUser = (u: { id?: string; name?: string; fullName?: string; email?: string; role?: string; avatarUrl?: string | null }) => {
+    setCurrentUser({
+      id: u.id || 'usr_open_access',
+      name: u.name || u.fullName || u.email || 'User',
+      email: u.email || '',
+      role: (u.role as UserRole) || 'PARTICIPANT',
+      avatarUrl: u.avatarUrl || null,
+    });
+    if (u.role) setCurrentRole(u.role as UserRole);
+  };
+
+  // Align open-access identity to the current workspace (admin/organizer/judge/participant)
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const authDisabled = process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true';
+        if (authDisabled && userRole) {
+          const switchRes = await fetch('/api/v1/auth/open-role', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ role: userRole }),
+          });
+          const switchJson = await switchRes.json();
+          if (!cancelled && switchJson.success && switchJson.data?.user) {
+            applySessionUser(switchJson.data.user);
+            return;
+          }
+        }
+
+        const res = await fetch('/api/v1/auth/me');
+        const json = await res.json();
+        if (cancelled) return;
+        if (json.success && json.data?.user) {
+          applySessionUser(json.data.user);
+        } else {
+          setCurrentUser(null);
+        }
+      } catch {
+        if (!cancelled) {
+          setCurrentUser(null);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userRole]);
+
+  const handleRoleChange = async (role: UserRole) => {
+    setCurrentRole(role);
+    if (process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true') {
+      try {
+        const res = await fetch('/api/v1/auth/open-role', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role }),
+        });
+        const json = await res.json();
+        if (json.success && json.data?.user) {
+          applySessionUser(json.data.user);
+        }
+      } catch {
+        // Navigation still proceeds
+      }
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[#FFFFFF] flex flex-col font-sans antialiased text-[#111827]">
       {/* Permanent Desktop Sidebar (w-260 or w-72 when collapsed) */}
       <Sidebar
         currentRole={currentRole}
-        onRoleChange={setCurrentRole}
+        onRoleChange={handleRoleChange}
         collapsed={sidebarCollapsed}
         onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
         isMobileOpen={mobileMenuOpen}

@@ -7,6 +7,9 @@ import { ScoringEngine } from '@/server/services/scoring.engine';
 import { successResponse, errorResponse } from '@/lib/api/response';
 import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
+import { EncryptionService } from '@/server/security/encryption.service';
+import { eventBus } from '@/server/realtime/event-bus';
+import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 const submitEvaluationSchema = z.object({
   status: z.enum(['DRAFT', 'SUBMITTED']).default('SUBMITTED'),
@@ -16,7 +19,7 @@ const submitEvaluationSchema = z.object({
   privateNotes: z.string().optional(),
   scores: z.array(
     z.object({
-      criterionId: z.string().uuid(),
+      criterionId: z.string().min(1),
       rawScore: z.number().min(0),
       feedback: z.string().optional(),
     })
@@ -57,6 +60,9 @@ export async function GET(
           evaluation: {
             include: {
               scores: true,
+              editRequests: {
+                orderBy: { createdAt: 'desc' },
+              },
             },
           },
         },
@@ -197,6 +203,16 @@ export async function POST(
     // Compute weighted scores authoritative on server
     const computed = ScoringEngine.calculateEvaluationScore(scoreInputs);
 
+    // Encrypt sensitive evaluation data at rest (AES-256-GCM)
+    const encryptedPayload = EncryptionService.encrypt({
+      scores,
+      prosComment,
+      consComment,
+      suggestions,
+      privateNotes,
+      computed,
+    });
+
     // Save evaluation in transaction
     const evaluation = await prisma.$transaction(async (tx) => {
       const savedEval = await tx.evaluation.upsert({
@@ -205,6 +221,7 @@ export async function POST(
           status,
           rawScoreSum: computed.rawScoreSum,
           weightedScore: computed.weightedScore,
+          encryptedPayload,
           prosComment,
           consComment,
           suggestions,
@@ -217,9 +234,12 @@ export async function POST(
           judgeUserId: session.id,
           projectId: assignment.projectId,
           rubricId: rubric.id,
+          roundId: assignment.roundId,
+          subRoundId: assignment.subRoundId,
           status,
           rawScoreSum: computed.rawScoreSum,
           weightedScore: computed.weightedScore,
+          encryptedPayload,
           prosComment,
           consComment,
           suggestions,
@@ -244,6 +264,7 @@ export async function POST(
             evaluationId: savedEval.id,
             criterionId: s.criterionId,
             rawScore: s.rawScore,
+            originalScore: s.rawScore,
             feedback: s.feedback,
           },
         });
@@ -266,6 +287,30 @@ export async function POST(
       entityType: 'Evaluation',
       entityId: evaluation.id,
       afterState: { weightedScore: computed.weightedScore, status },
+    });
+
+    // Real-time notification to organizer and judge rooms
+    await eventBus.publish({
+      type: status === 'SUBMITTED' ? 'EVALUATION_COMPLETED' : 'EVALUATION_UPDATED',
+      hackathonId: assignment.judge.hackathonId,
+      projectId: assignment.projectId,
+      userId: session.id,
+      actorId: session.id,
+      rooms: [
+        RealtimeRoomBuilder.organizer(assignment.judge.hackathonId),
+        RealtimeRoomBuilder.judge(session.id),
+        RealtimeRoomBuilder.evaluation(evaluation.id),
+        RealtimeRoomBuilder.admin(),
+      ],
+      payload: {
+        evaluationId: evaluation.id,
+        assignmentId: assignment.id,
+        projectId: assignment.projectId,
+        judgeId: assignment.judgeId,
+        status,
+        weightedScore: computed.weightedScore,
+        isCompleted: status === 'SUBMITTED',
+      },
     });
 
     return successResponse(

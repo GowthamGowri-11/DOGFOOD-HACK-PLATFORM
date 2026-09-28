@@ -77,6 +77,7 @@ const ORGANIZER_NAV: NavItem[] = [
   { label: 'Assignments', href: '/organizer/assignments', icon: Scale },
   { label: 'Rubrics', href: '/organizer/rubrics', icon: Sliders },
   { label: 'Evaluations', href: '/organizer/evaluations', icon: BarChart3 },
+  { label: 'Mark Edit Requests', href: '/organizer/mark-edit-requests', icon: FileText },
   { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles },
   { label: 'Voting', href: '/organizer/voting', icon: Vote },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
@@ -102,6 +103,7 @@ const ADMIN_NAV: NavItem[] = [
   { label: 'Users & Access', href: '/admin/users', icon: Users },
   { label: 'Roles & RBAC', href: '/admin/roles', icon: ShieldCheck },
   { label: 'All Hackathons', href: '/admin/hackathons', icon: Trophy },
+  { label: 'Mark Edit Requests', href: '/admin/mark-edit-requests', icon: FileText },
   { label: 'Registrations', href: '/admin/registrations', icon: UserCheck },
   { label: 'Teams', href: '/admin/teams', icon: Users },
   { label: 'Attendance Sessions', href: '/admin/attendance', icon: QrCode },
@@ -229,16 +231,26 @@ export function Sidebar({ role, title, subtitle, items }: SidebarProps) {
 
         {/* Footer info & Logout */}
         <div className="p-3 border-t border-slate-100">
-          <Link
-            href="/login"
-            className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors ${
-              collapsed ? 'justify-center' : ''
-            }`}
-            title={collapsed ? 'Sign Out' : undefined}
-          >
-            <LogOut className={`w-4 h-4 ${collapsed ? '' : 'mr-2'}`} />
-            {!collapsed && <span>Sign Out</span>}
-          </Link>
+          {process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true' ? (
+            <div
+              className={`px-3 py-2 text-[10px] font-semibold text-slate-500 ${
+                collapsed ? 'text-center' : ''
+              }`}
+            >
+              {collapsed ? 'Open' : 'Auth disabled — open access'}
+            </div>
+          ) : (
+            <Link
+              href="/login"
+              className={`flex items-center px-3 py-2 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-colors ${
+                collapsed ? 'justify-center' : ''
+              }`}
+              title={collapsed ? 'Sign Out' : undefined}
+            >
+              <LogOut className={`w-4 h-4 ${collapsed ? '' : 'mr-2'}`} />
+              {!collapsed && <span>Sign Out</span>}
+            </Link>
+          )}
         </div>
       </aside>
     </>

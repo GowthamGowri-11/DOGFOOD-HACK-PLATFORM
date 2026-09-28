@@ -1,4 +1,4 @@
-import { getSession } from '@/server/auth/session';
+import { getSession, isAuthDisabled } from '@/server/auth/session';
 import { UserRepository } from '@/server/repositories/user.repository';
 import { successResponse } from '@/lib/api/response';
 
@@ -14,16 +14,30 @@ export async function GET() {
       );
     }
 
+    if (isAuthDisabled()) {
+      return successResponse({
+        user: {
+          id: session.id,
+          name: session.fullName,
+          email: session.email,
+          role: session.role,
+          status: session.status || 'ACTIVE',
+          avatarUrl: session.avatarUrl || null,
+          createdAt: new Date().toISOString(),
+        },
+      });
+    }
+
     // Verify user in database with timeout, or fallback to session
-    let user = null;
+    let user: any = null;
     try {
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('DB_TIMEOUT')), 3000)
       );
-      user = (await Promise.race([
+      user = await Promise.race([
         UserRepository.findById(session.id),
         timeoutPromise,
-      ])) as any;
+      ]);
     } catch (dbErr) {
       console.warn('[auth/me] DB lookup timed out or failed, using session cache:', dbErr);
     }
@@ -58,7 +72,7 @@ export async function GET() {
         role: session.role,
         status: session.status || 'ACTIVE',
         avatarUrl: session.avatarUrl,
-        createdAt: new Date(),
+        createdAt: new Date().toISOString(),
       },
     });
   } catch {
@@ -68,4 +82,5 @@ export async function GET() {
     );
   }
 }
+
 

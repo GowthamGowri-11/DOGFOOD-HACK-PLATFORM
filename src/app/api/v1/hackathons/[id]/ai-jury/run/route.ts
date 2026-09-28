@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
 
 const aiJuryRunSchema = z.object({
-  projectId: z.string().uuid().optional(),
+  projectId: z.string().min(1).optional(),
 });
 
 export async function POST(

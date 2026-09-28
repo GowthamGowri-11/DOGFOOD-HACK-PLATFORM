@@ -8,7 +8,7 @@ import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
 
 const normalizationSchema = z.object({
-  hackathonId: z.string().uuid(),
+  hackathonId: z.string().min(1),
   method: z.enum(['Z_SCORE', 'MIN_MAX']).default('Z_SCORE'),
 });
 

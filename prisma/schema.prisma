@@ -35,6 +35,7 @@ model User {
   teamInvitesRcvd TeamInvite[]       @relation("InvitedUser")
   teamMembers     TeamMember[]
   votes           Vote[]
+  judgeEditRequests EvaluationEditRequest[] @relation("JudgeUserEditRequests")
 
   @@index([email])
   @@index([role])
@@ -84,6 +85,7 @@ model Hackathon {
   scoreNormalizations ScoreNormalization[]
   teams               Team[]
   tracks              Track[]
+  editRequests        EvaluationEditRequest[]
 
   @@index([slug])
   @@index([status])
@@ -245,6 +247,7 @@ model Project {
   result           Result?
   submissions      Submission[]
   votes            Vote[]
+  editRequests     EvaluationEditRequest[]
 
   @@unique([hackathonId, slug])
   @@index([hackathonId])
@@ -283,6 +286,7 @@ model Judge {
   hackathon       Hackathon         @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
   user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   assignments     JudgeAssignment[]
+  editRequests    EvaluationEditRequest[]
 
   @@unique([hackathonId, userId])
   @@index([hackathonId])
@@ -293,6 +297,8 @@ model JudgeAssignment {
   id          String           @id @default(uuid())
   judgeId     String
   projectId   String
+  roundId     String?
+  subRoundId  String?
   status      AssignmentStatus @default(ASSIGNED)
   assignedAt  DateTime         @default(now())
   completedAt DateTime?
@@ -303,6 +309,7 @@ model JudgeAssignment {
   @@unique([judgeId, projectId])
   @@index([judgeId, status])
   @@index([projectId])
+  @@index([roundId])
 }
 
 model Rubric {
@@ -338,44 +345,52 @@ model RubricCriterion {
 }
 
 model Evaluation {
-  id            String              @id @default(uuid())
-  assignmentId  String?             @unique
-  judgeId       String
-  judgeUserId   String
-  projectId     String
-  rubricId      String
-  status        EvaluationStatus    @default(DRAFT)
-  rawScoreSum   Float               @default(0)
-  weightedScore Float               @default(0)
-  prosComment   String?
-  consComment   String?
-  suggestions   String?
-  privateNotes  String?
-  submittedAt   DateTime?
-  createdAt     DateTime            @default(now())
-  updatedAt     DateTime            @updatedAt
-  aiComparisons AIHumanComparison[]
-  assignment    JudgeAssignment?    @relation(fields: [assignmentId], references: [id])
-  judge         Judge               @relation(fields: [judgeId], references: [id], onDelete: Cascade)
-  judgeUser     User                @relation(fields: [judgeUserId], references: [id])
-  project       Project             @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  rubric        Rubric              @relation(fields: [rubricId], references: [id])
-  scores        EvaluationScore[]
+  id               String                  @id @default(uuid())
+  assignmentId     String?                 @unique
+  judgeId          String
+  judgeUserId      String
+  projectId        String
+  rubricId         String
+  roundId          String?
+  subRoundId       String?
+  status           EvaluationStatus        @default(DRAFT)
+  rawScoreSum      Float                   @default(0)
+  weightedScore    Float                   @default(0)
+  version          Int                     @default(1)
+  encryptedPayload String?
+  markHistory      Json?
+  prosComment      String?
+  consComment      String?
+  suggestions      String?
+  privateNotes     String?
+  submittedAt      DateTime?
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  aiComparisons    AIHumanComparison[]
+  assignment       JudgeAssignment?        @relation(fields: [assignmentId], references: [id])
+  judge            Judge                   @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  judgeUser        User                    @relation(fields: [judgeUserId], references: [id])
+  project          Project                 @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  rubric           Rubric                  @relation(fields: [rubricId], references: [id])
+  scores           EvaluationScore[]
+  editRequests     EvaluationEditRequest[]
 
   @@unique([judgeId, projectId])
   @@index([projectId])
   @@index([judgeId])
   @@index([status])
+  @@index([roundId])
 }
 
 model EvaluationScore {
-  id           String          @id @default(uuid())
-  evaluationId String
-  criterionId  String
-  rawScore     Float
-  feedback     String?
-  criterion    RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
-  evaluation   Evaluation      @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  id            String          @id @default(uuid())
+  evaluationId  String
+  criterionId   String
+  rawScore      Float
+  originalScore Float?
+  feedback      String?
+  criterion     RubricCriterion @relation(fields: [criterionId], references: [id], onDelete: Cascade)
+  evaluation    Evaluation      @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
 
   @@unique([evaluationId, criterionId])
   @@index([criterionId])
@@ -655,16 +670,87 @@ model AuditLog {
 }
 
 model Notification {
-  id        String   @id @default(uuid())
-  userId    String
-  title     String
-  message   String
-  linkUrl   String?
-  isRead    Boolean  @default(false)
-  createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id          String    @id @default(uuid())
+  userId      String
+  title       String
+  message     String
+  linkUrl     String?
+  type        String?
+  entityType  String?
+  entityId    String?
+  hackathonId String?
+  roundId     String?
+  subRoundId  String?
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
+  @@index([hackathonId])
+}
+
+model EvaluationEditRequest {
+  id                String            @id @default(uuid())
+  evaluationId      String
+  judgeId           String
+  judgeUserId       String
+  hackathonId       String
+  roundId           String?
+  subRoundId        String?
+  teamId            String
+  projectId         String
+  criterionId       String
+  criterionTitle    String
+  oldScore          Float
+  requestedScore    Float
+  reason            String
+  status            EditRequestStatus @default(PENDING)
+  authCodeHash      String?
+  authCodeMasked    String?
+  authCodePlain     String?
+  authCodeExpiresAt DateTime?
+  isCodeUsed        Boolean           @default(false)
+  usedAt            DateTime?
+  approvedById      String?
+  approvedByType    String?
+  approvedAt        DateTime?
+  rejectedById      String?
+  rejectedReason    String?
+  rejectedAt        DateTime?
+  executedAt        DateTime?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+  evaluation        Evaluation        @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  judge             Judge             @relation(fields: [judgeId], references: [id], onDelete: Cascade)
+  judgeUser         User              @relation("JudgeUserEditRequests", fields: [judgeUserId], references: [id])
+  hackathon         Hackathon         @relation(fields: [hackathonId], references: [id], onDelete: Cascade)
+  project           Project           @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@index([hackathonId, status])
+  @@index([judgeUserId, status])
+  @@index([evaluationId])
+  @@index([projectId])
+}
+
+model AuthorizationCodeRegistry {
+  code          String    @id
+  editRequestId String    @unique
+  isUsed        Boolean   @default(false)
+  issuedAt      DateTime  @default(now())
+  expiresAt     DateTime
+  usedAt        DateTime?
+
+  @@index([isUsed, expiresAt])
+}
+
+enum EditRequestStatus {
+  PENDING
+  APPROVED
+  CODE_ISSUED
+  REJECTED
+  EXPIRED
+  EXECUTED
 }
 
 enum RoleType {

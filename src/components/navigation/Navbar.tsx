@@ -44,20 +44,31 @@ export function Navbar() {
 
           {/* Action CTAs */}
           <div className="hidden md:flex items-center space-x-3">
-            <Link
-              href="/login"
-              className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
-            >
-              <LogIn className="w-4 h-4 mr-1.5 text-slate-500" />
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
-            >
-              <UserPlus className="w-4 h-4 mr-1.5" />
-              Sign up
-            </Link>
+            {process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true' ? (
+              <Link
+                href="/admin/dashboard"
+                className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+              >
+                Open Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-colors"
+                >
+                  <LogIn className="w-4 h-4 mr-1.5 text-slate-500" />
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  className="inline-flex items-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
+                >
+                  <UserPlus className="w-4 h-4 mr-1.5" />
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
 
           {/* Mobile hamburger */}
@@ -104,20 +115,32 @@ export function Navbar() {
             Leaderboard
           </Link>
           <div className="pt-3 border-t border-slate-100 flex flex-col space-y-2">
-            <Link
-              href="/login"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg"
-            >
-              Log in
-            </Link>
-            <Link
-              href="/register"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full text-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg"
-            >
-              Sign up
-            </Link>
+            {process.env.NEXT_PUBLIC_AUTH_DISABLED === 'true' ? (
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setMobileMenuOpen(false)}
+                className="w-full text-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg"
+              >
+                Open Dashboard
+              </Link>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center px-4 py-2 text-sm font-medium text-slate-700 bg-slate-100 rounded-lg"
+                >
+                  Log in
+                </Link>
+                <Link
+                  href="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="w-full text-center px-4 py-2 text-sm font-semibold text-white bg-blue-600 rounded-lg"
+                >
+                  Sign up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       )}

@@ -1,0 +1,49 @@
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - gowtham
+      - balasujith
+      - balaganesh
+      - bharathraj
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    name: Build, Lint & Test
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/dogfood_test?schema=public"
+      DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/dogfood_test?schema=public"
+      JWT_SECRET: "test-jwt-secret-key-at-least-32-chars-long-dogfood"
+      AUTH_DISABLED: "false"
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run TypeScript Type Check
+        run: npx tsc --noEmit
+
+      - name: Run Test Suite
+        run: npm test
+
+      - name: Build Next.js Application
+        run: npm run build

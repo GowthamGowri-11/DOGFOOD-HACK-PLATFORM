@@ -5,9 +5,5 @@ export default function JudgeLayout({
 }: {
   children: React.ReactNode;
 }) {
-  return (
-    <AppShell userRole="JUDGE">
-      {children}
-    </AppShell>
-  );
+  return <AppShell userRole="JUDGE">{children}</AppShell>;
 }

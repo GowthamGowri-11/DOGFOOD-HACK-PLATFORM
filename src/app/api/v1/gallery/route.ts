@@ -1,6 +1,10 @@
-import { NextRequest } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { successResponse, errorResponse } from '@/lib/api/response';
+import { getCache, setCache, CACHE_KEYS } from '@/lib/cache';
+
+/** Gallery cache TTL: 2 minutes. Short enough to reflect new votes quickly. */
+const GALLERY_CACHE_TTL = 120;
 
 export async function GET(req: NextRequest) {
   try {
@@ -9,6 +13,26 @@ export async function GET(req: NextRequest) {
     const trackId = searchParams.get('trackId') || undefined;
     const search = searchParams.get('search') || undefined;
     const sort = searchParams.get('sort') || 'newest'; // 'newest' | 'votes' | 'rank'
+
+    // Build a deterministic cache key. Skip caching for freeform search queries
+    // to prevent cache key explosion. Cached queries share TTL of 2 minutes.
+    const shouldCache = !search;
+    const filterKey = [
+      hackathonId || 'all',
+      trackId || 'all',
+      sort,
+    ].join(':');
+    const cacheKey = CACHE_KEYS.GALLERY(filterKey);
+
+    if (shouldCache) {
+      const cached = await getCache<{ totalCount: number; projects: unknown[] }>(cacheKey);
+      if (cached !== null) {
+        const res = NextResponse.json({ success: true, data: cached });
+        res.headers.set('X-Cache', 'HIT');
+        res.headers.set('X-Cache-Key', cacheKey);
+        return res;
+      }
+    }
 
     // Show projects that are published or have at least one SUBMITTED submission
     const projects = await prisma.project.findMany({
@@ -116,10 +140,20 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    return successResponse({
+    const payload = {
       totalCount: formatted.length,
       projects: formatted,
-    });
+    };
+
+    // Write to cache on DB miss (non-search requests only)
+    if (shouldCache) {
+      await setCache(cacheKey, payload, GALLERY_CACHE_TTL);
+    }
+
+    const res = NextResponse.json({ success: true, data: payload });
+    res.headers.set('X-Cache', 'MISS');
+    res.headers.set('X-Cache-Key', shouldCache ? cacheKey : 'SKIP');
+    return res;
   } catch (error: any) {
     const status = error.status || 500;
     const code = error.code || 'INTERNAL_ERROR';

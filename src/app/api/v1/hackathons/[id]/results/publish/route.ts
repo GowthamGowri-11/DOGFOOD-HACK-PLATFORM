@@ -13,6 +13,10 @@ export async function POST(
 
     const publication = await ResultService.publishResults(hackathonId, session.id);
 
+    // Invalidate leaderboard cache so public users immediately see freshly published results
+    const { deleteCache, CACHE_KEYS } = await import('@/lib/cache');
+    await deleteCache(CACHE_KEYS.LEADERBOARD(hackathonId));
+
     return successResponse(
       publication,
       'Official leaderboard and winner results published successfully to the public.'

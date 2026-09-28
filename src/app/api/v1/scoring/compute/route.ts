@@ -7,7 +7,7 @@ import prisma from '@/lib/prisma';
 import { AuditService } from '@/server/services/audit.service';
 
 const computeScoringSchema = z.object({
-  hackathonId: z.string().uuid(),
+  hackathonId: z.string().min(1),
 });
 
 export async function POST(req: NextRequest) {

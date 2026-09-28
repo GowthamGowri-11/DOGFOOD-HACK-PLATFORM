@@ -109,7 +109,7 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
       const data = await res.json();
 
       if (res.status === 401) {
-        window.location.href = `/login?from=/hackathons/${hackathon.slug}`;
+        showToast('Registration requires an active session', 'error');
         return;
       }
 

@@ -134,6 +134,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const navItems = getNavItems();
 
 
+
   return (
     <>
       {/* Mobile Backdrop */}

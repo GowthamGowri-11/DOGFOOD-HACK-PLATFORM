@@ -1,6 +1,5 @@
 import React from 'react';
 import Link from 'next/link';
-import { redirect } from 'next/navigation';
 import {
   Trophy,
   Users,
@@ -26,7 +25,7 @@ export const dynamic = 'force-dynamic';
 export default async function ParticipantHackathonsPage() {
   const session = await getSession();
   if (!session) {
-    redirect('/login?from=/participant/hackathons');
+    return <div className="p-8 text-sm text-slate-500">Unable to load session.</div>;
   }
 
   const [registrations, teams, projects] = await Promise.all([

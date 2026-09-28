@@ -29,3 +29,8 @@ Dogfood.zip
 Thumbs.db
 .idea/
 .vscode/
+
+# User uploads (keep directory structure via .gitkeep)
+public/uploads/*
+!public/uploads/.gitkeep
+!public/uploads/banners/.gitkeep
