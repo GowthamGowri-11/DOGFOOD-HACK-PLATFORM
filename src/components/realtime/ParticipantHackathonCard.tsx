@@ -10,6 +10,8 @@ import {
   Award,
   AlertTriangle,
   ArrowRight,
+  Trophy,
+  AlertCircle,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -80,6 +82,50 @@ export function ParticipantHackathonCard({
         </div>
       </div>
 
+      {/* Round Progression Status Notification Banner */}
+      {team && (team.progressionStatus === 'ADVANCED' || team.progressionStatus === 'ELIMINATED') && (
+        <div
+          className={`p-3.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+            team.progressionStatus === 'ADVANCED'
+              ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]'
+              : 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
+          }`}
+        >
+          <div className="flex items-center space-x-2.5">
+            {team.progressionStatus === 'ADVANCED' ? (
+              <Trophy className="w-4 h-4 text-[#059669] flex-shrink-0" />
+            ) : (
+              <AlertCircle className="w-4 h-4 text-[#D97706] flex-shrink-0" />
+            )}
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold">
+                  {team.progressionStatus === 'ADVANCED'
+                    ? `Your team has been selected for the next round of ${h.title}.`
+                    : `Your team was not selected for the next round of ${h.title}.`}
+                </span>
+                <Badge variant={team.progressionStatus === 'ADVANCED' ? 'emerald' : 'amber'}>
+                  {team.progressionStatus === 'ADVANCED' ? `ROUND ${team.highestRound} UNLOCKED` : 'NOT SELECTED'}
+                </Badge>
+              </div>
+              <span className="text-[11px] opacity-90 block mt-0.5">
+                {team.progressionStatus === 'ADVANCED'
+                  ? `Eligible to submit and participate in Round ${team.highestRound}.`
+                  : 'You can still view the published leaderboard. Historical submissions and scores remain saved.'}
+              </span>
+            </div>
+          </div>
+
+          {team.progressionStatus === 'ELIMINATED' && (
+            <Link href="/leaderboard">
+              <Button variant="secondary" size="sm" className="font-semibold text-xs whitespace-nowrap">
+                View Leaderboard →
+              </Button>
+            </Link>
+          )}
+        </div>
+      )}
+
       {/* Submission Countdown Bar */}
       <SubmissionCountdown
         hackathonId={h.id}
@@ -101,7 +147,7 @@ export function ParticipantHackathonCard({
             <div>
               <span className="text-sm font-bold text-[#111827] block">{team.name}</span>
               <span className="text-xs text-[#64748B]">
-                {team.members.length} Member{team.members.length === 1 ? '' : 's'} (Code: {team.inviteCode})
+                {team.members?.length || 0} Member{team.members?.length === 1 ? '' : 's'} (Code: {team.inviteCode})
               </span>
             </div>
           ) : (

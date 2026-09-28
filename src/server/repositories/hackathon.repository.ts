@@ -1,5 +1,5 @@
 import prisma from '@/lib/prisma';
-import { EventStatus, Prisma } from '@prisma/client';
+import { EventStatus, Prisma, ProgressionMode } from '@prisma/client';
 
 export interface ListPublicHackathonsOptions {
   search?: string;
@@ -236,6 +236,8 @@ export class HackathonRepository {
     judgingEndTime: Date;
     eligibilityRules?: string;
     rulesAndGuidelines?: string;
+    progressionMode?: ProgressionMode;
+    currentRoundNumber?: number;
   }) {
     return prisma.hackathon.create({
       data: {
@@ -246,6 +248,8 @@ export class HackathonRepository {
         organizationName: data.organizationName.trim(),
         organizerId: data.organizerId,
         status: data.status || 'DRAFT',
+        progressionMode: data.progressionMode || 'OVERALL_PERFORMANCE',
+        currentRoundNumber: data.currentRoundNumber || 1,
         minTeamSize: data.minTeamSize || 1,
         maxTeamSize: data.maxTeamSize || 4,
         bannerUrl: data.bannerUrl,

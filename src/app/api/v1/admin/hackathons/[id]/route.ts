@@ -144,6 +144,7 @@ export async function PATCH(
       'logoUrl',
       'eligibilityRules',
       'rulesAndGuidelines',
+      'progressionMode',
     ];
 
     allowedFields.forEach((field) => {
@@ -170,6 +171,23 @@ export async function PATCH(
     });
 
     const updated = await HackathonRepository.update(id, updateData);
+
+    // Sync rounds if provided
+    let roundsToSync: any[] = [];
+    if (Array.isArray(body.rounds)) {
+      roundsToSync = body.rounds;
+    } else if (body.rulesAndGuidelines) {
+      try {
+        const parsed = JSON.parse(body.rulesAndGuidelines);
+        if (Array.isArray(parsed.rounds)) roundsToSync = parsed.rounds;
+      } catch {
+        // ignore
+      }
+    }
+    if (roundsToSync.length > 0) {
+      const { RoundProgressionService } = await import('@/server/services/round-progression.service');
+      await RoundProgressionService.syncRoundsFromConfig(id, roundsToSync);
+    }
 
     // Handle Prizes / Prize Pool updates
     if (body.prizes && Array.isArray(body.prizes)) {

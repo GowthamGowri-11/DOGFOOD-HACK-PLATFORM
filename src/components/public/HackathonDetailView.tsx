@@ -69,6 +69,12 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
     setTimeout(() => setToastMessage(null), 4000);
   };
 
+  const [teamProgression, setTeamProgression] = useState<{
+    progressionStatus: 'ELIGIBLE' | 'ADVANCED' | 'ELIMINATED' | 'DISQUALIFIED';
+    highestRound: number;
+    teamName: string;
+  } | null>(null);
+
   useEffect(() => {
     async function checkRegistration() {
       try {
@@ -77,6 +83,24 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
           const data = await res.json();
           if (data.data?.registered) {
             setRegistered(true);
+
+            // Fetch team to see progression status
+            try {
+              const teamsRes = await fetch('/api/v1/participants/me/teams');
+              if (teamsRes.ok) {
+                const tData = await teamsRes.json();
+                const team = tData.data?.teams?.find((t: any) => t.hackathonId === hackathon.id);
+                if (team && (team.progressionStatus === 'ADVANCED' || team.progressionStatus === 'ELIMINATED')) {
+                  setTeamProgression({
+                    progressionStatus: team.progressionStatus,
+                    highestRound: team.highestRound,
+                    teamName: team.name,
+                  });
+                }
+              }
+            } catch {
+              // Ignore team fetch error
+            }
           }
         }
       } catch (err) {
@@ -162,6 +186,63 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
           <ArrowLeft className="w-3.5 h-3.5 mr-1.5" /> Back to Explore
         </Link>
       </div>
+
+      {/* Round Progression Status Banner */}
+      {teamProgression && (
+        <div
+          className={`mb-4 p-4 rounded-2xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm ${
+            teamProgression.progressionStatus === 'ADVANCED'
+              ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]'
+              : 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
+          }`}
+        >
+          <div className="flex items-start space-x-3.5">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                teamProgression.progressionStatus === 'ADVANCED'
+                  ? 'bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0]'
+                  : 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
+              }`}
+            >
+              {teamProgression.progressionStatus === 'ADVANCED' ? (
+                <Trophy className="w-5 h-5" />
+              ) : (
+                <AlertCircle className="w-5 h-5" />
+              )}
+            </div>
+            <div>
+              <div className="flex items-center space-x-2">
+                <span className="text-xs font-bold uppercase tracking-wider">
+                  Round Progression Status
+                </span>
+                <Badge variant={teamProgression.progressionStatus === 'ADVANCED' ? 'emerald' : 'amber'}>
+                  {teamProgression.progressionStatus === 'ADVANCED'
+                    ? `ROUND ${teamProgression.highestRound} UNLOCKED`
+                    : 'NOT SELECTED'}
+                </Badge>
+              </div>
+              <p className="text-sm font-bold mt-0.5">
+                {teamProgression.progressionStatus === 'ADVANCED'
+                  ? `Your team has been selected for the next round of ${hackathon.title}.`
+                  : `Your team was not selected for the next round of ${hackathon.title}.`}
+              </p>
+              <p className="text-xs opacity-90 mt-0.5">
+                {teamProgression.progressionStatus === 'ADVANCED'
+                  ? `Your team "${teamProgression.teamName}" has advanced to Round ${teamProgression.highestRound}. All later round features and submission channels are unlocked.`
+                  : 'Your historical submissions and evaluations remain saved. You can still view the finalized leaderboard.'}
+              </p>
+            </div>
+          </div>
+
+          {teamProgression.progressionStatus === 'ELIMINATED' && (
+            <Link href="/leaderboard" className="w-full sm:w-auto">
+              <Button variant="secondary" size="sm" className="w-full sm:w-auto font-bold whitespace-nowrap">
+                View Leaderboard →
+              </Button>
+            </Link>
+          )}
+        </div>
+      )}
 
       {/* Top Rich Header Card (Unstop Spec) */}
       <div className="bg-white border border-[#E2E8F0] rounded-[18px] p-6 sm:p-8 shadow-card space-y-6">

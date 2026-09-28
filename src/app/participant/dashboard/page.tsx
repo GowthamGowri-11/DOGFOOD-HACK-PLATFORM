@@ -149,6 +149,80 @@ export default async function ParticipantDashboard() {
         </div>
       </div>
 
+      {/* Round Progression Status Banner */}
+      {primaryTeam && primaryHackathon && (primaryTeam.progressionStatus === 'ADVANCED' || primaryTeam.progressionStatus === 'ELIMINATED') && (
+        <div
+          className={`rounded-[18px] p-5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${
+            primaryTeam.progressionStatus === 'ADVANCED'
+              ? 'bg-[#ECFDF5] border-[#A7F3D0]'
+              : 'bg-[#FFFBEB] border-[#FDE68A]'
+          }`}
+        >
+          <div className="flex items-start space-x-3.5">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                primaryTeam.progressionStatus === 'ADVANCED'
+                  ? 'bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0]'
+                  : 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
+              }`}
+            >
+              {primaryTeam.progressionStatus === 'ADVANCED' ? (
+                <Trophy className="w-5 h-5" />
+              ) : (
+                <AlertCircle className="w-5 h-5" />
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#334155]">
+                  {primaryHackathon.title} • Round Progression Update
+                </span>
+                {primaryTeam.progressionStatus === 'ADVANCED' ? (
+                  <Badge variant="emerald">ADVANCED TO ROUND {primaryTeam.highestRound}</Badge>
+                ) : (
+                  <Badge variant="amber">NOT SELECTED</Badge>
+                )}
+              </div>
+              <p
+                className={`text-sm font-bold ${
+                  primaryTeam.progressionStatus === 'ADVANCED' ? 'text-[#065F46]' : 'text-[#92400E]'
+                }`}
+              >
+                {primaryTeam.progressionStatus === 'ADVANCED'
+                  ? `Your team has been selected for the next round of ${primaryHackathon.title}.`
+                  : `Your team was not selected for the next round of ${primaryHackathon.title}.`}
+              </p>
+              <p
+                className={`text-xs ${
+                  primaryTeam.progressionStatus === 'ADVANCED' ? 'text-[#047857]' : 'text-[#B45309]'
+                }`}
+              >
+                {primaryTeam.progressionStatus === 'ADVANCED'
+                  ? `You have unlocked Round ${primaryTeam.highestRound} features, submissions, and workspace access.`
+                  : 'You can still view the published leaderboard and official rankings. All historical submissions and evaluations remain intact.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 flex-shrink-0 w-full sm:w-auto">
+            {primaryTeam.progressionStatus === 'ADVANCED' ? (
+              <Link href={`/hackathons/${primaryHackathon.slug}`} className="w-full sm:w-auto">
+                <Button variant="primary" size="sm" className="w-full sm:w-auto font-bold">
+                  Access Round {primaryTeam.highestRound} →
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/leaderboard" className="w-full sm:w-auto">
+                <Button variant="secondary" size="sm" className="w-full sm:w-auto font-bold">
+                  View Leaderboard →
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 2. TWO-COLUMN SECTION: Your Registered Hackathon & Hackathon Journey */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
         {/* LEFT: Your Registered Hackathon Card (5 Cols) */}
@@ -279,51 +353,51 @@ export default async function ParticipantDashboard() {
                 <div className="text-[11px] font-bold text-[#0F172A] leading-tight">
                   Idea Submission
                 </div>
-                <div className="text-[10px] text-[#64748B]">Mar 01</div>
+                <div className="text-[10px] text-[#64748B]">Mar 05</div>
               </div>
 
-              {/* Step 3: Evaluation & Shortlisting */}
+              {/* Step 3: Round 1 Evaluation */}
               <div className="flex flex-col items-center space-y-1.5">
-                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
-                  3
+                <div className="w-9 h-9 rounded-full bg-[#2563EB] text-white flex items-center justify-center text-xs font-bold shadow-sm">
+                  ✓
                 </div>
-                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
-                  Evaluation & Shortlisting
+                <div className="text-[11px] font-bold text-[#0F172A] leading-tight">
+                  Round 1 Evaluation
                 </div>
-                <div className="text-[10px] text-[#94A3B8]">Mar 05</div>
+                <div className="text-[10px] text-[#64748B]">Mar 10</div>
               </div>
 
-              {/* Step 4: Development Phase */}
+              {/* Step 4: Grand Finale */}
               <div className="flex flex-col items-center space-y-1.5">
-                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                <div className="w-9 h-9 rounded-full bg-[#EFF6FF] border-2 border-[#2563EB] text-[#2563EB] flex items-center justify-center text-xs font-bold shadow-sm">
                   4
                 </div>
-                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
-                  Development Phase
+                <div className="text-[11px] font-bold text-[#0F172A] leading-tight">
+                  Grand Finale
                 </div>
-                <div className="text-[10px] text-[#94A3B8]">Mar 08 – 25</div>
+                <div className="text-[10px] text-[#2563EB] font-semibold">Mar 15</div>
               </div>
 
-              {/* Step 5: Final Submission */}
+              {/* Step 5: Jury Scoring */}
               <div className="flex flex-col items-center space-y-1.5">
-                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                <div className="w-9 h-9 rounded-full bg-[#F1F5F9] border border-[#CBD5E1] text-[#94A3B8] flex items-center justify-center text-xs font-bold">
                   5
                 </div>
-                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
-                  Final Submission
+                <div className="text-[11px] font-medium text-[#64748B] leading-tight">
+                  Jury Scoring
                 </div>
-                <div className="text-[10px] text-[#94A3B8]">Mar 26</div>
+                <div className="text-[10px] text-[#94A3B8]">Mar 18</div>
               </div>
 
-              {/* Step 6: Final Presentation */}
+              {/* Step 6: Winners Announced */}
               <div className="flex flex-col items-center space-y-1.5">
-                <div className="w-9 h-9 rounded-full bg-white border-2 border-[#CBD5E1] text-[#64748B] flex items-center justify-center text-xs font-semibold">
+                <div className="w-9 h-9 rounded-full bg-[#F1F5F9] border border-[#CBD5E1] text-[#94A3B8] flex items-center justify-center text-xs font-bold">
                   6
                 </div>
-                <div className="text-[11px] font-semibold text-[#64748B] leading-tight">
-                  Final Presentation
+                <div className="text-[11px] font-medium text-[#64748B] leading-tight">
+                  Winners Announced
                 </div>
-                <div className="text-[10px] text-[#94A3B8]">Mar 28 – 30</div>
+                <div className="text-[10px] text-[#94A3B8]">Mar 20</div>
               </div>
             </div>
           </div>

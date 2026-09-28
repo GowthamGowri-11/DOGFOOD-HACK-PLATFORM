@@ -87,6 +87,8 @@ export class ProjectRepository {
               maxTeamSize: true,
               subStartTime: true,
               subEndTime: true,
+              currentRoundNumber: true,
+              progressionMode: true,
             },
           },
           track: true,
