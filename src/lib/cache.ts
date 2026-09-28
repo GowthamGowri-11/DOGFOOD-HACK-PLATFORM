@@ -1,13 +1,18 @@
-import { getRedisClient } from './redis';
+/**
+ * In-Memory High-Performance Cache Service
+ *
+ * Provides fast, zero-dependency in-memory caching with automatic TTL eviction,
+ * pattern-based invalidation, and type-safe cache keys.
+ */
 
-// In-memory fallback cache when Redis is unavailable or unconfigured
-interface MemoryCacheEntry {
-  value: any;
+interface CacheEntry<T = any> {
+  value: T;
   expiresAt: number;
 }
-const memoryCache = new Map<string, MemoryCacheEntry>();
 
-function cleanMemoryCache() {
+const memoryCache = new Map<string, CacheEntry>();
+
+function cleanExpiredEntries(): void {
   const now = Date.now();
   memoryCache.forEach((entry, key) => {
     if (entry.expiresAt <= now) {
@@ -33,22 +38,7 @@ export const CACHE_KEYS = {
  * Retrieve an item from the cache.
  */
 export async function getCache<T>(key: string): Promise<T | null> {
-  const redis = getRedisClient();
-
-  if (redis) {
-    try {
-      const data = await redis.get<T>(key);
-      if (data !== null && data !== undefined) {
-        return data;
-      }
-      return null;
-    } catch (err) {
-      console.warn(`[Cache] Redis GET failed for key "${key}", falling back to memory:`, (err as Error).message);
-    }
-  }
-
-  // Fallback to memory
-  cleanMemoryCache();
+  cleanExpiredEntries();
   const entry = memoryCache.get(key);
   if (entry && entry.expiresAt > Date.now()) {
     return entry.value as T;
@@ -60,22 +50,6 @@ export async function getCache<T>(key: string): Promise<T | null> {
  * Set an item in the cache with a time-to-live in seconds.
  */
 export async function setCache<T>(key: string, value: T, ttlSeconds = 300): Promise<boolean> {
-  const redis = getRedisClient();
-
-  if (redis) {
-    try {
-      if (ttlSeconds > 0) {
-        await redis.set(key, value, { ex: ttlSeconds });
-      } else {
-        await redis.set(key, value);
-      }
-      return true;
-    } catch (err) {
-      console.warn(`[Cache] Redis SET failed for key "${key}", falling back to memory:`, (err as Error).message);
-    }
-  }
-
-  // Fallback to memory
   memoryCache.set(key, {
     value,
     expiresAt: ttlSeconds > 0 ? Date.now() + ttlSeconds * 1000 : Number.MAX_SAFE_INTEGER,
@@ -87,19 +61,7 @@ export async function setCache<T>(key: string, value: T, ttlSeconds = 300): Prom
  * Delete a specific key from the cache.
  */
 export async function deleteCache(key: string): Promise<boolean> {
-  memoryCache.delete(key);
-  const redis = getRedisClient();
-
-  if (redis) {
-    try {
-      await redis.del(key);
-      return true;
-    } catch (err) {
-      console.warn(`[Cache] Redis DEL failed for key "${key}":`, (err as Error).message);
-      return false;
-    }
-  }
-  return true;
+  return memoryCache.delete(key);
 }
 
 /**
@@ -107,32 +69,14 @@ export async function deleteCache(key: string): Promise<boolean> {
  */
 export async function deleteCachePattern(pattern: string): Promise<number> {
   let count = 0;
-
-  // Invalidate matching memory keys
   const regexPattern = new RegExp('^' + pattern.replace(/\*/g, '.*') + '$');
   const memoryKeys = Array.from(memoryCache.keys());
+
   for (let i = 0; i < memoryKeys.length; i++) {
     const key = memoryKeys[i];
     if (regexPattern.test(key)) {
       memoryCache.delete(key);
       count++;
-    }
-  }
-
-  const redis = getRedisClient();
-  if (redis) {
-    try {
-      const keys = await redis.keys(pattern);
-      if (keys.length > 0) {
-        // Delete in safe chunks to avoid argument length limits
-        for (let i = 0; i < keys.length; i += 100) {
-          const batch = keys.slice(i, i + 100);
-          await redis.del(...batch);
-        }
-        count += keys.length;
-      }
-    } catch (err) {
-      console.warn(`[Cache] Redis pattern DEL failed for pattern "${pattern}":`, (err as Error).message);
     }
   }
 

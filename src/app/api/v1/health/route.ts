@@ -1,15 +1,11 @@
 import { successResponse } from '@/lib/api/response';
-import { checkRedisHealth } from '@/lib/redis';
 import prisma from '@/lib/prisma';
 
 export async function GET() {
-  const [redisHealth, dbHealth] = await Promise.all([
-    checkRedisHealth(),
-    prisma
-      .$queryRaw`SELECT 1`
-      .then(() => ({ status: 'CONNECTED', error: undefined as string | undefined }))
-      .catch((err: any) => ({ status: 'ERROR', error: (err?.message || 'Database query error') as string | undefined })),
-  ]);
+  const dbHealth = await prisma
+    .$queryRaw`SELECT 1`
+    .then(() => ({ status: 'CONNECTED', error: undefined as string | undefined }))
+    .catch((err: any) => ({ status: 'ERROR', error: (err?.message || 'Database query error') as string | undefined }));
 
   const isDegraded = dbHealth.status === 'ERROR';
 
@@ -25,12 +21,9 @@ export async function GET() {
           status: dbHealth.status,
           ...(dbHealth.error ? { error: dbHealth.error } : {}),
         },
-        redis: {
-          provider: 'Upstash Redis',
-          status: redisHealth.status,
-          latencyMs: redisHealth.latencyMs,
-          ...(redisHealth.error ? { error: redisHealth.error } : {}),
-          ...(redisHealth.url ? { endpoint: redisHealth.url } : {}),
+        cache: {
+          provider: 'In-Memory High-Performance Store',
+          status: 'CONNECTED',
         },
       },
     },

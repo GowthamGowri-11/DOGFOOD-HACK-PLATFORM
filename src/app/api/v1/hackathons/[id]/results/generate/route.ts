@@ -25,7 +25,7 @@ export async function POST(
 
     const { method, forceRegenerate } = parsed.data;
 
-    const { DistributedLock } = await import('@/lib/redis-lock');
+    const { DistributedLock } = await import('@/lib/lock');
     const { deleteCache, CACHE_KEYS } = await import('@/lib/cache');
 
     const resultData = await DistributedLock.withLock(

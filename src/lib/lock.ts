@@ -1,12 +1,12 @@
-import { getRedisClient } from './redis';
 import crypto from 'crypto';
 
-// In-memory fallback mutex locks
+// In-memory mutex locks with expiration
 const localLocks = new Map<string, { token: string; expiresAt: number }>();
 
 /**
- * Distributed Lock Utility using Redis SET with NX and EX.
- * Safe fallback to process-local locks when Redis is unavailable.
+ * Mutex Lock Utility
+ *
+ * Provides concurrency locking with automatic TTL timeout and token verification.
  */
 export class DistributedLock {
   /**
@@ -17,28 +17,9 @@ export class DistributedLock {
    */
   public static async acquire(key: string, ttlSeconds = 30): Promise<string | null> {
     const token = crypto.randomUUID();
-    const redis = getRedisClient();
-
-    if (redis) {
-      try {
-        // SET key token EX ttl NX
-        const result = await redis.set(key, token, {
-          nx: true,
-          ex: ttlSeconds,
-        });
-
-        if (result === 'OK') {
-          return token;
-        }
-        return null;
-      } catch (err) {
-        console.warn(`[Lock] Redis acquire failed for "${key}", falling back to local:`, (err as Error).message);
-      }
-    }
-
-    // Local fallback
     const now = Date.now();
     const existing = localLocks.get(key);
+
     if (existing && existing.expiresAt > now) {
       return null;
     }
@@ -51,23 +32,6 @@ export class DistributedLock {
    * Releases a previously acquired lock, ensuring ownership matches the token.
    */
   public static async release(key: string, token: string): Promise<boolean> {
-    const redis = getRedisClient();
-
-    if (redis) {
-      try {
-        // Lua script or token check to prevent releasing another process's lock
-        const currentToken = await redis.get<string>(key);
-        if (currentToken === token) {
-          await redis.del(key);
-          return true;
-        }
-        return false;
-      } catch (err) {
-        console.warn(`[Lock] Redis release failed for "${key}":`, (err as Error).message);
-      }
-    }
-
-    // Local fallback
     const existing = localLocks.get(key);
     if (existing && existing.token === token) {
       localLocks.delete(key);
@@ -77,7 +41,7 @@ export class DistributedLock {
   }
 
   /**
-   * Executes a callback within a distributed lock, guaranteeing automatic release.
+   * Executes a callback within a lock, guaranteeing automatic release.
    */
   public static async withLock<T>(
     key: string,
@@ -86,7 +50,7 @@ export class DistributedLock {
   ): Promise<T> {
     const token = await DistributedLock.acquire(key, ttlSeconds);
     if (!token) {
-      throw new Error(`Could not acquire distributed lock for resource: "${key}". Process already running.`);
+      throw new Error(`Could not acquire lock for resource: "${key}". Process already running.`);
     }
 
     try {

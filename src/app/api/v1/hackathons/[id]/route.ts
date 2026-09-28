@@ -229,7 +229,7 @@ export async function PATCH(
       // Ignore during test/static builds
     }
 
-    // Invalidate Redis caches: detail + all public list variants
+    // Invalidate caches: detail + all public list variants
     await Promise.all([
       deleteCache(CACHE_KEYS.HACKATHON(hackathonId)),
       deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`),
@@ -291,7 +291,7 @@ export async function DELETE(
       // Ignore during test/static builds
     }
 
-    // Invalidate Redis caches
+    // Invalidate caches
     await Promise.all([
       deleteCache(CACHE_KEYS.HACKATHON(hackathonId)),
       deleteCachePattern(`${CACHE_KEYS.HACKATHONS_PUBLIC()}:*`),
