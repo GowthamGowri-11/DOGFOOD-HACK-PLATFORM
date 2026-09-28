@@ -10,10 +10,13 @@ import { AuditService } from '@/server/services/audit.service';
 import { EventStatus } from '@prisma/client';
 import prisma from '@/lib/prisma';
 import { revalidatePath } from 'next/cache';
+<<<<<<< HEAD
 import { getCache, setCache, deleteCache, deleteCachePattern, CACHE_KEYS } from '@/lib/cache';
 
 /** Public hackathons list cache TTL: 60 seconds */
 const HACKATHONS_LIST_TTL = 60;
+=======
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 
 export const dynamic = 'force-dynamic';
 
@@ -68,6 +71,7 @@ const createHackathonSchema = z.object({
   judgingEndTime: z.string().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
+<<<<<<< HEAD
   // Flexible for uploaded assets + prize fields from both branches
   bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
   logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
@@ -75,6 +79,14 @@ const createHackathonSchema = z.object({
   prizePool: z.number().optional().or(z.string()),
   currency: z.string().default('USD'),
   prizes: z.array(z.any()).optional(),
+=======
+  bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
+  prizePool: z.number().optional().or(z.string()),
+  currency: z.string().default('USD'),
+  prizes: z.array(z.any()).optional(),
+  tracks: z.array(trackInputSchema).optional().default([]),
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 });
 
 export async function GET(req: NextRequest) {
@@ -223,7 +235,39 @@ export async function POST(req: NextRequest) {
       rulesAndGuidelines: data.rulesAndGuidelines,
     });
 
+<<<<<<< HEAD
     // Create Tracks and Problem Statements if provided (structured tracks payload)
+=======
+    // Handle Prizes / Prize Pool
+    const numericPrizePool = Number(data.prizePool) || 0;
+    if (data.prizes && Array.isArray(data.prizes) && data.prizes.length > 0) {
+      await prisma.prize.createMany({
+        data: data.prizes.map((p: any, idx: number) => ({
+          hackathonId: created.id,
+          title: p.title || `Prize ${idx + 1}`,
+          category: p.category || 'General',
+          amount: Number(p.amount) || 0,
+          currency: p.currency || data.currency || 'USD',
+          rankOrder: p.rankOrder || idx + 1,
+          description: p.description || '',
+        })),
+      });
+    } else if (numericPrizePool > 0) {
+      await prisma.prize.create({
+        data: {
+          hackathonId: created.id,
+          title: 'Total Prize Pool',
+          category: 'Grand Pool',
+          amount: numericPrizePool,
+          currency: data.currency || 'USD',
+          rankOrder: 1,
+          description: 'Platform competition reward pool',
+        },
+      });
+    }
+
+    // Create Tracks and Problem Statements if provided
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
     if (data.tracks && data.tracks.length > 0) {
       for (let tIdx = 0; tIdx < data.tracks.length; tIdx++) {
         const trackData = data.tracks[tIdx];
@@ -263,7 +307,11 @@ export async function POST(req: NextRequest) {
         }
       }
     } else if (data.rulesAndGuidelines) {
+<<<<<<< HEAD
       // Fallback: auto-create tracks/PSs from JSON embedded in rulesAndGuidelines
+=======
+      // Auto-create Tracks and Problem Statements if present in rulesAndGuidelines JSON
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
       try {
         const parsedRules = JSON.parse(data.rulesAndGuidelines);
         if (parsedRules.problemStatements && Array.isArray(parsedRules.problemStatements) && parsedRules.problemStatements.length > 0) {

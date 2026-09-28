@@ -56,13 +56,7 @@ interface EvaluationRound {
   };
   termsAndConditions: string;
   criteria: CriterionItem[];
-}
-
-interface ProblemStatementItem {
-  track: string;
-  code: string;
-  title: string;
-  description: string;
+  tracks: TrackItem[];
 }
 
 
@@ -123,13 +117,10 @@ export default function AdminCreateHackathonPage() {
   const [maxTeamSize, setMaxTeamSize] = useState<number>(4);
   const [maxTeamsAllowed, setMaxTeamsAllowed] = useState<string>('');
 
-  // Tracks & Problem Statements
-  const [tracks, setTracks] = useState<TrackItem[]>([]);
-
-  // Section 3: Important Details
+  // Section: Important Details
   const [registrationDeadline, setRegistrationDeadline] = useState(formatForInput(addDays(now, 7)));
 
-  // Section 4: Evaluation Rounds
+  // Evaluation Rounds (Each round contains its own tracks and challenge questions)
   const [rounds, setRounds] = useState<EvaluationRound[]>([
     {
       name: 'The Qualifiers',
@@ -155,6 +146,27 @@ export default function AdminCreateHackathonPage() {
         { name: 'Presentation & Pitch', maxMarks: 15, description: 'Communication, live demonstration, documentation' },
         { name: 'Business Impact & Feasibility', maxMarks: 15, description: 'Real-world usefulness and deployment potential' },
       ],
+      tracks: [
+        {
+          title: 'Enterprise AI & Autonomous Systems',
+          slug: 'enterprise-ai-autonomous-systems',
+          description:
+            'Agentic LLM workflows, retrieval-augmented intelligence, multimodal copilots, and enterprise governance.',
+          colorHex: '#2563EB',
+          displayOrder: 0,
+          problemStatements: [
+            {
+              code: 'AI-01',
+              title: 'Autonomous Clinical Diagnostic and Treatment Verification Agent',
+              description:
+                'Design an autonomous agent that ingests raw EHR data, verifies multimodal diagnostic evidence against WHO protocols, and outputs structured physician action briefs.',
+              challengeDocUrl: 'https://github.com/enterprise/ai-agent-challenge',
+              isPublic: true,
+              displayOrder: 0,
+            },
+          ],
+        },
+      ],
     },
     {
       name: 'The Grand Finale',
@@ -179,16 +191,7 @@ export default function AdminCreateHackathonPage() {
         { name: 'Product Polish', maxMarks: 20, description: 'Visual finesse and design execution' },
         { name: 'Pitch Delivery', maxMarks: 20, description: 'Clarity and response to jury questions' },
       ],
-    },
-  ]);
-
-  // Section 5: Problem Statements (From reference image 4)
-  const [problemStatements, setProblemStatements] = useState<ProblemStatementItem[]>([
-    {
-      track: 'Artificial Intelligence & Agents',
-      code: 'PS-01',
-      title: 'Autonomous Multi-Agent Enterprise Automation',
-      description: 'Build a coordinated multi-agent workflow that solves enterprise data synthesis and pipeline remediation.',
+      tracks: [],
     },
   ]);
 
@@ -265,6 +268,7 @@ export default function AdminCreateHackathonPage() {
           { name: 'Innovation & Idea', maxMarks: 50, description: 'Novelty and relevance' },
           { name: 'Implementation', maxMarks: 50, description: 'Code quality and completeness' },
         ],
+        tracks: [],
       },
     ]);
   };
@@ -304,27 +308,16 @@ export default function AdminCreateHackathonPage() {
     setRounds(updated);
   };
 
-  // Problem Statements Handlers
-  const addProblemStatement = () => {
-    setProblemStatements([
-      ...problemStatements,
-      {
-        track: 'General Innovation',
-        code: `PS-0${problemStatements.length + 1}`,
-        title: '',
-        description: '',
-      },
-    ]);
+  const updateRoundTracks = (roundIndex: number, newTracks: TrackItem[]) => {
+    const updated = [...rounds];
+    updated[roundIndex] = { ...updated[roundIndex], tracks: newTracks };
+    setRounds(updated);
   };
 
-  const removeProblemStatement = (index: number) => {
-    setProblemStatements(problemStatements.filter((_, i) => i !== index));
-  };
-
-  const updateProblemStatement = (index: number, field: keyof ProblemStatementItem, value: string) => {
-    const updated = [...problemStatements];
-    updated[index] = { ...updated[index], [field]: value };
-    setProblemStatements(updated);
+  const copyTracksFromRound = (sourceIdx: number, targetIdx: number) => {
+    if (!rounds[sourceIdx]) return;
+    const copiedTracks = JSON.parse(JSON.stringify(rounds[sourceIdx].tracks || []));
+    updateRoundTracks(targetIdx, copiedTracks);
   };
 
   // Form Submit Handler
@@ -356,6 +349,27 @@ export default function AdminCreateHackathonPage() {
     try {
       const cleanedOrganizers = organizers.filter((o) => o.name.trim() !== '');
 
+      // Flatten all tracks across rounds for Prisma persistence
+      const allTracks: TrackItem[] = rounds.flatMap((r, rIdx) =>
+        (r.tracks || []).map(t => ({
+          ...t,
+          problemStatements: (t.problemStatements || []).map(p => ({
+            ...p,
+            roundIndex: rIdx,
+          })),
+        }))
+      );
+
+      // Build question-to-round assignment map for backwards compatibility
+      const questionRoundAssignments: Record<string, number> = {};
+      rounds.forEach((r, rIdx) => {
+        (r.tracks || []).forEach(t => {
+          (t.problemStatements || []).forEach(ps => {
+            questionRoundAssignments[ps.code] = rIdx;
+          });
+        });
+      });
+
       const extendedConfig = {
         organizers: cleanedOrganizers.length > 0 ? cleanedOrganizers : [{ name: 'Event Coordinator', contact: 'coordinator@platform.dev' }],
         maxTeamsAllowed: maxTeamsAllowed ? Number(maxTeamsAllowed) : null,
@@ -366,7 +380,7 @@ export default function AdminCreateHackathonPage() {
             maxMarks: Number(c.maxMarks) || 10
           }))
         })),
-        problemStatements: problemStatements.filter((p) => p.title.trim() !== ''),
+        questionRoundAssignments,
         prizePool: Number(prizePool) || 0,
         currency,
       };
@@ -413,7 +427,7 @@ export default function AdminCreateHackathonPage() {
         judgingEndTime: judgingEnd.toISOString(),
         prizePool: Number(prizePool) || 0,
         currency,
-        tracks,
+        tracks: allTracks,
         rulesAndGuidelines: JSON.stringify(extendedConfig),
       };
 
@@ -741,41 +755,7 @@ export default function AdminCreateHackathonPage() {
           </div>
         </div>
 
-        {/* ======================================================== */}
-        {/* SECTION 3: TRACKS & PROBLEM STATEMENTS */}
-        {/* ======================================================== */}
-        <TracksAndProblemsEditor tracks={tracks} onChange={setTracks} />
 
-        {/* ======================================================== */}
-        {/* SECTION 3: IMPORTANT DETAILS */}
-        {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-[#2563eb]" />
-            <div>
-              <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
-              <p className="text-xs text-[#64748b]">
-                Set the overall registration and hackathon submission deadlines, and team criteria.
-              </p>
-            </div>
-          </div>
-
-          <div className="space-y-1.5 max-w-md">
-            <label className="text-xs font-bold text-[#334155]">Registration Deadline*</label>
-            <input
-              type="datetime-local"
-              required
-              value={registrationDeadline}
-              onChange={(e) => setRegistrationDeadline(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-            />
-            {registrationDeadline && (
-              <span className="text-[11px] font-medium text-[#2563eb] block pt-0.5">
-                {formatDateDisplay(registrationDeadline)}
-              </span>
-            )}
-          </div>
-        </div>
 
         {/* ======================================================== */}
         {/* SECTION 4: EVALUATION ROUNDS */}
@@ -1088,6 +1068,23 @@ export default function AdminCreateHackathonPage() {
                       </span>
                     </div>
                   </div>
+
+                  {/* Tracks & Challenge Questions for this specific round */}
+                  <div className="pt-2 border-t border-[#e2e8f0]">
+                    <TracksAndProblemsEditor
+                      embeddedInRound
+                      roundIndex={rIdx}
+                      roundName={round.name || `Round ${rIdx + 1}`}
+                      tracks={round.tracks || []}
+                      onChange={(newTracks) => updateRoundTracks(rIdx, newTracks)}
+                      onCopyFromPrevious={
+                        rIdx > 0 && (rounds[0]?.tracks?.length || 0) > 0
+                          ? () => copyTracksFromRound(0, rIdx)
+                          : undefined
+                      }
+                      previousRoundName={rIdx > 0 ? (rounds[0]?.name || 'Round 1') : undefined}
+                    />
+                  </div>
                 </div>
               );
             })}
@@ -1095,96 +1092,33 @@ export default function AdminCreateHackathonPage() {
         </div>
 
         {/* ======================================================== */}
-        {/* SECTION 5: PROBLEM STATEMENTS (From reference image 4) */}
+        {/* SECTION 4: IMPORTANT DETAILS */}
         {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-5">
-          <div className="flex items-center justify-between pb-3 border-b border-[#f1f5f9]">
-            <div className="flex items-center space-x-2">
-              <Lightbulb className="w-4 h-4 text-[#2563eb]" />
-              <div>
-                <h2 className="text-base font-extrabold text-[#0f172a]">Problem Statements</h2>
-                <p className="text-xs text-[#64748b]">Configure track challenges and technical statements for participating teams.</p>
-              </div>
+        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-[#2563eb]" />
+            <div>
+              <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
+              <p className="text-xs text-[#64748b]">
+                Set the overall registration deadline for participants. Round-specific dates and deadlines are managed in their respective rounds above.
+              </p>
             </div>
-
-            <button
-              type="button"
-              onClick={addProblemStatement}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#2563eb] bg-[#eff6ff] border border-[#dbeafe] hover:bg-[#dbeafe]/50 rounded-xl shadow-xs transition-colors cursor-pointer"
-            >
-              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-              <span>Add Problem Statement</span>
-            </button>
           </div>
 
-          <div className="space-y-4">
-            {problemStatements.map((ps, pIdx) => (
-              <div
-                key={pIdx}
-                className="p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-3 relative"
-              >
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-2.5 py-0.5 rounded-full border border-[#dbeafe]">
-                    Challenge #{pIdx + 1}
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => removeProblemStatement(pIdx)}
-                    disabled={problemStatements.length <= 1}
-                    className="p-1 text-[#dc2626] hover:bg-[#fee2e2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
-                    title="Remove Problem Statement"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase">CODE / ID</span>
-                    <input
-                      type="text"
-                      value={ps.code}
-                      onChange={(e) => updateProblemStatement(pIdx, 'code', e.target.value)}
-                      placeholder="e.g. PS-01"
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] font-semibold text-[#0f172a]"
-                    />
-                  </div>
-
-                  <div className="sm:col-span-2 space-y-1">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase">TRACK / CATEGORY</span>
-                    <input
-                      type="text"
-                      value={ps.track}
-                      onChange={(e) => updateProblemStatement(pIdx, 'track', e.target.value)}
-                      placeholder="e.g. Artificial Intelligence & Agents"
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb]"
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-[#64748b] uppercase">CHALLENGE TITLE*</span>
-                  <input
-                    type="text"
-                    value={ps.title}
-                    onChange={(e) => updateProblemStatement(pIdx, 'title', e.target.value)}
-                    placeholder="e.g. Autonomous Multi-Agent Enterprise Automation"
-                    className="w-full px-3 py-1.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] font-medium text-[#0f172a]"
-                  />
-                </div>
-
-                <div className="space-y-1">
-                  <span className="text-[10px] font-bold text-[#64748b] uppercase">CHALLENGE DESCRIPTION</span>
-                  <textarea
-                    rows={2}
-                    value={ps.description}
-                    onChange={(e) => updateProblemStatement(pIdx, 'description', e.target.value)}
-                    placeholder="Provide details on scope, expectations, and target deliverables..."
-                    className="w-full p-2.5 text-xs bg-white border border-[#e2e8f0] rounded-lg focus:outline-none focus:border-[#2563eb] text-[#0f172a]"
-                  />
-                </div>
-              </div>
-            ))}
+          <div className="space-y-1.5 max-w-md">
+            <label className="text-xs font-bold text-[#334155]">Registration Deadline*</label>
+            <input
+              type="datetime-local"
+              required
+              value={registrationDeadline}
+              onChange={(e) => setRegistrationDeadline(e.target.value)}
+              className="w-full px-3.5 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+            />
+            {registrationDeadline && (
+              <span className="text-[11px] font-medium text-[#2563eb] block pt-0.5">
+                {formatDateDisplay(registrationDeadline)}
+              </span>
+            )}
           </div>
         </div>
 

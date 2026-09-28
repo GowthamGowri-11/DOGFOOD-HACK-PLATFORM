@@ -252,7 +252,7 @@ export default function PublicProjectDetailPage({
 
   if (loading) {
     return (
-      <AppShell userRole="PARTICIPANT">
+      <AppShell>
         <div className="py-24 text-center space-y-3">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto" />
           <p className="text-xs text-[#64748B] font-medium">Loading project profile & portfolio...</p>
@@ -263,7 +263,7 @@ export default function PublicProjectDetailPage({
 
   if (error || !project) {
     return (
-      <AppShell userRole="PARTICIPANT">
+      <AppShell>
         <div className="max-w-xl mx-auto py-16 text-center space-y-4 bg-white border border-[#E2E8F0] rounded-[18px] p-8 shadow-card">
           <AlertCircle className="w-12 h-12 text-[#EF4444] mx-auto" />
           <h2 className="text-xl font-bold text-[#111827]">Project Not Available</h2>
@@ -284,7 +284,7 @@ export default function PublicProjectDetailPage({
   }
 
   return (
-    <AppShell userRole="PARTICIPANT">
+    <AppShell>
       <div className="space-y-6">
         {/* Top Breadcrumb & Actions Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E2E8F0]">

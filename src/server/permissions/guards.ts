@@ -27,9 +27,12 @@ export async function requireAuth(): Promise<UserSession> {
 
   const session = await getSession();
   if (!session) {
+<<<<<<< HEAD
     if (process.env.NODE_ENV !== 'production') {
       return getOpenAccessSessionForRole('ADMIN');
     }
+=======
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
     throw new AuthError('Authentication required to access this resource.', 'UNAUTHORIZED', 401);
   }
 

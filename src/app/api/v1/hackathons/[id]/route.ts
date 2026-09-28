@@ -43,7 +43,10 @@ const updateHackathonSchema = z.object({
   judgingEndTime: z.string().datetime().optional(),
   eligibilityRules: z.string().optional(),
   rulesAndGuidelines: z.string().optional(),
+<<<<<<< HEAD
   // Flexible URLs for uploaded banners/logos + prize fields from both branches
+=======
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
   bannerUrl: z.string().optional().or(z.literal('')).or(z.null()),
   logoUrl: z.string().optional().or(z.literal('')).or(z.null()),
   prizePool: z.number().optional().or(z.string()),

@@ -55,6 +55,7 @@ export default function HomePage() {
           eventMode: 'Online',
           tracks: h.tracks?.map((t: any) => ({ id: t.id, title: t.title, colorHex: t.colorHex })) || [],
           prizes: h.prizes?.map((p: any) => ({ amount: Number(p.amount), currency: p.currency, title: p.title })) || [],
+<<<<<<< HEAD
           deadlineDate: h.subEndTime
             ? new Date(h.subEndTime)
             : h.regEndTime
@@ -62,6 +63,12 @@ export default function HomePage() {
               : undefined,
           registeredCount: h._count?.registrations ?? 0,
           featured: Boolean(h.isFeatured),
+=======
+          deadlineDate: h.subEndTime ? new Date(h.subEndTime) : (h.regEndTime ? new Date(h.regEndTime) : new Date(Date.now() + 86400000 * 5)),
+          registeredCount: h._count?.registrations || 48,
+          featured: h.isFeatured || false,
+          rulesAndGuidelines: h.rulesAndGuidelines,
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
         }));
         setHackathons(formatted);
       } else {
@@ -130,9 +137,13 @@ export default function HomePage() {
 
   return (
     <AppShell
+<<<<<<< HEAD
       userRole="PARTICIPANT"
       showFeaturedRail={true}
       featuredItems={featuredItems}
+=======
+      showFeaturedRail={false}
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
       pageTitle="Discover & Compete"
       pageSubtitle="The enterprise platform for student, developer and AI competitions with calibrated judging."
     >
@@ -210,14 +221,16 @@ export default function HomePage() {
           </Link>
         </div>
 
-        {/* Competition Cards Grid/List */}
+        {/* Competition Cards Grid */}
         {loading ? (
-          <div className="space-y-4 py-4">
-            {[1, 2].map((i) => (
-              <div key={i} className="bg-white border border-[#E2E8F0] rounded-[16px] p-6 animate-pulse space-y-3">
-                <div className="h-4 bg-slate-100 rounded w-1/4" />
-                <div className="h-6 bg-slate-100 rounded w-3/4" />
-                <div className="h-4 bg-slate-100 rounded w-1/2" />
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 py-4">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-white border border-[#E2E8F0] rounded-2xl p-5 animate-pulse space-y-3 min-h-[380px]">
+                <div className="h-5 bg-slate-100 rounded-full w-1/4" />
+                <div className="h-32 bg-slate-100 rounded-xl w-full" />
+                <div className="h-5 bg-slate-100 rounded w-3/4" />
+                <div className="h-16 bg-slate-100 rounded-xl w-full" />
+                <div className="h-10 bg-slate-100 rounded-xl w-full mt-auto" />
               </div>
             ))}
           </div>
@@ -228,9 +241,9 @@ export default function HomePage() {
             <p className="text-xs text-[#64748B] mt-1">Try selecting &quot;All&quot; to explore all active and upcoming competitions.</p>
           </div>
         ) : (
-          <div className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredHackathons.map((h) => (
-              <HackathonCard key={h.id} {...h} />
+              <HackathonCard key={h.id} {...h} variant="grid" />
             ))}
           </div>
         )}

@@ -55,6 +55,7 @@ interface EvaluationRound {
   };
   termsAndConditions: string;
   criteria: CriterionItem[];
+  tracks: TrackItem[];
 }
 
 
@@ -94,8 +95,6 @@ export default function AdminEditHackathonPage({
   const [maxTeamSize, setMaxTeamSize] = useState<number>(4);
   const [maxTeamsAllowed, setMaxTeamsAllowed] = useState<string>('100');
 
-  // Tracks & Problem Statements
-  const [tracks, setTracks] = useState<TrackItem[]>([]);
 
   // Important Dates
   const [registrationDeadline, setRegistrationDeadline] = useState('');
@@ -127,6 +126,7 @@ export default function AdminEditHackathonPage({
         { name: 'Presentation & Pitch', maxMarks: 15, description: 'Demo clarity' },
         { name: 'Business Impact', maxMarks: 15, description: 'Real-world value' },
       ],
+      tracks: [],
     },
   ]);
 
@@ -165,26 +165,26 @@ export default function AdminEditHackathonPage({
           setCurrency(h.prizes[0].currency || 'USD');
         }
 
+        // Build tracks data (will merge round assignments from config later)
+        let loadedTracks: TrackItem[] = [];
         if (h.tracks && Array.isArray(h.tracks)) {
-          setTracks(
-            h.tracks.map((t: any) => ({
-              id: t.id,
-              title: t.title,
-              slug: t.slug,
-              description: t.description || '',
-              colorHex: t.colorHex || '#2563EB',
-              displayOrder: t.displayOrder || 0,
-              problemStatements: (t.problemStatements || []).map((p: any) => ({
-                id: p.id,
-                code: p.code,
-                title: p.title,
-                description: p.description,
-                challengeDocUrl: p.challengeDocUrl || '',
-                isPublic: p.isPublic !== false,
-                displayOrder: p.displayOrder || 0,
-              })),
-            }))
-          );
+          loadedTracks = h.tracks.map((t: any) => ({
+            id: t.id,
+            title: t.title,
+            slug: t.slug,
+            description: t.description || '',
+            colorHex: t.colorHex || '#2563EB',
+            displayOrder: t.displayOrder || 0,
+            problemStatements: (t.problemStatements || []).map((p: any) => ({
+              id: p.id,
+              code: p.code,
+              title: p.title,
+              description: p.description,
+              challengeDocUrl: p.challengeDocUrl || '',
+              isPublic: p.isPublic !== false,
+              displayOrder: p.displayOrder || 0,
+            })),
+          }));
         }
 
         if (h.rulesAndGuidelines) {
@@ -205,6 +205,43 @@ export default function AdminEditHackathonPage({
               setPrizePool(parsed.prizePool);
             }
             if (parsed.currency) setCurrency(parsed.currency);
+
+            // Restore question-to-round assignments
+            const assignments = (parsed.questionRoundAssignments && typeof parsed.questionRoundAssignments === 'object')
+              ? (parsed.questionRoundAssignments as Record<string, number>)
+              : {};
+
+            if (Object.keys(assignments).length > 0) {
+              loadedTracks = loadedTracks.map(track => ({
+                ...track,
+                problemStatements: track.problemStatements.map(ps => ({
+                  ...ps,
+                  roundIndex: assignments[ps.code] ?? -1,
+                })),
+              }));
+            }
+
+            if (parsed.rounds && Array.isArray(parsed.rounds)) {
+              const restoredRounds = parsed.rounds.map((r: EvaluationRound, rIdx: number) => {
+                if (r.tracks && Array.isArray(r.tracks) && r.tracks.length > 0) {
+                  return r;
+                }
+                const roundTracks = loadedTracks
+                  .map(t => ({
+                    ...t,
+                    problemStatements: t.problemStatements.filter(
+                      p => assignments[p.code] === rIdx || (rIdx === 0 && (assignments[p.code] == null || assignments[p.code] === -1))
+                    ),
+                  }))
+                  .filter(t => t.problemStatements.length > 0);
+
+                return {
+                  ...r,
+                  tracks: roundTracks.length > 0 ? roundTracks : (r.tracks || []),
+                };
+              });
+              setRounds(restoredRounds);
+            }
           } catch {
             if (h.organizer?.fullName) {
               setOrganizers([{ name: h.organizer.fullName, contact: h.organizer.email || '' }]);
@@ -266,6 +303,7 @@ export default function AdminEditHackathonPage({
           { name: 'Innovation & Idea', maxMarks: 50, description: 'Novelty and relevance' },
           { name: 'Implementation', maxMarks: 50, description: 'Code quality and completeness' },
         ],
+        tracks: [],
       },
     ]);
   };
@@ -305,6 +343,18 @@ export default function AdminEditHackathonPage({
     setRounds(updated);
   };
 
+  const updateRoundTracks = (roundIndex: number, newTracks: TrackItem[]) => {
+    const updated = [...rounds];
+    updated[roundIndex] = { ...updated[roundIndex], tracks: newTracks };
+    setRounds(updated);
+  };
+
+  const copyTracksFromRound = (sourceIdx: number, targetIdx: number) => {
+    if (!rounds[sourceIdx]) return;
+    const copiedTracks = JSON.parse(JSON.stringify(rounds[sourceIdx].tracks || []));
+    updateRoundTracks(targetIdx, copiedTracks);
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
@@ -313,6 +363,27 @@ export default function AdminEditHackathonPage({
 
     try {
       const cleanedOrganizers = organizers.filter((o) => o.name.trim() !== '');
+
+      // Flatten all tracks across rounds for Prisma persistence
+      const allTracks: TrackItem[] = rounds.flatMap((r, rIdx) =>
+        (r.tracks || []).map(t => ({
+          ...t,
+          problemStatements: (t.problemStatements || []).map(p => ({
+            ...p,
+            roundIndex: rIdx,
+          })),
+        }))
+      );
+
+      // Build question-to-round assignment map for backwards compatibility
+      const questionRoundAssignments: Record<string, number> = {};
+      rounds.forEach((r, rIdx) => {
+        (r.tracks || []).forEach(t => {
+          (t.problemStatements || []).forEach(ps => {
+            questionRoundAssignments[ps.code] = rIdx;
+          });
+        });
+      });
 
       const extendedConfig = {
         organizers: cleanedOrganizers,
@@ -324,6 +395,7 @@ export default function AdminEditHackathonPage({
             maxMarks: Number(c.maxMarks) || 10
           }))
         })),
+        questionRoundAssignments,
         prizePool: Number(prizePool) || 0,
         currency,
       };
@@ -341,7 +413,7 @@ export default function AdminEditHackathonPage({
         eventEndTime: eventEndTime ? new Date(eventEndTime).toISOString() : undefined,
         prizePool: Number(prizePool) || 0,
         currency,
-        tracks,
+        tracks: allTracks,
         rulesAndGuidelines: JSON.stringify(extendedConfig),
       };
 
@@ -661,60 +733,7 @@ export default function AdminEditHackathonPage({
           </div>
         </div>
 
-        {/* ======================================================== */}
-        {/* SECTION 3: TRACKS & PROBLEM STATEMENTS */}
-        {/* ======================================================== */}
-        <TracksAndProblemsEditor tracks={tracks} onChange={setTracks} />
 
-        {/* ======================================================== */}
-        {/* SECTION 3: IMPORTANT DETAILS */}
-        {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
-            <Calendar className="w-4 h-4 text-[#2563eb]" />
-            <div>
-              <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
-              <p className="text-xs text-[#64748b]">
-                Set the overall registration and hackathon submission deadlines, and team criteria.
-              </p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">Registration Deadline*</label>
-              <input
-                type="datetime-local"
-                required
-                value={registrationDeadline}
-                onChange={(e) => setRegistrationDeadline(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">Event Start Date & Time*</label>
-              <input
-                type="datetime-local"
-                required
-                value={eventStartTime}
-                onChange={(e) => setEventStartTime(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-
-            <div className="space-y-1.5">
-              <label className="text-xs font-bold text-[#334155]">Event End Date & Time*</label>
-              <input
-                type="datetime-local"
-                required
-                value={eventEndTime}
-                onChange={(e) => setEventEndTime(e.target.value)}
-                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-              />
-            </div>
-          </div>
-        </div>
 
         {/* ======================================================== */}
         {/* SECTION 4: EVALUATION ROUNDS */}
@@ -996,9 +1015,76 @@ export default function AdminEditHackathonPage({
                       </span>
                     </div>
                   </div>
+
+                  {/* Tracks & Challenge Questions for this specific round */}
+                  <div className="pt-2 border-t border-[#e2e8f0]">
+                    <TracksAndProblemsEditor
+                      embeddedInRound
+                      roundIndex={rIdx}
+                      roundName={round.name || `Round ${rIdx + 1}`}
+                      tracks={round.tracks || []}
+                      onChange={(newTracks) => updateRoundTracks(rIdx, newTracks)}
+                      onCopyFromPrevious={
+                        rIdx > 0 && (rounds[0]?.tracks?.length || 0) > 0
+                          ? () => copyTracksFromRound(0, rIdx)
+                          : undefined
+                      }
+                      previousRoundName={rIdx > 0 ? (rounds[0]?.name || 'Round 1') : undefined}
+                    />
+                  </div>
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        {/* ======================================================== */}
+        {/* SECTION 4: IMPORTANT DETAILS */}
+        {/* ======================================================== */}
+        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="border-b border-[#f1f5f9] pb-3 flex items-center space-x-2">
+            <Calendar className="w-4 h-4 text-[#2563eb]" />
+            <div>
+              <h2 className="text-base font-extrabold text-[#0f172a]">Important Details</h2>
+              <p className="text-xs text-[#64748b]">
+                Set the overall registration and hackathon submission deadlines, and team criteria.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#334155]">Registration Deadline*</label>
+              <input
+                type="datetime-local"
+                required
+                value={registrationDeadline}
+                onChange={(e) => setRegistrationDeadline(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#334155]">Event Start Date & Time*</label>
+              <input
+                type="datetime-local"
+                required
+                value={eventStartTime}
+                onChange={(e) => setEventStartTime(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold text-[#334155]">Event End Date & Time*</label>
+              <input
+                type="datetime-local"
+                required
+                value={eventEndTime}
+                onChange={(e) => setEventEndTime(e.target.value)}
+                className="w-full px-3.5 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+              />
+            </div>
           </div>
         </div>
 

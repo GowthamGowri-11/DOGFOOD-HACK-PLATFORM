@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import {
   Trophy,
   Compass,
@@ -21,14 +21,11 @@ import {
   History,
   FileText,
   UserCheck2,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Plus,
   Scale,
   Settings,
   Server,
-  KeyRound,
   PieChart,
 } from 'lucide-react';
 
@@ -50,6 +47,10 @@ export interface SidebarProps {
   onCloseMobile?: () => void;
   userName?: string;
   userEmail?: string;
+<<<<<<< HEAD
+=======
+  userAvatarUrl?: string | null;
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 }
 
 const PARTICIPANT_ITEMS: NavItem[] = [
@@ -113,12 +114,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onToggleCollapse,
   isMobileOpen = false,
   onCloseMobile,
+<<<<<<< HEAD
   userName = 'User',
   userEmail = '',
+=======
+  userName,
+  userEmail,
+  userAvatarUrl,
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 }) => {
   const pathname = usePathname();
-  const router = useRouter();
-  const [roleDropdownOpen, setRoleDropdownOpen] = useState(false);
 
   // Select items list based on current role
   const getNavItems = () => {
@@ -136,6 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const navItems = getNavItems();
 
+<<<<<<< HEAD
   const handleRoleSelect = async (role: UserRole) => {
     setRoleDropdownOpen(false);
     if (onRoleChange) {
@@ -185,6 +191,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ctaHref: '/admin/dashboard',
     },
   };
+=======
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
 
   return (
     <>
@@ -231,61 +239,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
           )}
         </div>
 
-        {/* MIDDLE SECTION: Role Selector, Primary CTA, Navigation Links */}
-        <div className="flex-1 overflow-y-auto px-4 py-4 space-y-4">
-          {/* Role Switcher Pill */}
-          {!collapsed ? (
-            <div className="relative">
-              <span className="block text-[12px] font-medium text-[#64748B] px-1 mb-1.5">
-                You&apos;re viewing as
-              </span>
-              <button
-                onClick={() => setRoleDropdownOpen(!roleDropdownOpen)}
-                className="w-full h-[48px] flex items-center justify-between px-3.5 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[13px] text-[14px] font-medium text-[#111827] transition-colors"
-              >
-                <div className="flex items-center space-x-2.5 truncate">
-                  <span className="text-base">{roleMeta[currentRole].icon}</span>
-                  <span className="truncate">{roleMeta[currentRole].label}</span>
-                </div>
-                <ChevronDown className="w-4 h-4 text-[#94A3B8]" />
-              </button>
-
-              {/* Role Dropdown */}
-              {roleDropdownOpen && (
-                <div className="absolute top-full mt-1.5 left-0 right-0 z-50 bg-white rounded-xl border border-[#E2E8F0] shadow-md py-1 text-xs animate-in fade-in duration-100">
-                  {(['PARTICIPANT', 'ORGANIZER', 'JUDGE', 'ADMIN'] as UserRole[]).map((r) => (
-                    <button
-                      key={r}
-                      onClick={() => handleRoleSelect(r)}
-                      className={`w-full flex items-center space-x-2.5 px-3.5 py-2.5 text-left hover:bg-[#F8FAFC] transition-colors ${
-                        currentRole === r ? 'font-semibold text-[#2563EB] bg-[#EFF6FF]' : 'text-[#334155]'
-                      }`}
-                    >
-                      <span>{roleMeta[r].icon}</span>
-                      <span className="text-[13px]">{roleMeta[r].label}</span>
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          ) : (
-            <div className="text-center py-1 text-lg" title={`Viewing as ${currentRole}`}>
-              {roleMeta[currentRole].icon}
-            </div>
-          )}
-
-          {/* Primary CTA Button (42-44px height, 22px radius, 13-14px font, 500-600 weight) */}
-          {!collapsed && (
-            <Link
-              href={roleMeta[currentRole].ctaHref}
-              className="flex items-center justify-center space-x-2 w-full h-[42px] px-4 bg-[#2563EB] hover:bg-[#1D4ED8] active:bg-[#1E40AF] text-white rounded-[22px] text-[13.5px] font-medium transition-colors shadow-none"
-            >
-              <span>{roleMeta[currentRole].ctaLabel}</span>
-            </Link>
-          )}
-
+        {/* MIDDLE SECTION: Navigation Links */}
+        <div className="flex-1 overflow-y-auto px-4 py-3">
           {/* Navigation Links List */}
-          <nav className="space-y-[3px] pt-1">
+          <nav className="space-y-[3px]">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive =
@@ -330,25 +287,60 @@ export const Sidebar: React.FC<SidebarProps> = ({
           {!collapsed ? (
             <div className="flex items-center justify-between p-2 rounded-xl bg-white border border-[#E2E8F0]">
               <div className="flex items-center space-x-2.5 truncate">
+<<<<<<< HEAD
                 <div className="w-[32px] h-[32px] rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
                   {(userName || 'U').charAt(0).toUpperCase()}
                 </div>
                 <div className="truncate">
                   <div className="font-semibold text-xs text-[#111827] truncate">{userName || 'User'}</div>
                   <div className="text-[10px] text-[#64748B] truncate">{userEmail || currentRole}</div>
+=======
+                {userAvatarUrl ? (
+                  <img
+                    src={userAvatarUrl}
+                    alt={userName || 'User'}
+                    className="w-[32px] h-[32px] rounded-full object-cover ring-2 ring-blue-100 flex-shrink-0"
+                  />
+                ) : (
+                  <div className="w-[32px] h-[32px] rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                    {userName ? userName.charAt(0).toUpperCase() : 'G'}
+                  </div>
+                )}
+                <div className="truncate">
+                  <div className="font-semibold text-xs text-[#111827] truncate">
+                    {userName || 'Guest User'}
+                  </div>
+                  <div className="text-[10px] text-[#64748B] truncate">
+                    {userEmail || (userName ? 'Active Session' : 'Sign in to compete')}
+                  </div>
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
                 </div>
               </div>
               <Link
-                href="/participant/settings"
+                href={
+                  userName
+                    ? currentRole === 'JUDGE'
+                      ? '/judge/profile'
+                      : currentRole === 'ADMIN'
+                      ? '/admin/dashboard'
+                      : currentRole === 'ORGANIZER'
+                      ? '/organizer/dashboard'
+                      : '/participant/settings'
+                    : '/login'
+                }
                 className="p-1 text-[#94A3B8] hover:text-[#2563EB] transition-colors"
-                title="Settings"
+                title="Settings / Workspace"
               >
                 <Settings className="w-4 h-4" />
               </Link>
             </div>
           ) : (
             <div className="w-8 h-8 mx-auto rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-xs flex items-center justify-center">
+<<<<<<< HEAD
               {(userName || 'U').charAt(0).toUpperCase()}
+=======
+              {userName ? userName.charAt(0).toUpperCase() : 'G'}
+>>>>>>> 955df85a1823fdc70d72489433820b8abade5940
             </div>
           )}
         </div>

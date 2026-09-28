@@ -12,6 +12,7 @@ const registerSchema = z.object({
   fullName: z.string().min(2, 'Full name must be at least 2 characters').optional(),
   email: z.string().email('Valid email is required'),
   password: z.string().min(8, 'Password must be at least 8 characters'),
+  role: z.enum(['PARTICIPANT', 'ORGANIZER', 'JUDGE']).optional().default('PARTICIPANT'),
 }).refine((data) => data.name || data.fullName, {
   message: 'Name is required',
   path: ['fullName'],
@@ -43,19 +44,23 @@ export async function POST(req: NextRequest) {
 
     const passwordHash = await hashPassword(parsed.data.password);
 
-    // SECURITY: Public registration is strictly locked to PARTICIPANT role
+    // SECURITY: Public registration allows PARTICIPANT, ORGANIZER, JUDGE. ADMIN is strictly forbidden.
+    const assignedRole = parsed.data.role && ['PARTICIPANT', 'ORGANIZER', 'JUDGE'].includes(parsed.data.role)
+      ? parsed.data.role
+      : 'PARTICIPANT';
+
     const user = await UserRepository.create({
       email: normalizedEmail,
       passwordHash,
       fullName: resolvedName,
-      role: 'PARTICIPANT',
+      role: assignedRole,
     });
 
     await setSessionCookie({
       id: user.id,
       email: user.email,
       fullName: user.fullName,
-      role: 'PARTICIPANT',
+      role: assignedRole,
       status: 'ACTIVE',
       avatarUrl: user.avatarUrl,
     });
@@ -65,7 +70,7 @@ export async function POST(req: NextRequest) {
       action: 'USER_REGISTERED',
       entityType: 'User',
       entityId: user.id,
-      afterState: { email: user.email, role: 'PARTICIPANT' },
+      afterState: { email: user.email, role: user.role },
       ipAddress: ip,
     });
 
