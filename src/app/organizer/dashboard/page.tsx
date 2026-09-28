@@ -9,6 +9,7 @@ import {
   BarChart3,
   Sliders,
   Award,
+  Trophy,
 } from 'lucide-react';
 import { getSession } from '@/server/auth/session';
 import { KPICard } from '@/components/ui/KPICard';

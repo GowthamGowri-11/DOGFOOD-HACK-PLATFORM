@@ -142,9 +142,11 @@ export async function DELETE(
           userId: session.id,
         },
       },
+      include: {
         project: {
           select: { hackathonId: true },
         },
+      },
     });
 
     if (!existingVote) {

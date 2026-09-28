@@ -75,19 +75,28 @@ export async function POST(req: NextRequest) {
       return errorResponse('Rubric not found or contains no criteria', 'NOT_FOUND', 404);
     }
 
-    // Fetch active model & prompt versions
-    const activeModel = await prisma.aIModelVersion.findFirst({
-      where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
+    // Fetch or ensure active model & prompt versions
+    const modelVer = await prisma.aIModelVersion.upsert({
+      where: { versionTag: 'v1.4' },
+      update: {},
+      create: {
+        versionTag: 'v1.4',
+        modelProvider: 'anthropic',
+        modelName: 'claude-3-7-sonnet',
+        temperature: 0.2,
+        systemPromptHash: 'hash_sha256_enterprise_v1',
+      },
     });
 
-    const activePrompt = await prisma.aIPromptVersion.findFirst({
-      where: { isActive: true },
-      orderBy: { createdAt: 'desc' },
+    const promptVer = await prisma.promptVersion.upsert({
+      where: { versionTag: 'v3' },
+      update: {},
+      create: {
+        versionTag: 'v3',
+        promptTemplate: 'Analyze repository artifacts with objective criterion grounding.',
+        evidenceRules: 'Categorize findings by architecture, code quality, APIs, security, and tests.',
+      },
     });
-
-    const modelVersionId = activeModel?.id || 'default_model_v1';
-    const promptVersionId = activePrompt?.id || 'default_prompt_v3';
 
     // Execute AI Jury Service
     const evalResult = await AIJuryService.evaluateSubmission(
@@ -115,42 +124,32 @@ export async function POST(req: NextRequest) {
         hackathonId: project.hackathonId,
         projectId: project.id,
         rubricId: rubric.id,
-        modelVersionId,
-        promptVersionId,
+        modelVersionId: modelVer.id,
+        promptVersionId: promptVer.id,
         overallScore: evalResult.overallScore,
         confidenceScore: evalResult.confidenceScore,
+        rawAnalysis: JSON.parse(JSON.stringify(evalResult)),
         summaryFeedback: evalResult.summaryFeedback,
-        latencyMs: evalResult.latencyMs,
-        status: 'COMPLETED',
+        executionLatencyMs: evalResult.latencyMs,
+        evidence: {
+          create: evalResult.evidence.map((ev) => ({
+            category: ev.category,
+            finding: ev.finding,
+            snippet: ev.snippet,
+            sourceLocation: ev.sourceLocation,
+            confidenceLevel: ev.confidenceLevel,
+          })),
+        },
+        scores: {
+          create: evalResult.criterionScores.map((sc) => ({
+            criterionId: sc.criterionId,
+            score: sc.score,
+            confidence: sc.confidence,
+            feedback: sc.feedback,
+          })),
+        },
       },
     });
-
-    // Save Extracted Evidence
-    if (evalResult.evidence.length > 0) {
-      await prisma.aIEvidence.createMany({
-        data: evalResult.evidence.map((ev) => ({
-          runId: juryRun.id,
-          category: ev.category,
-          finding: ev.finding,
-          snippet: ev.snippet,
-          sourceLocation: ev.sourceLocation,
-          confidenceLevel: ev.confidenceLevel,
-        })),
-      });
-    }
-
-    // Save Criterion AI Scores
-    for (const sc of evalResult.criterionScores) {
-      await prisma.aICriterionScore.create({
-        data: {
-          runId: juryRun.id,
-          criterionId: sc.criterionId,
-          score: sc.score,
-          confidence: sc.confidence,
-          feedback: sc.feedback,
-        },
-      });
-    }
 
     await AuditService.log({
       userId: session.id,
