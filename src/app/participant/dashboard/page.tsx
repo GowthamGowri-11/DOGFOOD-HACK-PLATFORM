@@ -162,6 +162,80 @@ export default async function ParticipantDashboard() {
         </div>
       </div>
 
+      {/* Round Progression Status Banner */}
+      {primaryTeam && primaryHackathon && (primaryTeam.progressionStatus === 'ADVANCED' || primaryTeam.progressionStatus === 'ELIMINATED') && (
+        <div
+          className={`rounded-[18px] p-5 border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-xs ${
+            primaryTeam.progressionStatus === 'ADVANCED'
+              ? 'bg-[#ECFDF5] border-[#A7F3D0]'
+              : 'bg-[#FFFBEB] border-[#FDE68A]'
+          }`}
+        >
+          <div className="flex items-start space-x-3.5">
+            <div
+              className={`w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 mt-0.5 ${
+                primaryTeam.progressionStatus === 'ADVANCED'
+                  ? 'bg-[#D1FAE5] text-[#059669] border border-[#A7F3D0]'
+                  : 'bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A]'
+              }`}
+            >
+              {primaryTeam.progressionStatus === 'ADVANCED' ? (
+                <Trophy className="w-5 h-5" />
+              ) : (
+                <AlertCircle className="w-5 h-5" />
+              )}
+            </div>
+
+            <div className="space-y-1">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-wider text-[#334155]">
+                  {primaryHackathon.title} • Round Progression Update
+                </span>
+                {primaryTeam.progressionStatus === 'ADVANCED' ? (
+                  <Badge variant="emerald">ADVANCED TO ROUND {primaryTeam.highestRound}</Badge>
+                ) : (
+                  <Badge variant="amber">NOT SELECTED</Badge>
+                )}
+              </div>
+              <p
+                className={`text-sm font-bold ${
+                  primaryTeam.progressionStatus === 'ADVANCED' ? 'text-[#065F46]' : 'text-[#92400E]'
+                }`}
+              >
+                {primaryTeam.progressionStatus === 'ADVANCED'
+                  ? `Your team has been selected for the next round of ${primaryHackathon.title}.`
+                  : `Your team was not selected for the next round of ${primaryHackathon.title}.`}
+              </p>
+              <p
+                className={`text-xs ${
+                  primaryTeam.progressionStatus === 'ADVANCED' ? 'text-[#047857]' : 'text-[#B45309]'
+                }`}
+              >
+                {primaryTeam.progressionStatus === 'ADVANCED'
+                  ? `You have unlocked Round ${primaryTeam.highestRound} features, submissions, and workspace access.`
+                  : 'You can still view the published leaderboard and official rankings. All historical submissions and evaluations remain intact.'}
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2 flex-shrink-0 w-full sm:w-auto">
+            {primaryTeam.progressionStatus === 'ADVANCED' ? (
+              <Link href={`/hackathons/${primaryHackathon.slug}`} className="w-full sm:w-auto">
+                <Button variant="primary" size="sm" className="w-full sm:w-auto font-bold">
+                  Access Round {primaryTeam.highestRound} →
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/leaderboard" className="w-full sm:w-auto">
+                <Button variant="secondary" size="sm" className="w-full sm:w-auto font-bold">
+                  View Leaderboard →
+                </Button>
+              </Link>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 2. Interactive Workflow Pipeline Progress Tracker */}
       <div className="bg-[#F8FAFC] border border-[#E2E8F0] rounded-[18px] p-6 shadow-card space-y-4">
         <div className="flex items-center justify-between">

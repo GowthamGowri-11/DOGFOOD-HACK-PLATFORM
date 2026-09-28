@@ -199,6 +199,8 @@ export class TeamRepository {
               judgingStartTime: true,
               judgingEndTime: true,
               resultsPublishedAt: true,
+              progressionMode: true,
+              currentRoundNumber: true,
             },
           },
           members: {

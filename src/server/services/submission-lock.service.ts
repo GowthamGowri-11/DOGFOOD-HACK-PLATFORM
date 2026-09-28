@@ -11,7 +11,7 @@ export class SubmissionLockService {
   /**
    * Validates project submission criteria, builds the canonical snapshot, and freezes the submission.
    */
-  public static async submitAndLockProject(projectId: string, userId: string) {
+  public static async submitAndLockProject(projectId: string, userId: string, targetRoundNumber?: number) {
     const project = await ProjectRepository.findById(projectId);
     if (!project) {
       throw { message: 'Project not found.', code: 'NOT_FOUND', status: 404 };
@@ -20,6 +20,18 @@ export class SubmissionLockService {
     const isMember = project.team.members.some((m) => m.userId === userId);
     if (!isMember) {
       throw { message: 'You are not authorized to submit for this team.', code: 'FORBIDDEN', status: 403 };
+    }
+
+    // 0. Round Progression Access Verification
+    const activeRound = targetRoundNumber || project.hackathon.currentRoundNumber || 1;
+    const { RoundProgressionService } = await import('@/server/services/round-progression.service');
+    const access = await RoundProgressionService.checkTeamRoundAccess(userId, project.hackathon.id, activeRound);
+    if (!access.allowed) {
+      throw {
+        message: access.message,
+        code: access.code,
+        status: access.status,
+      };
     }
 
     // 1. Race Condition / Double Submit Guard

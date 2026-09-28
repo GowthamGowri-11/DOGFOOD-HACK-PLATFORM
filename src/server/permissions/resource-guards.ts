@@ -267,5 +267,18 @@ export class ResourceGuards {
     if (!comment) return false;
     return comment.project.hackathon.organizerId === organizerUserId;
   }
+
+  /**
+   * Checks if a participant is authorized to participate in a specific round of a hackathon.
+   */
+  public static async canParticipantAccessRound(
+    userId: string,
+    hackathonId: string,
+    roundNumber: number
+  ): Promise<boolean> {
+    const { RoundProgressionService } = await import('@/server/services/round-progression.service');
+    const result = await RoundProgressionService.checkTeamRoundAccess(userId, hackathonId, roundNumber);
+    return result.allowed;
+  }
 }
 

@@ -125,6 +125,50 @@ export default async function ParticipantHackathonsPage() {
                   </div>
                 </div>
 
+                {/* Round Progression Status Notification Banner */}
+                {team && (team.progressionStatus === 'ADVANCED' || team.progressionStatus === 'ELIMINATED') && (
+                  <div
+                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 ${
+                      team.progressionStatus === 'ADVANCED'
+                        ? 'bg-[#ECFDF5] border-[#A7F3D0] text-[#065F46]'
+                        : 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
+                    }`}
+                  >
+                    <div className="flex items-center space-x-2.5">
+                      {team.progressionStatus === 'ADVANCED' ? (
+                        <Trophy className="w-4 h-4 text-[#059669] flex-shrink-0" />
+                      ) : (
+                        <AlertCircle className="w-4 h-4 text-[#D97706] flex-shrink-0" />
+                      )}
+                      <div>
+                        <div className="flex items-center space-x-2">
+                          <span className="text-xs font-bold">
+                            {team.progressionStatus === 'ADVANCED'
+                              ? `Your team has been selected for the next round of ${h.title}.`
+                              : `Your team was not selected for the next round of ${h.title}.`}
+                          </span>
+                          <Badge variant={team.progressionStatus === 'ADVANCED' ? 'emerald' : 'amber'}>
+                            {team.progressionStatus === 'ADVANCED' ? `ROUND ${team.highestRound} UNLOCKED` : 'NOT SELECTED'}
+                          </Badge>
+                        </div>
+                        <span className="text-[11px] opacity-90 block mt-0.5">
+                          {team.progressionStatus === 'ADVANCED'
+                            ? `Eligible to submit and participate in Round ${team.highestRound}.`
+                            : 'You can still view the published leaderboard. Historical submissions and scores remain saved.'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {team.progressionStatus === 'ELIMINATED' && (
+                      <Link href="/leaderboard">
+                        <Button variant="secondary" size="sm" className="font-semibold text-xs whitespace-nowrap">
+                          View Leaderboard →
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                )}
+
                 {/* Timeline and Team/Project Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
                   {/* Team Box */}

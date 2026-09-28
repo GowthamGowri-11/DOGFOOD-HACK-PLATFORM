@@ -9,9 +9,15 @@ export async function POST(
 ) {
   try {
     const session = await requireRole(['PARTICIPANT', 'ORGANIZER', 'ADMIN']);
-    const projectId = params.id;
+    let roundNumber: number | undefined = undefined;
+    try {
+      const body = await req.clone().json();
+      if (body?.roundNumber) roundNumber = Number(body.roundNumber);
+    } catch {
+      // Body may be empty
+    }
 
-    const result = await SubmissionLockService.submitAndLockProject(projectId, session.id);
+    const result = await SubmissionLockService.submitAndLockProject(params.id, session.id, roundNumber);
 
     return successResponse(
       result,

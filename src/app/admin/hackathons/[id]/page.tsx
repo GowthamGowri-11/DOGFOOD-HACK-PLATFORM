@@ -46,6 +46,7 @@ interface EvaluationRound {
   endDate: string;
   submissionDeadline: string;
   maxTeamsAllowed: number;
+  selectionCount?: number | string;
   requiredSubmissions: {
     github: boolean;
     ppt: boolean;
@@ -100,6 +101,9 @@ export default function AdminEditHackathonPage({
   const [registrationDeadline, setRegistrationDeadline] = useState('');
   const [eventStartTime, setEventStartTime] = useState('');
   const [eventEndTime, setEventEndTime] = useState('');
+
+  // Progression Mode
+  const [progressionMode, setProgressionMode] = useState<'SELECTION_BASED' | 'OVERALL_PERFORMANCE'>('OVERALL_PERFORMANCE');
 
   // Evaluation Rounds
   const [rounds, setRounds] = useState<EvaluationRound[]>([
@@ -190,6 +194,9 @@ export default function AdminEditHackathonPage({
         if (h.rulesAndGuidelines) {
           try {
             const parsed = JSON.parse(h.rulesAndGuidelines);
+            if (h.progressionMode || parsed.progressionMode) {
+              setProgressionMode((h.progressionMode || parsed.progressionMode) as any);
+            }
             if (parsed.organizers && Array.isArray(parsed.organizers) && parsed.organizers.length > 0) {
               setOrganizers(parsed.organizers);
             } else if (h.organizer?.fullName) {
@@ -287,6 +294,7 @@ export default function AdminEditHackathonPage({
         name: `Round ${rounds.length + 1}`,
         isFinal: false,
         roundType: 'Hackathon',
+        selectionCount: rounds.length === 1 ? 10 : 5,
         startDate: eventStartTime,
         endDate: eventEndTime,
         submissionDeadline: eventEndTime,
@@ -361,6 +369,16 @@ export default function AdminEditHackathonPage({
     setError(null);
     setSuccessMsg(null);
 
+    if (progressionMode === 'SELECTION_BASED') {
+      for (let i = 0; i < rounds.length; i++) {
+        const count = Number(rounds[i].selectionCount);
+        if (!rounds[i].selectionCount || isNaN(count) || count <= 0 || !Number.isInteger(count)) {
+          setError(`Please specify a valid positive number of teams advancing for Round ${i + 1} ("${rounds[i].name || 'Round ' + (i + 1)}").`);
+          return;
+        }
+      }
+    }
+
     try {
       const cleanedOrganizers = organizers.filter((o) => o.name.trim() !== '');
 
@@ -385,16 +403,20 @@ export default function AdminEditHackathonPage({
         });
       });
 
+      const processedRounds = rounds.map(r => ({
+        ...r,
+        selectionCount: progressionMode === 'SELECTION_BASED' && r.selectionCount ? Number(r.selectionCount) : null,
+        criteria: r.criteria.map(c => ({
+          ...c,
+          maxMarks: Number(c.maxMarks) || 10
+        }))
+      }));
+
       const extendedConfig = {
         organizers: cleanedOrganizers,
         maxTeamsAllowed: maxTeamsAllowed ? Number(maxTeamsAllowed) : null,
-        rounds: rounds.map(r => ({
-          ...r,
-          criteria: r.criteria.map(c => ({
-            ...c,
-            maxMarks: Number(c.maxMarks) || 10
-          }))
-        })),
+        progressionMode,
+        rounds: processedRounds,
         questionRoundAssignments,
         prizePool: Number(prizePool) || 0,
         currency,
@@ -408,12 +430,14 @@ export default function AdminEditHackathonPage({
         bannerUrl: bannerUrl.trim() || null,
         minTeamSize: Number(minTeamSize),
         maxTeamSize: Number(maxTeamSize),
+        progressionMode,
         regEndTime: registrationDeadline ? new Date(registrationDeadline).toISOString() : undefined,
         eventStartTime: eventStartTime ? new Date(eventStartTime).toISOString() : undefined,
         eventEndTime: eventEndTime ? new Date(eventEndTime).toISOString() : undefined,
         prizePool: Number(prizePool) || 0,
         currency,
         tracks: allTracks,
+        rounds: processedRounds,
         rulesAndGuidelines: JSON.stringify(extendedConfig),
       };
 
@@ -760,6 +784,84 @@ export default function AdminEditHackathonPage({
             </button>
           </div>
 
+          {/* ======================================================== */}
+          {/* RESULT / PROGRESSION METHOD SECTION */}
+          {/* ======================================================== */}
+          <div className="p-4 bg-[#f8fafc] border border-[#e2e8f0] rounded-xl space-y-3">
+            <div>
+              <h3 className="text-xs font-bold text-[#0f172a] uppercase tracking-wider">
+                Result / Progression Method
+              </h3>
+              <p className="text-[11px] text-[#64748b]">
+                Select how teams advance through the competition rounds.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <label
+                className={`flex items-start p-3 rounded-xl border cursor-pointer transition-all ${
+                  progressionMode === 'SELECTION_BASED'
+                    ? 'bg-[#eff6ff] border-[#2563eb] ring-1 ring-[#2563eb]'
+                    : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1]'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="progressionModeEdit"
+                  value="SELECTION_BASED"
+                  checked={progressionMode === 'SELECTION_BASED'}
+                  onChange={() => setProgressionMode('SELECTION_BASED')}
+                  className="mt-0.5 text-[#2563eb] focus:ring-[#2563eb]"
+                />
+                <div className="ml-2.5">
+                  <span className="block text-xs font-bold text-[#0f172a]">Selection Based</span>
+                  <span className="block text-[11px] text-[#64748b] mt-0.5 leading-relaxed">
+                    Elimination model: only top-selected teams advance to the next round. Remaining teams are eliminated from subsequent rounds.
+                  </span>
+                </div>
+              </label>
+
+              <label
+                className={`flex items-start p-3 rounded-xl border cursor-pointer transition-all ${
+                  progressionMode === 'OVERALL_PERFORMANCE'
+                    ? 'bg-[#eff6ff] border-[#2563eb] ring-1 ring-[#2563eb]'
+                    : 'bg-white border-[#e2e8f0] hover:border-[#cbd5e1]'
+                }`}
+              >
+                <input
+                  type="radio"
+                  name="progressionModeEdit"
+                  value="OVERALL_PERFORMANCE"
+                  checked={progressionMode === 'OVERALL_PERFORMANCE'}
+                  onChange={() => setProgressionMode('OVERALL_PERFORMANCE')}
+                  className="mt-0.5 text-[#2563eb] focus:ring-[#2563eb]"
+                />
+                <div className="ml-2.5">
+                  <span className="block text-xs font-bold text-[#0f172a]">Overall Performance</span>
+                  <span className="block text-[11px] text-[#64748b] mt-0.5 leading-relaxed">
+                    Cumulative model: all teams participate in all rounds. Scores are consolidated at the end. Teams are not eliminated.
+                  </span>
+                </div>
+              </label>
+            </div>
+
+            {progressionMode === 'SELECTION_BASED' ? (
+              <div className="p-3 bg-[#eff6ff] border border-[#bfdbfe] rounded-lg text-xs text-[#1e40af] flex items-center space-x-2">
+                <CheckCircle2 className="w-4 h-4 text-[#2563eb] flex-shrink-0" />
+                <span className="font-medium">
+                  Configure team selection for each round below. Only the specified top teams will advance to later rounds.
+                </span>
+              </div>
+            ) : (
+              <div className="p-3 bg-[#f1f5f9] border border-[#e2e8f0] rounded-lg text-xs text-[#475569] flex items-center space-x-2">
+                <AlertCircle className="w-4 h-4 text-[#64748b] flex-shrink-0" />
+                <span>
+                  All rounds contribute to the final consolidated result. Teams are not eliminated between rounds.
+                </span>
+              </div>
+            )}
+          </div>
+
           <div className="space-y-6">
             {rounds.map((round, rIdx) => {
               const totalMarks = round.criteria.reduce((sum, c) => sum + Number(c.maxMarks || 0), 0);
@@ -777,6 +879,11 @@ export default function AdminEditHackathonPage({
                       {round.isFinal && (
                         <span className="text-[10px] font-bold text-[#d97706] bg-[#fef3c7] px-2.5 py-0.5 rounded-full border border-[#fde68a]">
                           FINALE
+                        </span>
+                      )}
+                      {progressionMode === 'SELECTION_BASED' && round.selectionCount && (
+                        <span className="text-[10px] font-bold text-[#16a34a] bg-[#dcfce7] px-2.5 py-0.5 rounded-full border border-[#bbf7d0]">
+                          Advances Top {round.selectionCount} Teams
                         </span>
                       )}
                     </div>
@@ -814,7 +921,7 @@ export default function AdminEditHackathonPage({
                       />
                     </div>
 
-                    <div className="sm:col-span-2 space-y-1">
+                    <div className={progressionMode === 'SELECTION_BASED' ? 'space-y-1' : 'sm:col-span-2 space-y-1'}>
                       <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND TYPE</span>
                       <select
                         value={round.roundType}
@@ -828,6 +935,24 @@ export default function AdminEditHackathonPage({
                         <option value="Coding Challenge">Coding Challenge</option>
                       </select>
                     </div>
+
+                    {progressionMode === 'SELECTION_BASED' && (
+                      <div className="space-y-1">
+                        <span className="text-[10px] font-bold text-[#2563eb] uppercase flex items-center justify-between">
+                          <span>TEAMS ADVANCING*</span>
+                          <span className="text-[9px] text-[#64748b] normal-case">(Top-K cutoff)</span>
+                        </span>
+                        <input
+                          type="number"
+                          min="1"
+                          required={progressionMode === 'SELECTION_BASED'}
+                          value={round.selectionCount ?? ''}
+                          onChange={(e) => updateRound(rIdx, 'selectionCount', e.target.value)}
+                          placeholder={rIdx === 0 ? "25" : rIdx === 1 ? "10" : "5"}
+                          className="w-full px-3 py-2 text-xs bg-[#eff6ff] border border-[#bfdbfe] rounded-xl font-bold text-[#1d4ed8] focus:outline-none focus:border-[#2563eb]"
+                        />
+                      </div>
+                    )}
                   </div>
 
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
