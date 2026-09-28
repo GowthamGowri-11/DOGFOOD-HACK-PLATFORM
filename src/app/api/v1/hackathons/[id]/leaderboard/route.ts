@@ -50,7 +50,7 @@ export async function GET(
       );
     }
 
-    // Check Redis cache for published leaderboard
+    // Check cache for published leaderboard
     const cacheKey = CACHE_KEYS.LEADERBOARD(hackathonId);
     if (hackathon.status === 'RESULTS_PUBLISHED') {
       const cached = await getCache<any>(cacheKey);
@@ -215,7 +215,7 @@ export async function GET(
               'Requires additional end-to-end integration test suites.'
             ]),
             improve: rawAnalysis.improve || (latestEvaluation?.suggestions ? [latestEvaluation.suggestions] : [
-              'Integrate Redis cache warmers for latency mitigation.',
+              'Integrate high-speed cache warmers for latency mitigation.',
               'Adopt OpenTelemetry tracing for deep agent observability.'
             ]),
           },

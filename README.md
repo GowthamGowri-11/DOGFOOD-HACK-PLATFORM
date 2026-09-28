@@ -10,9 +10,9 @@ An enterprise-grade hackathon management, competition, judging, and AI-assisted 
 - **Language & Types:** TypeScript with strict type checking
 - **Styling:** Tailwind CSS with modern enterprise design system
 - **Database:** Neon Serverless PostgreSQL with connection pooling
-- **Cache & Session Store:** Upstash Redis (High-throughput caching, active session store, distributed rate limiting, and distributed locks)
+- **Cache & Session Store:** High-Performance In-Memory Store (Fast caching, active session store, sliding-window rate limiting, and mutex locks)
 - **ORM:** Prisma ORM with automated migrations
-- **Security:** Argon2id/Bcrypt password hashing, signed JWT sessions with Redis revocation tracking, centralized RBAC
+- **Security:** Argon2id/Bcrypt password hashing, signed JWT sessions with revocation tracking, centralized RBAC
 - **AI Subsystem:** Independent AI Jury with structural evidence extraction, AI-Human comparison engine, and versioned calibration pipeline
 
 ---
@@ -22,12 +22,11 @@ An enterprise-grade hackathon management, competition, judging, and AI-assisted 
 ### 1. Prerequisites
 - Node.js 18+ (tested on Node 20+)
 - Neon PostgreSQL connection string
-- Upstash Redis REST URL & Token (for caching, distributed sessions & rate limiting)
 
 ### 2. Environment Setup
 ```bash
 cp .env.example .env
-# Fill in your DATABASE_URL, DIRECT_URL, and UPSTASH_REDIS credentials
+# Fill in your DATABASE_URL and DIRECT_URL
 ```
 
 ### 3. Install & Initialize

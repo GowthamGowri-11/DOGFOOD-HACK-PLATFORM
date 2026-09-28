@@ -140,7 +140,7 @@ export async function getSession(): Promise<UserSession | null> {
   const decoded = verifySessionToken(token);
   if (!decoded) return null;
 
-  // Validate session against Redis session store (supports real-time revocation)
+  // Validate session against active session store (supports real-time revocation)
   if (decoded.sessionId) {
     try {
       const isValid = await SessionStore.isSessionValid(decoded.sessionId);
@@ -184,11 +184,11 @@ export async function setSessionCookie(session: UserSession) {
   const sessionWithId = { ...session, sessionId };
   const expirySeconds = getSessionExpirySeconds();
 
-  // Register in Redis Session Store with synchronized TTL
+  // Register in Session Store with synchronized TTL
   try {
     await SessionStore.registerSession(sessionWithId, expirySeconds);
   } catch {
-    // Redis optional fallback
+    // SessionStore optional fallback
   }
 
   const token = createSessionToken(sessionWithId);

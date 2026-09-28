@@ -1,11 +1,18 @@
-import { getRedisClient } from '../../lib/redis';
-
 interface RateLimitRecord {
   count: number;
   resetAt: number;
 }
 
 const memoryStore = new Map<string, RateLimitRecord>();
+
+function cleanExpiredRateLimits(): void {
+  const now = Date.now();
+  memoryStore.forEach((record, key) => {
+    if (now > record.resetAt) {
+      memoryStore.delete(key);
+    }
+  });
+}
 
 export class RateLimiter {
   /**
@@ -16,6 +23,7 @@ export class RateLimiter {
     maxAttempts = 10,
     windowMs = 15 * 60 * 1000
   ): { allowed: boolean; remaining: number } {
+    cleanExpiredRateLimits();
     const now = Date.now();
     const record = memoryStore.get(key);
 
@@ -34,8 +42,7 @@ export class RateLimiter {
   }
 
   /**
-   * Checks if an identifier has exceeded allowed attempts using Redis atomic INCR + PEXPIRE.
-   * Gracefully falls back to memory store if Redis is unavailable.
+   * Checks if an identifier has exceeded allowed attempts.
    *
    * @param key Unique key (e.g. `login:user@email.com` or `ip:127.0.0.1`)
    * @param maxAttempts Maximum allowed attempts (default 10)
@@ -47,27 +54,6 @@ export class RateLimiter {
     maxAttempts = 10,
     windowMs = 15 * 60 * 1000
   ): Promise<{ allowed: boolean; remaining: number }> {
-    const redis = getRedisClient();
-
-    if (redis) {
-      try {
-        const redisKey = `ratelimit:${key}`;
-        const count = await redis.incr(redisKey);
-
-        if (count === 1) {
-          // First attempt in this window: set expiration
-          const ttlSec = Math.ceil(windowMs / 1000);
-          await redis.expire(redisKey, ttlSec);
-        }
-
-        const allowed = count <= maxAttempts;
-        const remaining = Math.max(0, maxAttempts - count);
-        return { allowed, remaining };
-      } catch (err) {
-        console.warn(`[RateLimiter] Redis check failed for "${key}", falling back to memory:`, (err as Error).message);
-      }
-    }
-
     return this.checkSync(key, maxAttempts, windowMs);
   }
 
@@ -76,13 +62,5 @@ export class RateLimiter {
    */
   public static async reset(key: string): Promise<void> {
     memoryStore.delete(key);
-    const redis = getRedisClient();
-    if (redis) {
-      try {
-        await redis.del(`ratelimit:${key}`);
-      } catch (err) {
-        console.warn(`[RateLimiter] Redis reset failed for "${key}":`, (err as Error).message);
-      }
-    }
   }
 }
