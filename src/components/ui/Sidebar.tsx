@@ -179,11 +179,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
         {/* TOP: Brand Wordmark & Collapse Icon */}
         <div className="h-[72px] px-5 border-b border-[#202228] flex items-center justify-between">
           <Link href="/" className="flex items-center space-x-3 overflow-hidden group">
-            {/* Stylized Glowing Orange ATLYX Logo */}
-            <div className="w-[34px] h-[34px] rounded-lg bg-[#FA541C] flex items-center justify-center flex-shrink-0 shadow-md shadow-[#FA541C]/25 group-hover:scale-105 transition-transform">
-              <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 2L2 22h4.5l2.5-5h6l2.5 5H22L12 2zm0 6.5L14.25 13h-4.5L12 8.5z"/>
-              </svg>
+            {/* ATLYX Logo Image */}
+            <div className="w-[34px] h-[34px] flex items-center justify-center flex-shrink-0 group-hover:scale-105 transition-transform">
+              <img src="/atlyx-logo.png" alt="ATLYX Logo" className="w-full h-full object-contain" />
             </div>
             {!collapsed && (
               <div className="truncate">
