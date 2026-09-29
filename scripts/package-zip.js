@@ -49,17 +49,27 @@ function copyDir(src, dest) {
       if (excludeFiles.has(entry.name) || entry.name.endsWith('.log') || entry.name.endsWith('.zip') || entry.name.endsWith('.tsbuildinfo')) {
         continue;
       }
-      fs.copyFileSync(srcPath, destPath);
+      try {
+        fs.copyFileSync(srcPath, destPath);
+      } catch {
+        const content = fs.readFileSync(srcPath);
+        fs.writeFileSync(destPath, content);
+      }
     }
   }
 }
 
 console.log('1. Cleaning old staging and archives...');
-if (fs.existsSync(stagingDir)) {
-  fs.rmSync(stagingDir, { recursive: true, force: true });
-}
+try {
+  if (fs.existsSync(stagingDir)) {
+    fs.rmSync(stagingDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+  }
+} catch {}
+
 if (fs.existsSync(zipFile)) {
-  fs.unlinkSync(zipFile);
+  try {
+    fs.unlinkSync(zipFile);
+  } catch {}
 }
 
 console.log('2. Staging clean source files...');
@@ -90,13 +100,16 @@ for (const req of requiredFiles) {
   console.log(`  ✓ ${req} present (${fs.statSync(p).size} bytes)`);
 }
 
-console.log('4. Compressing archive via PowerShell Compress-Archive...');
-execSync(`powershell -Command "Compress-Archive -Path '${stagingDir}\\*' -DestinationPath '${zipFile}' -Force"`, {
+console.log('4. Compressing archive via .NET ZipFile...');
+const psScript = `Add-Type -AssemblyName System.IO.Compression.FileSystem; [System.IO.Compression.ZipFile]::CreateFromDirectory('${stagingDir.replace(/'/g, "''")}', '${zipFile.replace(/'/g, "''")}', [System.IO.Compression.CompressionLevel]::Optimal, $false)`;
+execSync(`powershell -NoProfile -Command "${psScript}"`, {
   stdio: 'inherit',
 });
 
 console.log('5. Cleaning staging directory...');
-fs.rmSync(stagingDir, { recursive: true, force: true });
+try {
+  fs.rmSync(stagingDir, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+} catch {}
 
 const stats = fs.statSync(zipFile);
 console.log(`\n========================================`);
