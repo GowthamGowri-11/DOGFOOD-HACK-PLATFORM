@@ -274,10 +274,9 @@ export default function OrganizerProfilePage() {
       </div>
 
       {/* 3. MAIN DETAILS FORM & PREVIEW */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Left 2 Cols: Profile & Organization Info */}
-        <div className="lg:col-span-2 space-y-6">
-          <div className="bg-white border border-[#E5E0D8] rounded-2xl p-6 shadow-xs space-y-5">
+      <div className="space-y-6">
+        {/* Profile & Organization Info */}
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl p-6 shadow-xs space-y-5">
             <div className="flex items-center justify-between border-b border-stone-100 pb-3">
               <h3 className="font-extrabold text-stone-900 text-sm flex items-center gap-2">
                 <Building2 className="w-4 h-4 text-[#FA541C]" />
@@ -507,81 +506,42 @@ export default function OrganizerProfilePage() {
               </Link>
             </div>
           </div>
-        </div>
 
-        {/* Right 1 Col: Certificate Seal & Verification Card */}
-        <div className="space-y-6">
-          <div className="bg-gradient-to-br from-[#1E293B] to-[#0F172A] text-white rounded-2xl p-6 shadow-md space-y-4">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-extrabold uppercase tracking-wider text-[#FA541C] bg-[#FA541C]/10 px-2 py-0.5 rounded border border-[#FA541C]/30">
-                Official Endorsement
-              </span>
-              <ShieldCheck className="w-4 h-4 text-[#FA541C]" />
-            </div>
-
-            <div className="space-y-1">
-              <h4 className="font-extrabold text-base tracking-tight font-serif text-white">
-                Certificate Issuance Authority
-              </h4>
-              <p className="text-[11px] text-slate-300 leading-relaxed font-sans">
-                As verified Organizer Lead, credentials generated under your hackathons are backed by
-                SHA-256 cryptographic hashes and institutional signatures.
-              </p>
-            </div>
-
-            <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700 space-y-2">
-              <div className="text-[10px] text-slate-400 uppercase tracking-wider font-semibold">
-                Signatory Endorsement Line
-              </div>
-              <div className="font-serif italic text-sm font-bold text-amber-200">
-                {fullName || 'Apex Event Lead'}
-              </div>
-              <div className="text-[11px] text-slate-400">
-                {signatoryTitle || 'Lead Event Convener & Organizing Chair'}
-              </div>
-              <div className="text-[10px] font-mono text-emerald-400 pt-1 border-t border-slate-700/80 flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                Authorized Key: ATLYX-ORG-KEY-2026-X8
-              </div>
-            </div>
-
-            <Link
-              href="/organizer/certificates"
-              className="w-full inline-flex items-center justify-center gap-2 py-2.5 bg-[#FA541C] hover:bg-[#E03A00] text-white text-xs font-bold rounded-xl transition-all shadow-xs"
-            >
-              <span>Design &amp; Issue Certificates</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-
-          {/* Security & Access */}
+          {/* Platform Security & Attestation */}
           <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-xs space-y-3">
-            <h4 className="font-extrabold text-xs text-stone-900 uppercase tracking-wider">
-              Security &amp; API Integration
-            </h4>
-            <div className="space-y-2 text-xs">
-              <div className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border border-stone-100">
-                <span className="text-stone-600 font-medium">REST Webhooks</span>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                  Active
-                </span>
+            <div className="flex items-center justify-between border-b border-stone-100 pb-2.5">
+              <h4 className="font-extrabold text-xs text-stone-900 uppercase tracking-wider">
+                Platform Security &amp; Attestation
+              </h4>
+              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                Verified
+              </span>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-1">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">ACCOUNT AUTHENTICATION</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-stone-800 font-semibold">Active Enterprise Session</span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">Active</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border border-stone-100">
-                <span className="text-stone-600 font-medium">Session Verification</span>
-                <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">
-                  256-bit TLS
-                </span>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-1">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">COMMUNICATIONS SECURITY</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-stone-800 font-semibold">256-bit TLS Encrypted</span>
+                  <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded">TLS 1.3</span>
+                </div>
               </div>
-              <div className="flex items-center justify-between p-2 rounded-lg bg-stone-50 border border-stone-100">
-                <span className="text-stone-600 font-medium">Audit Ledger</span>
-                <span className="text-[10px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded">
-                  Immutable
-                </span>
+              <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-1">
+                <span className="text-[10px] font-bold text-stone-400 uppercase tracking-wider block">AUDIT TRAIL</span>
+                <div className="flex items-center justify-between">
+                  <span className="text-stone-800 font-semibold">SHA-256 Cryptographic Logs</span>
+                  <span className="text-[10px] font-bold text-stone-600 bg-stone-100 px-2 py-0.5 rounded">Immutable</span>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
     </div>
   );
 }
