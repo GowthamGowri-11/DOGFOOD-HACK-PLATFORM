@@ -254,8 +254,8 @@ export default function PublicProjectDetailPage({
     return (
       <AppShell>
         <div className="py-24 text-center space-y-3">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto" />
-          <p className="text-xs text-[#64748B] font-medium">Loading project profile & portfolio...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-2 border-[#FA541C] border-t-transparent mx-auto" />
+          <p className="text-xs text-[#6B7280] font-medium">Loading project profile & portfolio...</p>
         </div>
       </AppShell>
     );
@@ -264,16 +264,16 @@ export default function PublicProjectDetailPage({
   if (error || !project) {
     return (
       <AppShell>
-        <div className="max-w-xl mx-auto py-16 text-center space-y-4 bg-white border border-[#E2E8F0] rounded-[18px] p-8 shadow-card">
+        <div className="max-w-xl mx-auto py-16 text-center space-y-4 bg-white border border-[#E5E0D8] rounded-2xl p-8 shadow-xs">
           <AlertCircle className="w-12 h-12 text-[#EF4444] mx-auto" />
-          <h2 className="text-xl font-bold text-[#111827]">Project Not Available</h2>
-          <p className="text-xs text-[#64748B] leading-relaxed">
+          <h2 className="text-xl font-bold text-[#18181B]">Project Not Available</h2>
+          <p className="text-xs text-[#6B7280] leading-relaxed">
             {error || 'This project submission is private or has been unlisted.'}
           </p>
           <div className="pt-2">
             <Link
               href="/projects"
-              className="inline-flex items-center px-4 py-2.5 bg-[#2563EB] text-white rounded-[11px] text-xs font-semibold hover:bg-[#1D4ED8] transition-colors"
+              className="inline-flex items-center px-4 py-2.5 bg-[#FA541C] hover:bg-[#E03A00] text-white rounded-xl text-xs font-bold transition-all shadow-xs"
             >
               <ArrowLeft className="w-4 h-4 mr-1.5" /> Back to Project Showcase
             </Link>
@@ -287,23 +287,23 @@ export default function PublicProjectDetailPage({
     <AppShell>
       <div className="space-y-6">
         {/* Top Breadcrumb & Actions Bar */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2 border-b border-[#E2E8F0]">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-[#E5E0D8]">
           <div className="flex items-center space-x-2 text-xs">
             <Link
               href="/projects"
-              className="inline-flex items-center font-semibold text-[#64748B] hover:text-[#2563EB] transition-colors"
+              className="inline-flex items-center font-semibold text-[#6B7280] hover:text-[#FA541C] transition-colors"
             >
               <ArrowLeft className="w-3.5 h-3.5 mr-1" /> Project Showcase
             </Link>
-            <span className="text-[#CBD5E1]">/</span>
+            <span className="text-[#D1D5DB]">/</span>
             <Link
               href={`/hackathons/${project.hackathon.slug}`}
-              className="text-[#64748B] hover:text-[#2563EB] font-medium truncate max-w-[200px]"
+              className="text-[#6B7280] hover:text-[#FA541C] font-medium truncate max-w-[200px] transition-colors"
             >
               {project.hackathon.title}
             </Link>
-            <span className="text-[#CBD5E1]">/</span>
-            <span className="font-semibold text-[#111827] truncate max-w-[180px]">
+            <span className="text-[#D1D5DB]">/</span>
+            <span className="font-bold text-[#18181B] truncate max-w-[180px]">
               {project.title}
             </span>
           </div>
@@ -311,61 +311,67 @@ export default function PublicProjectDetailPage({
           <div className="flex items-center space-x-2 self-end sm:self-center">
             <button
               onClick={handleShare}
-              className="inline-flex items-center px-3 py-1.5 bg-white border border-[#E2E8F0] hover:border-[#CBD5E1] rounded-[11px] text-xs font-semibold text-[#475569] hover:text-[#111827] shadow-xs transition-colors"
+              className="inline-flex items-center px-3.5 py-1.5 bg-white border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-xl text-xs font-semibold text-[#374151] hover:text-[#FA541C] shadow-2xs hover:shadow-xs transition-all cursor-pointer active:scale-95"
             >
-              <Share2 className="w-3.5 h-3.5 mr-1.5 text-[#64748B]" />
+              <Share2 className="w-3.5 h-3.5 mr-1.5 text-[#6B7280]" />
               {copiedLink ? 'Link Copied!' : 'Share'}
             </button>
           </div>
         </div>
 
-        {/* Project Hero Header Card (Unstop Developer Portfolio) */}
-        <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-6 sm:p-8 shadow-card space-y-6">
+        {/* Project Hero Header Card (Apex Design System) */}
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl sm:rounded-3xl p-6 sm:p-8 shadow-xs space-y-6">
           <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
             {/* Left Info Column */}
-            <div className="flex items-start space-x-4 max-w-3xl">
+            <div className="flex items-start space-x-5 max-w-3xl">
               {/* Project Monogram Container (84x84) */}
-              <div className="w-[84px] h-[84px] rounded-[16px] bg-gradient-to-br from-[#EFF6FF] to-[#DBEAFE] border border-[#BFDBFE] flex items-center justify-center text-[#2563EB] font-black text-3xl shadow-xs flex-shrink-0">
+              <div className="w-[84px] h-[84px] rounded-2xl bg-gradient-to-br from-[#FFF5ED] via-[#FFEDE1] to-[#FED7AA] border border-[#FED7AA] flex items-center justify-center text-[#FA541C] font-black text-3xl shadow-sm flex-shrink-0 select-none">
                 {project.title.charAt(0)}
               </div>
 
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <Badge variant="blue" size="sm">
+                  <span className="px-3 py-1 rounded-full text-xs font-bold bg-[#FFF5ED] text-[#FA541C] border border-[#FED7AA] shadow-2xs">
                     {project.track?.title || 'Open Track'}
-                  </Badge>
+                  </span>
 
                   {project.problemStatement?.code && (
-                    <Badge variant="neutral" size="sm">
+                    <span className="px-3 py-1 rounded-full text-xs font-semibold bg-[#F4F4F5] text-[#52525B] border border-[#E4E4E7]">
                       Problem {project.problemStatement.code}
-                    </Badge>
+                    </span>
                   )}
 
                   {project.officialResult && (
-                    <Badge variant="amber" size="sm">
-                      <Trophy className="w-3 h-3 mr-1" />
+                    <span className="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-800 border border-amber-300 flex items-center shadow-2xs">
+                      <Trophy className="w-3 h-3 mr-1 text-amber-600" />
                       Rank #{project.officialResult.rank} ({project.officialResult.finalScore.toFixed(1)} pts)
-                    </Badge>
+                    </span>
                   )}
                 </div>
 
-                <h1 className="text-2xl sm:text-3xl font-bold text-[#111827] tracking-tight leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-[#18181B] tracking-tight leading-tight">
                   {project.title}
                 </h1>
 
                 {project.tagline && (
-                  <p className="text-sm font-medium text-[#475569] leading-relaxed">
+                  <p className="text-sm font-normal text-[#4B5563] leading-relaxed">
                     {project.tagline}
                   </p>
                 )}
 
-                <div className="flex items-center text-xs text-[#64748B] pt-0.5 space-x-3">
+                <div className="flex items-center text-xs text-[#6B7280] pt-1 space-x-3">
                   <span>
-                    Team: <strong className="text-[#111827]">{project.team.name}</strong>
+                    Team: <strong className="text-[#18181B] font-semibold">{project.team.name}</strong>
                   </span>
                   <span>•</span>
                   <span>
-                    Event: <strong className="text-[#111827]">{project.hackathon.title}</strong>
+                    Event:{' '}
+                    <Link
+                      href={`/hackathons/${project.hackathon.slug}`}
+                      className="text-[#18181B] font-semibold hover:text-[#FA541C] transition-colors"
+                    >
+                      {project.hackathon.title}
+                    </Link>
                   </span>
                 </div>
               </div>
@@ -376,23 +382,23 @@ export default function PublicProjectDetailPage({
               <button
                 onClick={handleVoteToggle}
                 disabled={voting}
-                className={`px-5 py-2.5 rounded-[12px] font-bold text-xs shadow-xs transition-all flex items-center space-x-2.5 ${
+                className={`px-5 py-2.5 rounded-xl font-bold text-xs sm:text-sm shadow-sm hover:shadow-md transition-all flex items-center space-x-2.5 cursor-pointer hover:-translate-y-0.5 active:scale-95 ${
                   project.hasVoted
-                    ? 'bg-[#FEF2F2] text-[#DC2626] border border-[#FECACA] hover:bg-[#FEE2E2]'
-                    : 'bg-[#111827] hover:bg-[#2563EB] active:bg-[#1D4ED8] text-white'
+                    ? 'bg-[#FFF1F0] text-[#E03A00] border border-[#FFA39E]'
+                    : 'bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#FF6636] hover:to-[#D4380D] text-white'
                 }`}
               >
                 <Heart
                   className={`w-4 h-4 ${
-                    project.hasVoted ? 'fill-[#DC2626] text-[#DC2626]' : 'text-white'
+                    project.hasVoted ? 'fill-[#E03A00] text-[#E03A00]' : 'fill-white text-white'
                   }`}
                 />
                 <span>{project.hasVoted ? 'Voted' : 'Support with Vote'}</span>
-                <span className="px-2 py-0.5 rounded-full bg-white/20 text-xs font-mono">
+                <span className="px-2 py-0.5 rounded-full bg-white/25 text-xs font-mono font-bold">
                   {project.communityVotesCount}
                 </span>
               </button>
-              <span className="text-[10px] text-[#94A3B8]">
+              <span className="text-[10px] text-[#6B7280] font-medium">
                 Community recognition • Independent from official jury scores
               </span>
             </div>
@@ -400,7 +406,7 @@ export default function PublicProjectDetailPage({
 
           {/* Winner Award Banner if present */}
           {project.officialResult?.awardCategory && (
-            <div className="bg-gradient-to-r from-[#ECFDF5] via-[#F0FDF4] to-[#ECFDF5] border border-[#A7F3D0] rounded-[14px] p-4 flex items-center justify-between text-[#065F46] shadow-xs">
+            <div className="bg-gradient-to-r from-[#ECFDF5] via-[#F0FDF4] to-[#ECFDF5] border border-[#A7F3D0] rounded-2xl p-4 flex items-center justify-between text-[#065F46] shadow-2xs">
               <div className="flex items-center space-x-3">
                 <div className="w-10 h-10 rounded-xl bg-[#059669] text-white flex items-center justify-center shadow-xs flex-shrink-0">
                   <Award className="w-6 h-6" />
@@ -421,13 +427,13 @@ export default function PublicProjectDetailPage({
           )}
 
           {/* Action Links Bar */}
-          <div className="flex flex-wrap gap-2.5 pt-4 border-t border-[#F1F5F9]">
+          <div className="flex flex-wrap gap-2.5 pt-4 border-t border-[#F4EFEA]">
             {project.demoUrl && (
               <a
                 href={project.demoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[11px] text-xs font-semibold shadow-xs transition-colors"
+                className="inline-flex items-center px-4 py-2.5 bg-[#FA541C] hover:bg-[#E03A00] text-white rounded-xl text-xs font-bold shadow-xs transition-all hover:-translate-y-0.5 active:scale-95 cursor-pointer"
               >
                 <ExternalLink className="w-4 h-4 mr-2" /> Live Working Demo
               </a>
@@ -437,9 +443,9 @@ export default function PublicProjectDetailPage({
                 href={project.repoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#111827] border border-[#E2E8F0] rounded-[11px] text-xs font-semibold transition-colors"
+                className="inline-flex items-center px-4 py-2.5 bg-white hover:bg-[#FAF8F5] text-[#18181B] border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-xl text-xs font-semibold shadow-2xs transition-all hover:-translate-y-0.5 active:scale-95"
               >
-                <Github className="w-4 h-4 mr-2 text-[#334155]" /> Source Code Repository
+                <Github className="w-4 h-4 mr-2 text-[#374151]" /> Source Code Repository
               </a>
             )}
             {project.videoUrl && (
@@ -447,9 +453,9 @@ export default function PublicProjectDetailPage({
                 href={project.videoUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] rounded-[11px] text-xs font-semibold transition-colors"
+                className="inline-flex items-center px-4 py-2.5 bg-white hover:bg-[#FAF8F5] text-[#18181B] border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-xl text-xs font-semibold shadow-2xs transition-all hover:-translate-y-0.5 active:scale-95"
               >
-                <Video className="w-4 h-4 mr-2 text-[#2563EB]" /> Video Walkthrough
+                <Video className="w-4 h-4 mr-2 text-[#FA541C]" /> Video Walkthrough
               </a>
             )}
             {project.documentationUrl && (
@@ -457,9 +463,9 @@ export default function PublicProjectDetailPage({
                 href={project.documentationUrl}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center px-4 py-2 bg-[#F8FAFC] hover:bg-[#F1F5F9] text-[#475569] border border-[#E2E8F0] rounded-[11px] text-xs font-semibold transition-colors"
+                className="inline-flex items-center px-4 py-2.5 bg-white hover:bg-[#FAF8F5] text-[#18181B] border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-xl text-xs font-semibold shadow-2xs transition-all hover:-translate-y-0.5 active:scale-95"
               >
-                <FileText className="w-4 h-4 mr-2 text-[#64748B]" /> Technical Documentation
+                <FileText className="w-4 h-4 mr-2 text-[#6B7280]" /> Technical Documentation
               </a>
             )}
           </div>
@@ -470,45 +476,45 @@ export default function PublicProjectDetailPage({
           {/* LEFT 2 COLUMNS: Architecture Description & Comments */}
           <div className="lg:col-span-2 space-y-6">
             {/* About Project Card */}
-            <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-6 sm:p-8 shadow-card space-y-4">
-              <div className="flex items-center space-x-2 border-b border-[#F1F5F9] pb-3">
-                <Code2 className="w-4 h-4 text-[#2563EB]" />
-                <h2 className="text-base font-bold text-[#111827]">
+            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-6 sm:p-7 shadow-xs space-y-4">
+              <div className="flex items-center space-x-2.5 border-b border-[#F4EFEA] pb-3.5">
+                <Code2 className="w-4 h-4 text-[#FA541C]" />
+                <h2 className="text-base font-extrabold text-[#18181B]">
                   About the Solution & Technical Architecture
                 </h2>
               </div>
-              <div className="text-sm text-[#475569] leading-relaxed whitespace-pre-line font-normal">
+              <div className="text-sm text-[#4B5563] leading-relaxed whitespace-pre-line font-normal">
                 {project.description}
               </div>
             </div>
 
             {/* Problem Statement Details */}
             {project.problemStatement && (
-              <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-6 shadow-card space-y-3">
+              <div className="bg-white border border-[#E5E0D8] rounded-2xl p-6 shadow-xs space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-[#64748B] uppercase tracking-wider">
+                  <span className="text-xs font-bold text-[#6B7280] uppercase tracking-wider">
                     Target Challenge
                   </span>
-                  <Badge variant="blue" size="sm">
+                  <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#FFF5ED] text-[#FA541C] border border-[#FED7AA]">
                     {project.problemStatement.code}
-                  </Badge>
+                  </span>
                 </div>
-                <h3 className="text-sm font-bold text-[#111827]">
+                <h3 className="text-base font-bold text-[#18181B]">
                   {project.problemStatement.title}
                 </h3>
               </div>
             )}
 
             {/* Community Comments Section */}
-            <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-6 sm:p-8 shadow-card space-y-6">
-              <div className="flex items-center justify-between border-b border-[#F1F5F9] pb-4">
-                <div className="flex items-center space-x-2">
-                  <MessageSquare className="w-4 h-4 text-[#2563EB]" />
-                  <h2 className="text-base font-bold text-[#111827]">
+            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-6 sm:p-7 shadow-xs space-y-6">
+              <div className="flex items-center justify-between border-b border-[#F4EFEA] pb-4">
+                <div className="flex items-center space-x-2.5">
+                  <MessageSquare className="w-4 h-4 text-[#FA541C]" />
+                  <h2 className="text-base font-extrabold text-[#18181B]">
                     Community Discussion ({comments.length})
                   </h2>
                 </div>
-                <span className="text-xs text-[#64748B]">Feedback & Questions</span>
+                <span className="text-xs text-[#6B7280] font-medium">Feedback & Questions</span>
               </div>
 
               {/* Comment Input */}
@@ -518,13 +524,13 @@ export default function PublicProjectDetailPage({
                   placeholder="Share feedback, ask technical questions, or give kudos to the team..."
                   value={commentInput}
                   onChange={(e) => setCommentInput(e.target.value)}
-                  className="w-full p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] text-xs sm:text-sm text-[#111827] placeholder-[#94A3B8] focus:outline-none focus:ring-2 focus:ring-[#2563EB] focus:bg-white transition-all"
+                  className="w-full p-4 bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-xs sm:text-sm text-[#18181B] placeholder-[#9CA3AF] focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] focus:bg-white transition-all resize-none"
                 />
                 <div className="flex justify-end">
                   <button
                     type="submit"
                     disabled={postingComment || !commentInput.trim()}
-                    className="px-4 py-2 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-[11px] text-xs font-semibold shadow-xs transition-colors flex items-center disabled:opacity-50"
+                    className="px-4 py-2 bg-[#FA541C] hover:bg-[#E03A00] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center disabled:opacity-50 cursor-pointer hover:-translate-y-0.5 active:scale-95"
                   >
                     <Send className="w-3.5 h-3.5 mr-1.5" />
                     {postingComment ? 'Posting...' : 'Post Comment'}
@@ -535,29 +541,29 @@ export default function PublicProjectDetailPage({
               {/* Comments Thread */}
               <div className="space-y-3 pt-2">
                 {comments.length === 0 ? (
-                  <div className="text-center py-8 text-xs text-[#94A3B8]">
+                  <div className="text-center py-8 text-xs text-[#9CA3AF]">
                     No comments yet. Be the first to share your thoughts on this submission!
                   </div>
                 ) : (
                   comments.map((c) => (
                     <div
                       key={c.id}
-                      className={`p-4 rounded-[14px] border transition-colors ${
+                      className={`p-4 rounded-xl border transition-colors ${
                         c.isFlagged
                           ? 'bg-[#FFFBEB] border-[#FDE68A] text-[#92400E]'
-                          : 'bg-[#F8FAFC] border-[#E2E8F0]'
+                          : 'bg-[#FAF8F5] border-[#E5E0D8]'
                       }`}
                     >
                       <div className="flex justify-between items-start">
                         <div className="flex items-center space-x-2.5">
-                          <div className="w-7 h-7 rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-xs flex items-center justify-center border border-[#BFDBFE]">
+                          <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#FFF5ED] to-[#FED7AA] text-[#FA541C] font-bold text-xs flex items-center justify-center border border-[#FED7AA]">
                             {c.user.fullName.charAt(0)}
                           </div>
                           <div>
-                            <span className="font-semibold text-xs text-[#111827]">
+                            <span className="font-bold text-xs text-[#18181B]">
                               {c.user.fullName}
                             </span>
-                            <span className="text-[10px] text-[#94A3B8] ml-2">
+                            <span className="text-[10px] text-[#9CA3AF] ml-2">
                               {new Date(c.createdAt).toLocaleDateString()}
                             </span>
                           </div>
@@ -575,21 +581,21 @@ export default function PublicProjectDetailPage({
                               setEditingCommentId(c.id);
                               setEditContent(c.content);
                             }}
-                            className="text-[#94A3B8] hover:text-[#111827] transition-colors"
+                            className="text-[#9CA3AF] hover:text-[#18181B] transition-colors cursor-pointer"
                             title="Edit"
                           >
                             <Edit2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeleteComment(c.id)}
-                            className="text-[#94A3B8] hover:text-[#DC2626] transition-colors"
+                            className="text-[#9CA3AF] hover:text-[#DC2626] transition-colors cursor-pointer"
                             title="Delete"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleModerateComment(c.id, c.isFlagged ? 'RESTORE' : 'HIDE')}
-                            className="text-[#94A3B8] hover:text-[#D97706] transition-colors"
+                            className="text-[#9CA3AF] hover:text-[#D97706] transition-colors cursor-pointer"
                             title="Moderate"
                           >
                             {c.isFlagged ? <Eye className="w-3.5 h-3.5" /> : <EyeOff className="w-3.5 h-3.5" />}
@@ -603,25 +609,25 @@ export default function PublicProjectDetailPage({
                             rows={2}
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full p-2.5 bg-white border border-[#CBD5E1] rounded-[10px] text-xs text-[#111827]"
+                            className="w-full p-2.5 bg-white border border-[#CBD5E1] rounded-xl text-xs text-[#18181B] focus:ring-1 focus:ring-[#FA541C] focus:border-[#FA541C] outline-none"
                           />
                           <div className="flex justify-end space-x-2">
                             <button
                               onClick={() => setEditingCommentId(null)}
-                              className="px-3 py-1 text-xs text-[#64748B] font-semibold"
+                              className="px-3 py-1 text-xs text-[#6B7280] font-semibold hover:text-[#18181B] cursor-pointer"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={() => handleEditComment(c.id)}
-                              className="px-3 py-1 bg-[#2563EB] text-white rounded-[8px] text-xs font-semibold"
+                              className="px-3 py-1 bg-[#FA541C] hover:bg-[#E03A00] text-white rounded-lg text-xs font-bold cursor-pointer"
                             >
                               Save
                             </button>
                           </div>
                         </div>
                       ) : (
-                        <p className="text-xs text-[#334155] mt-2 leading-relaxed whitespace-pre-line">
+                        <p className="text-xs text-[#4B5563] mt-2 leading-relaxed whitespace-pre-line">
                           {c.content}
                         </p>
                       )}
@@ -635,15 +641,15 @@ export default function PublicProjectDetailPage({
           {/* RIGHT 1 COLUMN: Tech Stack, Team, and Event Metadata */}
           <div className="space-y-6">
             {/* Tech Stack Card */}
-            <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-5 shadow-card space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#6B7280]">
                 Technologies & Tools
               </h3>
               <div className="flex flex-wrap gap-1.5 pt-1">
                 {(project.techStack || []).map((t) => (
                   <span
                     key={t}
-                    className="px-2.5 py-1 rounded-[8px] text-xs font-medium bg-[#F1F5F9] text-[#334155] border border-[#E2E8F0]"
+                    className="px-3 py-1 rounded-lg text-xs font-semibold bg-[#FAF8F5] text-[#374151] border border-[#E5E0D8] hover:border-[#FA541C]/40 transition-colors"
                   >
                     {t}
                   </span>
@@ -652,24 +658,24 @@ export default function PublicProjectDetailPage({
             </div>
 
             {/* Team Members Card */}
-            <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-5 shadow-card space-y-3">
+            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-xs space-y-3">
               <div className="flex items-center justify-between">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+                <h3 className="text-xs font-black uppercase tracking-wider text-[#6B7280]">
                   Team Members
                 </h3>
-                <span className="text-xs font-semibold text-[#2563EB]">
+                <span className="text-xs font-bold text-[#FA541C]">
                   {project.team.members.length} member(s)
                 </span>
               </div>
               <div className="space-y-2 pt-1">
                 {project.team.members.map((m, idx) => (
-                  <div key={idx} className="flex items-center space-x-3 text-xs p-2 rounded-[10px] hover:bg-[#F8FAFC]">
-                    <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold flex items-center justify-center text-xs flex-shrink-0">
+                  <div key={idx} className="flex items-center space-x-3 text-xs p-2 rounded-xl hover:bg-[#FAF8F5] transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-[#FFF5ED] border border-[#FED7AA] text-[#FA541C] font-bold flex items-center justify-center text-xs flex-shrink-0">
                       {m.user.fullName.charAt(0)}
                     </div>
                     <div className="truncate">
-                      <div className="font-semibold text-[#111827] truncate">{m.user.fullName}</div>
-                      <div className="text-[10px] text-[#64748B]">Contributor</div>
+                      <div className="font-bold text-[#18181B] truncate">{m.user.fullName}</div>
+                      <div className="text-[10px] text-[#6B7280]">Contributor</div>
                     </div>
                   </div>
                 ))}
@@ -677,41 +683,41 @@ export default function PublicProjectDetailPage({
             </div>
 
             {/* Event Summary Card */}
-            <div className="bg-[#FFFFFF] border border-[#E2E8F0] rounded-[18px] p-5 shadow-card space-y-3">
-              <h3 className="text-xs font-bold uppercase tracking-wider text-[#64748B]">
+            <div className="bg-white border border-[#E5E0D8] rounded-2xl p-5 shadow-xs space-y-3">
+              <h3 className="text-xs font-black uppercase tracking-wider text-[#6B7280]">
                 Hackathon Arena
               </h3>
               <div className="space-y-2 text-xs">
                 <div>
-                  <span className="text-[#64748B] block text-[11px]">Event Name</span>
+                  <span className="text-[#6B7280] block text-[11px] font-medium">Event Name</span>
                   <Link
                     href={`/hackathons/${project.hackathon.slug}`}
-                    className="font-semibold text-[#111827] hover:text-[#2563EB] transition-colors"
+                    className="font-bold text-[#18181B] hover:text-[#FA541C] transition-colors"
                   >
                     {project.hackathon.title}
                   </Link>
                 </div>
                 <div>
-                  <span className="text-[#64748B] block text-[11px]">Assigned Track</span>
-                  <span className="font-medium text-[#334155]">{project.track?.title}</span>
+                  <span className="text-[#6B7280] block text-[11px] font-medium">Assigned Track</span>
+                  <span className="font-semibold text-[#374151]">{project.track?.title}</span>
                 </div>
                 <div>
-                  <span className="text-[#64748B] block text-[11px]">Event Status</span>
-                  <Badge variant="blue" size="sm">
+                  <span className="text-[#6B7280] block text-[11px] font-medium">Event Status</span>
+                  <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider uppercase bg-emerald-50 text-emerald-700 border border-emerald-200 inline-block mt-0.5">
                     {project.hackathon.status}
-                  </Badge>
+                  </span>
                 </div>
               </div>
             </div>
 
             {/* Verified Submission Card */}
-            <div className="bg-gradient-to-br from-[#111827] to-[#1E293B] text-white rounded-[18px] p-5 space-y-2 shadow-card">
-              <div className="flex items-center space-x-1.5 text-[11px] text-[#38BDF8] font-bold uppercase tracking-wider">
-                <ShieldCheck className="w-4 h-4 text-[#38BDF8]" />
+            <div className="bg-gradient-to-br from-[#18181B] via-[#27272A] to-[#18181B] text-white rounded-2xl p-5 space-y-2 border border-neutral-800 shadow-sm">
+              <div className="flex items-center space-x-1.5 text-[11px] text-[#FA541C] font-extrabold uppercase tracking-wider">
+                <ShieldCheck className="w-4 h-4 text-[#FA541C]" />
                 <span>Verified Platform Entry</span>
               </div>
-              <h4 className="text-xs font-bold">Tamper-Proof Codebase Integrity</h4>
-              <p className="text-[11px] text-[#94A3B8] leading-relaxed">
+              <h4 className="text-xs font-bold text-white">Tamper-Proof Codebase Integrity</h4>
+              <p className="text-[11px] text-[#9CA3AF] leading-relaxed">
                 Repository snapshots and demo artifacts are timestamped and cryptographically logged for jury review.
               </p>
             </div>

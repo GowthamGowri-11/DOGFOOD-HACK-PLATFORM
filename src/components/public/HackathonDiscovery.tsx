@@ -467,7 +467,7 @@ export const HackathonDiscovery: React.FC<HackathonDiscoveryProps> = ({
   }, [allHackathons]);
 
   return (
-    <AppShell showFeaturedRail={true}>
+    <AppShell showFeaturedRail={false}>
       {/* Page Heading matching Image 1: dynamic count in orange, clean typography */}
       <div className="mb-4">
         <h1 className="text-[30px] sm:text-[36px] font-extrabold tracking-tight leading-tight">
