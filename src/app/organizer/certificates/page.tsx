@@ -72,42 +72,10 @@ const DEFAULT_FIELDS: Record<string, FieldConfig> = {
     badgeBorder: '#7C3AED',
     badgeBg: '#8B5CF6',
     sampleValue: 'John Doe',
-    x: 48,
-    y: 54,
+    x: 50,
+    y: 35,
     fontFamily: 'serif',
     fontSize: 24,
-    fontWeight: 'bold',
-    color: '#1E293B',
-    align: 'center',
-    visible: true,
-  },
-  department: {
-    id: 'department',
-    label: 'Department',
-    badgeColor: '#06B6D4',
-    badgeBorder: '#0891B2',
-    badgeBg: '#06B6D4',
-    sampleValue: 'Computer Science & Engineering',
-    x: 18,
-    y: 74,
-    fontFamily: 'sans',
-    fontSize: 13,
-    fontWeight: 'bold',
-    color: '#0F172A',
-    align: 'center',
-    visible: true,
-  },
-  collaborationDept: {
-    id: 'collaborationDept',
-    label: 'Collaboration Dept',
-    badgeColor: '#3B82F6',
-    badgeBorder: '#2563EB',
-    badgeBg: '#3B82F6',
-    sampleValue: 'AI & Data Science',
-    x: 32,
-    y: 74,
-    fontFamily: 'sans',
-    fontSize: 13,
     fontWeight: 'bold',
     color: '#0F172A',
     align: 'center',
@@ -120,12 +88,12 @@ const DEFAULT_FIELDS: Record<string, FieldConfig> = {
     badgeBorder: '#059669',
     badgeBg: '#10B981',
     sampleValue: 'Apex Institute of Technology',
-    x: 48,
-    y: 20,
+    x: 50,
+    y: 47,
     fontFamily: 'serif',
-    fontSize: 18,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#334155',
     align: 'center',
     visible: true,
   },
@@ -136,44 +104,28 @@ const DEFAULT_FIELDS: Record<string, FieldConfig> = {
     badgeBorder: '#D97706',
     badgeBg: '#F59E0B',
     sampleValue: 'Apex Global Hackathon 2026',
-    x: 52,
-    y: 62,
+    x: 50,
+    y: 58,
     fontFamily: 'sans',
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#FA541C',
     align: 'center',
     visible: true,
   },
-  certificateId: {
-    id: 'certificateId',
-    label: 'Certificate ID',
-    badgeColor: '#EF4444',
-    badgeBorder: '#DC2626',
-    badgeBg: '#EF4444',
-    sampleValue: 'APEX-2026-X9B2F',
-    x: 82,
-    y: 12,
-    fontFamily: 'mono',
-    fontSize: 11,
-    fontWeight: 'bold',
-    color: '#DC2626',
-    align: 'right',
-    visible: true,
-  },
-  date: {
-    id: 'date',
-    label: 'Date',
-    badgeColor: '#EC4899',
-    badgeBorder: '#DB2777',
-    badgeBg: '#EC4899',
-    sampleValue: 'September 29, 2026',
-    x: 48,
-    y: 86,
+  department: {
+    id: 'department',
+    label: 'Department',
+    badgeColor: '#06B6D4',
+    badgeBorder: '#0891B2',
+    badgeBg: '#06B6D4',
+    sampleValue: 'Computer Science & Engineering',
+    x: 22,
+    y: 72,
     fontFamily: 'sans',
     fontSize: 12,
-    fontWeight: '500',
-    color: '#475569',
+    fontWeight: 'bold',
+    color: '#0F172A',
     align: 'center',
     visible: true,
   },
@@ -184,12 +136,60 @@ const DEFAULT_FIELDS: Record<string, FieldConfig> = {
     badgeBorder: '#4F46E5',
     badgeBg: '#6366F1',
     sampleValue: 'Team Phoenix',
-    x: 82,
-    y: 86,
+    x: 50,
+    y: 72,
     fontFamily: 'sans',
     fontSize: 12,
     fontWeight: 'bold',
-    color: '#1E293B',
+    color: '#0F172A',
+    align: 'center',
+    visible: true,
+  },
+  collaborationDept: {
+    id: 'collaborationDept',
+    label: 'Collaboration Dept',
+    badgeColor: '#3B82F6',
+    badgeBorder: '#2563EB',
+    badgeBg: '#3B82F6',
+    sampleValue: 'AI & Data Science',
+    x: 78,
+    y: 72,
+    fontFamily: 'sans',
+    fontSize: 12,
+    fontWeight: 'bold',
+    color: '#0F172A',
+    align: 'center',
+    visible: true,
+  },
+  date: {
+    id: 'date',
+    label: 'Date',
+    badgeColor: '#EC4899',
+    badgeBorder: '#DB2777',
+    badgeBg: '#EC4899',
+    sampleValue: 'September 29, 2026',
+    x: 22,
+    y: 88,
+    fontFamily: 'sans',
+    fontSize: 11,
+    fontWeight: '500',
+    color: '#475569',
+    align: 'center',
+    visible: true,
+  },
+  certificateId: {
+    id: 'certificateId',
+    label: 'Certificate ID',
+    badgeColor: '#EF4444',
+    badgeBorder: '#DC2626',
+    badgeBg: '#EF4444',
+    sampleValue: 'APEX-2026-X9B2F',
+    x: 78,
+    y: 88,
+    fontFamily: 'mono',
+    fontSize: 11,
+    fontWeight: 'bold',
+    color: '#DC2626',
     align: 'center',
     visible: true,
   },
@@ -273,9 +273,15 @@ export default function CertificateManagementPage() {
 
     // Load saved template config if in localStorage
     try {
+      const version = localStorage.getItem('dogfood_certificate_config_version');
       const savedConfig = localStorage.getItem('dogfood_certificate_template_config');
-      if (savedConfig) {
+      if (savedConfig && version === 'v3_uncollided_layout') {
         setFields(JSON.parse(savedConfig));
+      } else {
+        // Upgrade to optimal uncollided layout
+        setFields(DEFAULT_FIELDS);
+        localStorage.setItem('dogfood_certificate_template_config', JSON.stringify(DEFAULT_FIELDS));
+        localStorage.setItem('dogfood_certificate_config_version', 'v3_uncollided_layout');
       }
       const savedImg = localStorage.getItem('dogfood_custom_template_image');
       const savedName = localStorage.getItem('dogfood_custom_template_name');
@@ -340,6 +346,7 @@ export default function CertificateManagementPage() {
   const handleSaveConfig = () => {
     try {
       localStorage.setItem('dogfood_certificate_template_config', JSON.stringify(fields));
+      localStorage.setItem('dogfood_certificate_config_version', 'v3_uncollided_layout');
       setNotification({
         type: 'success',
         message: 'Template configuration and dynamic field coordinates saved successfully!',
@@ -350,10 +357,14 @@ export default function CertificateManagementPage() {
     }
   };
 
-  // Reset coordinates
+  // Reset coordinates to perfect uncollided layout
   const handleResetConfig = () => {
     setFields(DEFAULT_FIELDS);
-    setNotification({ type: 'success', message: 'Field positions reset to default.' });
+    try {
+      localStorage.setItem('dogfood_certificate_template_config', JSON.stringify(DEFAULT_FIELDS));
+      localStorage.setItem('dogfood_certificate_config_version', 'v3_uncollided_layout');
+    } catch {}
+    setNotification({ type: 'success', message: 'Certificate layout auto-aligned with zero overlapping fields!' });
     setTimeout(() => setNotification(null), 2500);
   };
 
@@ -697,8 +708,17 @@ export default function CertificateManagementPage() {
 
               <div className="flex items-center gap-2">
                 <button
+                  onClick={handleResetConfig}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-amber-300 bg-amber-50 text-amber-900 hover:bg-amber-100 text-xs font-bold shadow-2xs transition-all cursor-pointer"
+                  title="Auto-align all certificate fields to optimal, non-overlapping positions"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                  Auto-Align Layout
+                </button>
+
+                <button
                   onClick={() => setShowFullPreview(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-xs font-semibold text-stone-700 hover:bg-stone-50 shadow-2xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-stone-200 bg-white text-xs font-semibold text-stone-700 hover:bg-stone-50 shadow-2xs transition-colors cursor-pointer"
                 >
                   <Eye className="w-3.5 h-3.5 text-stone-500" />
                   Preview
@@ -706,7 +726,7 @@ export default function CertificateManagementPage() {
 
                 <button
                   onClick={handleSaveConfig}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-red-700 hover:bg-red-800 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Config
@@ -714,7 +734,7 @@ export default function CertificateManagementPage() {
 
                 <button
                   onClick={handleResetConfig}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-rose-200 text-rose-700 hover:bg-rose-50 text-xs font-semibold transition-colors cursor-pointer"
                 >
                   <Trash2 className="w-3.5 h-3.5" />
                   Reset
@@ -771,10 +791,10 @@ export default function CertificateManagementPage() {
                       </div>
 
                       {/* Top Institution Banner */}
-                      <div className="text-center relative z-10 space-y-1">
+                      <div className="text-center relative z-10 space-y-0.5 pt-1">
                         <div className="inline-flex items-center justify-center gap-2">
                           <div
-                            className="w-7 h-7 rounded-full text-[11px] font-black flex items-center justify-center shadow-xs"
+                            className="w-6 h-6 rounded-full text-[10px] font-black flex items-center justify-center shadow-xs"
                             style={{
                               backgroundColor: activePreset.emblemBg,
                               color: activePreset.emblemTextColor,
@@ -783,25 +803,28 @@ export default function CertificateManagementPage() {
                             {activePreset.emblemText}
                           </div>
                           <span
-                            className="text-lg font-black tracking-tight font-serif"
+                            className="text-base sm:text-lg font-black tracking-tight font-serif"
                             style={{ color: activePreset.textColor }}
                           >
                             {activePreset.institutionTitle}
                           </span>
                         </div>
-                        <p className="text-[10px] text-stone-500 font-medium">
+                        <p className="text-[9.5px] text-stone-500 font-medium">
                           {activePreset.institutionSub}
                         </p>
                       </div>
 
                       {/* Heading */}
-                      <div className="text-center mt-5 mb-3 relative z-10">
+                      <div className="text-center mt-3 relative z-10 pointer-events-none">
                         <h2
-                          className="text-base sm:text-lg font-black uppercase tracking-widest font-serif"
+                          className="text-sm sm:text-base font-black uppercase tracking-widest font-serif"
                           style={{ color: activePreset.textColor }}
                         >
                           {activePreset.titleText}
                         </h2>
+                        <p className="text-[9px] uppercase tracking-wider text-stone-400 font-semibold mt-0.5">
+                          Proudly Presented To
+                        </p>
                       </div>
 
                     </>
@@ -823,13 +846,13 @@ export default function CertificateManagementPage() {
                         }}
                         className={`absolute z-30 cursor-move select-none transition-all flex flex-col items-center group ${
                           isSelected
-                            ? 'ring-2 ring-[#FA541C] ring-offset-2 ring-offset-white bg-white/95 shadow-2xl rounded-xl p-2 z-40 scale-105'
-                            : 'hover:ring-1 hover:ring-[#FA541C]/60 hover:bg-white/80 rounded-lg p-1.5'
+                            ? 'ring-2 ring-[#FA541C] ring-offset-2 ring-offset-white bg-white/95 shadow-xl rounded-xl p-1.5 z-40 scale-102'
+                            : 'hover:ring-1 hover:ring-[#FA541C]/60 hover:bg-white/80 rounded-lg p-1'
                         }`}
                       >
                         {/* Top Handle Badge with Field Label */}
                         <div
-                          className="px-2 py-0.5 rounded-full text-white text-[10px] font-bold shadow-2xs flex items-center gap-1 mb-1 pointer-events-none"
+                          className="px-2 py-0.5 rounded-full text-white text-[9px] font-bold shadow-2xs flex items-center gap-1 mb-0.5 pointer-events-none"
                           style={{ backgroundColor: f.badgeBg }}
                         >
                           <Move className="w-2.5 h-2.5 opacity-90" />
@@ -1473,13 +1496,16 @@ export default function CertificateManagementPage() {
                   </div>
 
                   {/* Title */}
-                  <div className="text-center mt-6 mb-4 relative z-10">
+                  <div className="text-center mt-3 mb-2 relative z-10">
                     <h2
-                      className="text-xl font-black uppercase tracking-widest font-serif"
+                      className="text-lg sm:text-xl font-black uppercase tracking-widest font-serif"
                       style={{ color: activePreset.textColor }}
                     >
                       {activePreset.titleText}
                     </h2>
+                    <p className="text-[10px] uppercase tracking-wider text-stone-400 font-semibold mt-0.5">
+                      Proudly Presented To
+                    </p>
                   </div>
                 </>
               )}
