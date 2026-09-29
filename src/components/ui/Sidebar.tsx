@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -144,6 +144,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenLoginModal,
 }) => {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const getNavItems = () => {
     if (!isAuthenticated) {
@@ -253,11 +258,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* BOTTOM: Profile Summary Card */}
-        <div className="p-3 border-t border-[#1E293B] bg-[#0E141D]">
+        <div className="p-3 border-t border-[#1E293B] bg-[#0E141D]" suppressHydrationWarning>
           {!collapsed ? (
             <div className="flex items-center justify-between p-2 rounded-xl bg-[#151D28] border border-[#1E293B]">
               <div className="flex items-center space-x-2.5 truncate">
-                {userAvatarUrl ? (
+                {mounted && userAvatarUrl ? (
                   <img
                     src={userAvatarUrl}
                     alt={userName || 'User'}
@@ -265,7 +270,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   />
                 ) : (
                   <div className="w-[30px] h-[30px] rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center border border-slate-700 flex-shrink-0">
-                    {userName
+                    {mounted && userName
                       ? userName.charAt(0).toUpperCase()
                       : currentRole === 'JUDGE'
                       ? 'D'
@@ -274,26 +279,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 )}
                 <div className="truncate">
                   <div className="font-bold text-xs text-white truncate">
-                    {userName ||
-                      (currentRole === 'JUDGE'
-                        ? 'Dr. Sarah Chen'
-                        : currentRole === 'ADMIN'
-                        ? 'System Administrator'
-                        : 'Apex Event Lead')}
+                    {mounted && userName
+                      ? userName
+                      : currentRole === 'JUDGE'
+                      ? 'Dr. Sarah Chen'
+                      : currentRole === 'ADMIN'
+                      ? 'System Administrator'
+                      : 'Apex Event Lead'}
                   </div>
                   <div className="text-[10px] text-[#94A3B8] truncate">
-                    {userEmail ||
-                      (currentRole === 'JUDGE'
-                        ? 'judge.alpha@hackathon.dev'
-                        : currentRole === 'ADMIN'
-                        ? 'admin@hackathon.dev'
-                        : 'organizer@hackathon.dev')}
+                    {mounted && userEmail
+                      ? userEmail
+                      : currentRole === 'JUDGE'
+                      ? 'judge.alpha@hackathon.dev'
+                      : currentRole === 'ADMIN'
+                      ? 'admin@hackathon.dev'
+                      : 'organizer@hackathon.dev'}
                   </div>
                 </div>
               </div>
               <Link
                 href={
-                  userName
+                  mounted && (userName || isAuthenticated)
                     ? currentRole === 'JUDGE'
                       ? '/judge/profile'
                       : currentRole === 'ADMIN'
@@ -305,13 +312,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 }
                 className="p-1 text-slate-400 hover:text-white transition-colors"
                 title="Settings / Workspace"
+                suppressHydrationWarning
               >
                 <Settings className="w-3.5 h-3.5" />
               </Link>
             </div>
           ) : (
             <div className="w-8 h-8 mx-auto rounded-full bg-slate-800 text-white font-bold text-xs flex items-center justify-center border border-slate-700">
-              {userName ? userName.charAt(0).toUpperCase() : 'A'}
+              {mounted && userName ? userName.charAt(0).toUpperCase() : 'A'}
             </div>
           )}
         </div>
