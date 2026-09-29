@@ -8,7 +8,6 @@ import {
   ChevronRight,
   ChevronDown,
   User,
-  Settings,
   LogOut,
   Trophy,
   Menu,
@@ -288,23 +287,6 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                     <span>My Profile</span>
                   </Link>
 
-                  <Link
-                    href={
-                      currentUser.role?.toUpperCase() === 'ADMIN'
-                        ? '/admin/profile'
-                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
-                        ? '/organizer/profile'
-                        : currentUser.role?.toUpperCase() === 'JUDGE'
-                        ? '/judge/profile'
-                        : '/participant/settings'
-                    }
-                    prefetch={true}
-                    onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#FFF5ED] hover:text-[#FA541C] font-semibold text-xs transition-colors"
-                  >
-                    <Settings className="w-4 h-4 text-[#64748B]" />
-                    <span>Profile Settings</span>
-                  </Link>
                 </div>
 
                 {/* Logout Button */}
