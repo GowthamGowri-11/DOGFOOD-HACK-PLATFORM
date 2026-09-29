@@ -242,35 +242,7 @@ export default function OrganizerJudgingDashboard() {
     }
   };
 
-  // Handle Trigger AI Jury Run
-  const handleTriggerAIJury = async () => {
-    if (!selectedHackathonId) return;
-    try {
-      setActionLoading(true);
-      setError(null);
-      setSuccessMsg(null);
 
-      const res = await fetch(`/api/v1/hackathons/${selectedHackathonId}/ai-jury/run`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-
-      const json = await res.json();
-      if (!res.ok) {
-        throw new Error(json.message || 'Failed to trigger AI Jury evaluation.');
-      }
-
-      setSuccessMsg(
-        `Autonomous AI Jury evaluation completed for ${json.data?.evaluatedProjects?.length || 0} projects with evidence extraction.`
-      );
-      loadJudgingStats(selectedHackathonId);
-    } catch (err: any) {
-      setError(err.message);
-    } finally {
-      setActionLoading(false);
-    }
-  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans select-none pb-12">
@@ -299,9 +271,6 @@ export default function OrganizerJudgingDashboard() {
             <div className="absolute text-orange-400/60">
               <Scale className="w-28 h-28 stroke-[1.2]" />
             </div>
-            <div className="absolute -right-4 bottom-3 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-md">
-              AI
-            </div>
           </div>
         </div>
 
@@ -315,22 +284,13 @@ export default function OrganizerJudgingDashboard() {
               Judging, Scoring &amp; Normalization Hub
             </h1>
             <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
-              Orchestrate balanced judge workloads, execute deterministic score normalizations, and benchmark peer ratings against autonomous AI jury models.
+              Orchestrate balanced judge workloads and execute deterministic score normalizations.
             </p>
 
-            {/* 3 Feature Badges in a row */}
             <div className="flex flex-wrap items-center gap-2.5 mt-4">
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
-                <Scale className="w-3.5 h-3.5 text-[#2563EB]" />
-                Judging &amp; Scoring Operations
-              </span>
               <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
                 <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
                 COI Protection Guard Active
-              </span>
-              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF5FF] text-[#9333EA] border border-[#E9D5FF]">
-                <Sparkles className="w-3.5 h-3.5 text-[#9333EA]" />
-                AI Jury Consensus
               </span>
             </div>
           </div>
@@ -666,107 +626,7 @@ export default function OrganizerJudgingDashboard() {
           </button>
         </div>
 
-        {/* 3. Autonomous AI Jury */}
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all relative overflow-hidden group">
-          {/* Subtle Watermark Artwork */}
-          <div className="absolute -right-4 -bottom-4 w-32 h-32 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity flex items-center justify-center text-[#059669]">
-            <Bot className="w-32 h-32" />
-          </div>
-
-          <div className="space-y-4 relative z-10">
-            <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669] flex-shrink-0">
-                <Cpu className="w-5 h-5" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-black text-slate-900">Autonomous AI Jury</h2>
-                  <span className="bg-[#ECFDF5] text-[#059669] text-[10px] font-black px-1.5 py-0.5 rounded border border-[#A7F3D0]">
-                    BETA
-                  </span>
-                </div>
-                <p className="text-xs font-bold text-[#059669]">Evidence Grounded Evaluation</p>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-500 leading-relaxed">
-              Executes evidence-grounded evaluation across locked code repositories, demo URLs, and rubric criteria.
-            </p>
-
-            <div className="space-y-1.5 pt-2">
-              <div className="px-4 py-2.5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs text-slate-600 flex justify-between items-center shadow-xs">
-                <span>
-                  Engine: <strong className="text-slate-900 font-bold">Claude 3.7</strong>
-                </span>
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-[10px] font-bold border border-[#A7F3D0]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
-                  Ready
-                </span>
-              </div>
-            </div>
-          </div>
-
-          <button
-            onClick={handleTriggerAIJury}
-            disabled={actionLoading}
-            className="w-full py-3 px-4 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-6 cursor-pointer relative z-10"
-          >
-            <Sparkles className="w-4 h-4" />
-            Run AI Jury Evaluation
-          </button>
-        </div>
       </div>
-
-      {/* AI vs Human Consensus Metrics (If available) */}
-      {comparisonMetrics && comparisonMetrics.totalComparisons > 0 && (
-        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div className="flex items-center space-x-2.5">
-              <Sparkles className="w-5 h-5 text-[#9333EA]" />
-              <h2 className="text-base font-extrabold text-slate-900">
-                AI Jury vs Human Judge Consensus Metrics
-              </h2>
-            </div>
-            <span className="text-xs text-slate-400 font-mono">
-              {comparisonMetrics.totalComparisons} criterion evaluation pairs analyzed
-            </span>
-          </div>
-
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-              <div className="text-xs text-slate-500 font-medium">Agreement Rate</div>
-              <div className="text-2xl font-black text-emerald-600 mt-1">
-                {comparisonMetrics.agreementRate}%
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">within ±10% tolerance</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-              <div className="text-xs text-slate-500 font-medium">MAE</div>
-              <div className="text-2xl font-black text-[#9333EA] mt-1">
-                {comparisonMetrics.mae}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">points deviation</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-              <div className="text-xs text-slate-500 font-medium">RMSE</div>
-              <div className="text-2xl font-black text-slate-900 mt-1">
-                {comparisonMetrics.rmse}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">variance penalty</div>
-            </div>
-
-            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-              <div className="text-xs text-slate-500 font-medium">Pearson Correlation</div>
-              <div className="text-2xl font-black text-[#2563EB] mt-1">
-                {comparisonMetrics.correlation}
-              </div>
-              <div className="text-[10px] text-slate-400 mt-0.5">scale -1.0 to 1.0</div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Judge Workload Distribution Table Section */}
       <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">

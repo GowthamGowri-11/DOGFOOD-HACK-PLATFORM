@@ -78,7 +78,6 @@ const ORGANIZER_NAV: NavItem[] = [
   { label: 'Rubrics', href: '/organizer/rubrics', icon: Sliders },
   { label: 'Evaluations', href: '/organizer/evaluations', icon: BarChart3 },
   { label: 'Mark Edit Requests', href: '/organizer/mark-edit-requests', icon: FileText },
-  { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles },
   { label: 'Voting', href: '/organizer/voting', icon: Vote },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
   { label: 'Certificates', href: '/organizer/certificates', icon: Award },
