@@ -61,6 +61,24 @@ export default function AdminAuditLogsPage() {
   const [selectedLog, setSelectedLog] = useState<AuditLogItem | null>(null);
   const [copiedState, setCopiedState] = useState<string | null>(null);
 
+  // Lock background body scroll and listen for Escape key when modal is open
+  useEffect(() => {
+    if (selectedLog) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setSelectedLog(null);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [selectedLog]);
+
   // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -425,10 +443,16 @@ export default function AdminAuditLogsPage() {
       {/* STATE DIFF INSPECTOR MODAL */}
       {/* ======================================================== */}
       {selectedLog && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full p-6 shadow-2xl border border-zinc-200 space-y-4 max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/20 backdrop-blur-md p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setSelectedLog(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col p-6 shadow-2xl shadow-slate-900/25 border border-zinc-200/90 space-y-4 overflow-hidden modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="flex items-start justify-between pb-3 border-b border-zinc-100">
+            <div className="flex-shrink-0 flex items-start justify-between pb-3 border-b border-zinc-100">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <h3 className="text-base font-bold text-zinc-900 font-mono">{selectedLog.action}</h3>
@@ -450,85 +474,91 @@ export default function AdminAuditLogsPage() {
               </button>
             </div>
 
-            {/* Metadata Overview */}
-            <div className="grid grid-cols-2 gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200 text-xs">
-              <div>
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                  Actor Attribution
-                </span>
-                <span className="font-bold text-zinc-900 mt-0.5 block">
-                  {selectedLog.user?.fullName || 'Platform Administrator'}
-                </span>
-                <span className="text-[11px] text-zinc-500 font-mono">
-                  {selectedLog.user?.email || 'admin@hackathon.dev'}
-                </span>
-              </div>
-              <div>
-                <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
-                  Timestamp &amp; Arena
-                </span>
-                <span className="font-mono text-zinc-900 mt-0.5 block">
-                  {formatTimestamp(selectedLog.createdAt)}
-                </span>
-                <span className="text-[11px] text-zinc-500">
-                  {selectedLog.hackathon?.title || 'Global Platform'}
-                </span>
-              </div>
-            </div>
-
-            {/* Before vs After States Diff */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider block">
-                    Before State
+            {/* Scrollable Content Body */}
+            <div
+              className="flex-1 overflow-y-auto overscroll-contain custom-scrollbar space-y-4"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              {/* Metadata Overview */}
+              <div className="grid grid-cols-2 gap-3 p-3.5 bg-zinc-50 rounded-2xl border border-zinc-200 text-xs">
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                    Actor Attribution
                   </span>
-                  {selectedLog.beforeState && (
-                    <button
-                      onClick={() =>
-                        copyToClipboard(JSON.stringify(selectedLog.beforeState, null, 2), 'Before State')
-                      }
-                      className="text-[10px] font-semibold text-orange-600 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Copy className="w-3 h-3" />
-                      <span>{copiedState === 'Before State' ? 'Copied!' : 'Copy'}</span>
-                    </button>
-                  )}
+                  <span className="font-bold text-zinc-900 mt-0.5 block">
+                    {selectedLog.user?.fullName || 'Platform Administrator'}
+                  </span>
+                  <span className="text-[11px] text-zinc-500 font-mono">
+                    {selectedLog.user?.email || 'admin@hackathon.dev'}
+                  </span>
                 </div>
-                <pre className="p-3 bg-zinc-50 border border-zinc-200 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-56 text-zinc-800">
-                  {selectedLog.beforeState
-                    ? JSON.stringify(selectedLog.beforeState, null, 2)
-                    : 'null (Initial Creation)'}
-                </pre>
+                <div>
+                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider block">
+                    Timestamp &amp; Arena
+                  </span>
+                  <span className="font-mono text-zinc-900 mt-0.5 block">
+                    {formatTimestamp(selectedLog.createdAt)}
+                  </span>
+                  <span className="text-[11px] text-zinc-500">
+                    {selectedLog.hackathon?.title || 'Global Platform'}
+                  </span>
+                </div>
               </div>
 
-              <div>
-                <div className="flex items-center justify-between mb-1">
-                  <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider block">
-                    After State
-                  </span>
-                  {selectedLog.afterState && (
-                    <button
-                      onClick={() =>
-                        copyToClipboard(JSON.stringify(selectedLog.afterState, null, 2), 'After State')
-                      }
-                      className="text-[10px] font-semibold text-orange-600 hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Copy className="w-3 h-3" />
-                      <span>{copiedState === 'After State' ? 'Copied!' : 'Copy'}</span>
-                    </button>
-                  )}
+              {/* Before vs After States Diff */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider block">
+                      Before State
+                    </span>
+                    {selectedLog.beforeState && (
+                      <button
+                        onClick={() =>
+                          copyToClipboard(JSON.stringify(selectedLog.beforeState, null, 2), 'Before State')
+                        }
+                        className="text-[10px] font-semibold text-orange-600 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedState === 'Before State' ? 'Copied!' : 'Copy'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <pre className="p-3 bg-zinc-50 border border-zinc-200 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-56 text-zinc-800">
+                    {selectedLog.beforeState
+                      ? JSON.stringify(selectedLog.beforeState, null, 2)
+                      : 'null (Initial Creation)'}
+                  </pre>
                 </div>
-                <pre className="p-3 bg-zinc-950 text-zinc-200 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-56 border border-zinc-800">
-                  {selectedLog.afterState
-                    ? JSON.stringify(selectedLog.afterState, null, 2)
-                    : 'null (Deleted)'}
-                </pre>
+
+                <div>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-xs font-bold text-zinc-600 uppercase tracking-wider block">
+                      After State
+                    </span>
+                    {selectedLog.afterState && (
+                      <button
+                        onClick={() =>
+                          copyToClipboard(JSON.stringify(selectedLog.afterState, null, 2), 'After State')
+                        }
+                        className="text-[10px] font-semibold text-orange-600 hover:underline flex items-center gap-1 cursor-pointer"
+                      >
+                        <Copy className="w-3 h-3" />
+                        <span>{copiedState === 'After State' ? 'Copied!' : 'Copy'}</span>
+                      </button>
+                    )}
+                  </div>
+                  <pre className="p-3 bg-zinc-950 text-zinc-200 rounded-2xl text-[11px] font-mono overflow-x-auto max-h-56 border border-zinc-800">
+                    {selectedLog.afterState
+                      ? JSON.stringify(selectedLog.afterState, null, 2)
+                      : 'null (Deleted)'}
+                  </pre>
+                </div>
               </div>
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end pt-2 border-t border-zinc-100">
+            <div className="flex-shrink-0 flex justify-end pt-3 border-t border-zinc-100">
               <button
                 onClick={() => setSelectedLog(null)}
                 className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-50 rounded-xl transition-colors cursor-pointer"

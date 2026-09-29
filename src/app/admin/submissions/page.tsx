@@ -114,6 +114,30 @@ export default function AdminSubmissionsPage() {
   const [copiedText, setCopiedText] = useState<string | null>(null);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
+  // Lock background body scroll and listen for Escape key when modals are open
+  const isAnyModalOpen = Boolean(inspectingItem || contactingTeam);
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setInspectingItem(null);
+          setContactingTeam(null);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isAnyModalOpen]);
+
   // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -854,10 +878,16 @@ export default function AdminSubmissionsPage() {
       {/* VIEW SUBMISSION SNAPSHOT MODAL */}
       {/* ======================================================== */}
       {inspectingItem && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-zinc-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setInspectingItem(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-zinc-200/90 shadow-2xl shadow-slate-900/25 overflow-hidden modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-start justify-between bg-gradient-to-r from-white to-orange-50/20">
+            <div className="flex-shrink-0 p-6 border-b border-zinc-100 flex items-start justify-between bg-gradient-to-r from-white via-orange-50/10 to-orange-50/20">
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-xl font-bold text-zinc-900">
@@ -881,7 +911,10 @@ export default function AdminSubmissionsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto text-xs">
+            <div
+              className="p-6 space-y-5 flex-1 overflow-y-auto overscroll-contain custom-scrollbar text-xs"
+              onWheel={(e) => e.stopPropagation()}
+            >
               {/* Submission Timestamps */}
               <div className="grid grid-cols-2 gap-3 p-4 bg-zinc-50 border border-zinc-200 rounded-2xl">
                 <div>
@@ -985,8 +1018,14 @@ export default function AdminSubmissionsPage() {
       {/* CONTACT / VIEW UN-SUBMITTED TEAM MODAL */}
       {/* ======================================================== */}
       {contactingTeam && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-lg w-full border border-zinc-200 shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setContactingTeam(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-lg w-full border border-zinc-200/90 shadow-2xl shadow-slate-900/25 p-6 space-y-5 modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between">
               <div className="space-y-1">
                 <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200">

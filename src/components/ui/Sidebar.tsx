@@ -137,9 +137,6 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'Judges', href: '/admin/judges', icon: UserCheck2 },
   { label: 'Results & Leaderboard', href: '/admin/results', icon: Award },
   { label: 'Track & Question Voting', href: '/admin/voting', icon: Vote },
-  { label: 'REST Webhooks', href: '/organizer/webhooks', icon: Zap },
-  { label: 'Data Portability & Import', href: '/organizer/portability', icon: Database },
-  { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
   { label: 'Certificate Management', href: '/organizer/certificates', icon: ShieldCheck, badge: 'Templates' },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: History },
 

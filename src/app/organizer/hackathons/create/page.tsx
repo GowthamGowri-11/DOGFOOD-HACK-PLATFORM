@@ -938,13 +938,15 @@ export default function OrganizerCreateHackathonPage() {
         {/* ======================================================== */}
         {/* SECTION 4: EVALUATION ROUNDS */}
         {/* ======================================================== */}
-        <div className="bg-white border border-[#e2e8f0] rounded-2xl p-6 shadow-xs space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-[#f1f5f9] gap-2">
-            <div className="flex items-center space-x-2">
-              <Layers className="w-4 h-4 text-[#2563eb]" />
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-[#F4EFEA] gap-3">
+            <div className="flex items-start gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#FFF5ED] border border-[#FED7AA] flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+                <Layers className="w-4 h-4 stroke-[2.2]" />
+              </div>
               <div>
-                <h2 className="text-base font-extrabold text-[#0f172a]">Evaluation Rounds</h2>
-                <p className="text-xs text-[#64748b]">
+                <h2 className="text-base font-extrabold text-[#18181B]">Evaluation Rounds</h2>
+                <p className="text-xs text-[#6B7280] font-normal mt-0.5">
                   Define the sequence of evaluation rounds and their specific problem statements.
                 </p>
               </div>
@@ -953,30 +955,28 @@ export default function OrganizerCreateHackathonPage() {
             <button
               type="button"
               onClick={addRound}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-bold text-[#2563eb] bg-[#eff6ff] border border-[#dbeafe] hover:bg-[#dbeafe]/50 rounded-xl shadow-xs transition-colors self-start sm:self-auto cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[#FA541C] bg-[#FFF5ED] hover:bg-[#FFE8D6] border border-[#FED7AA] rounded-xl shadow-2xs transition-all hover:scale-[1.02] active:scale-[0.98] self-start sm:self-auto cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
               <span>Add Round</span>
             </button>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4">
             {rounds.map((round, rIdx) => {
-              const totalMarks = round.criteria.reduce((sum, c) => sum + Number(c.maxMarks || 0), 0);
-
+              const totalMarks = (round.criteria || []).reduce((acc: number, c: any) => acc + (Number(c.maxMarks) || 0), 0);
               return (
                 <div
                   key={rIdx}
-                  className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-6 space-y-6 relative shadow-sm"
+                  className="bg-white border border-[#E5E0D8] hover:border-[#CBD5E1] rounded-2xl p-5 space-y-4 relative shadow-2xs transition-all"
                 >
-                  {/* Round header */}
-                  <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
-                    <div className="flex items-center gap-2.5">
-                      <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-3 py-1 rounded-full border border-[#dbeafe]">
+                  <div className="flex items-center justify-between pb-1">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-xs font-bold text-[#FA541C] bg-[#FFF5ED] px-3 py-1 rounded-full border border-[#FED7AA] shadow-2xs">
                         Round {rIdx + 1}
                       </span>
                       {round.isFinal && (
-                        <span className="text-[10px] font-bold text-[#d97706] bg-[#fef3c7] px-2.5 py-1 rounded-full border border-[#fde68a]">
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
                           FINALE
                         </span>
                       )}
@@ -986,153 +986,180 @@ export default function OrganizerCreateHackathonPage() {
                       type="button"
                       onClick={() => removeRound(rIdx)}
                       disabled={rounds.length <= 1}
-                      className="p-2 text-[#dc2626] hover:bg-[#fee2e2] rounded-xl transition-colors disabled:opacity-30 cursor-pointer"
+                      className="w-8 h-8 rounded-xl flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 transition-all disabled:opacity-30 cursor-pointer"
                       title="Delete Round"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  {/* Row 1 – Name + Final Round toggle + Round Type */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                    {/* Round Name */}
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Round Name</span>
-                      <input
-                        type="text"
-                        value={round.name}
-                        onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
-                        placeholder="e.g. The Qualifiers"
-                        className="w-full px-3 py-2.5 text-sm bg-white border border-[#e2e8f0] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
-                      />
+                  <div className="space-y-4 pt-2 border-t border-[#F4EFEA]">
+                    {/* Row 1: Name, Type, Status */}
+                    <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
+                      <div className="sm:col-span-6 space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          Round Name <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="text"
+                          value={round.name}
+                          onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
+                          placeholder="e.g. The Qualifiers"
+                          className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-bold text-[#18181B] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
+                        />
+                      </div>
+
+                      <div className="sm:col-span-4 space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          Round Type
+                        </label>
+                        <select
+                          value={round.roundType}
+                          onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
+                          className="w-full h-[40px] px-3 text-xs bg-white border border-[#E5E0D8] rounded-xl font-semibold text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs cursor-pointer"
+                        >
+                          <option value="Mock Hackathon">Mock Hackathon</option>
+                          <option value="Hackathon">Hackathon</option>
+                          <option value="Ideation">Ideation</option>
+                          <option value="Presentation">Presentation</option>
+                          <option value="Coding Challenge">Coding Challenge</option>
+                        </select>
+                      </div>
+
+                      <div className="sm:col-span-2 space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          Status
+                        </label>
+                        <label className={`flex items-center justify-center gap-2 h-[40px] px-3 rounded-xl border cursor-pointer select-none transition-all shadow-2xs ${
+                          round.isFinal
+                            ? 'bg-amber-50 border-amber-300 text-amber-900 font-bold'
+                            : 'bg-white border-[#E5E0D8] text-[#4B5563] hover:border-zinc-300 font-semibold'
+                        }`}>
+                          <input
+                            type="checkbox"
+                            checked={round.isFinal}
+                            onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
+                            className="w-4 h-4 rounded text-[#FA541C] focus:ring-[#FA541C] border-[#CBD5E1] cursor-pointer"
+                          />
+                          <span className="text-xs whitespace-nowrap">Finale</span>
+                        </label>
+                      </div>
                     </div>
 
-                    {/* Round Type */}
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Round Type</span>
-                      <select
-                        value={round.roundType}
-                        onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
-                        className="w-full px-3 py-2.5 text-sm bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] font-semibold"
-                      >
-                        <option value="Mock Hackathon">Mock Hackathon</option>
-                        <option value="Hackathon">Hackathon</option>
-                        <option value="Ideation">Ideation</option>
-                        <option value="Presentation">Presentation</option>
-                        <option value="Coding Challenge">Coding Challenge</option>
-                      </select>
-                    </div>
-                  </div>
+                    {/* Row 2: Dates */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          Start Date &amp; Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={round.startDate}
+                          onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
+                          className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-medium text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
+                        />
+                        {round.startDate && (
+                          <span className="text-[10px] text-[#6B7280] block font-medium">
+                            {formatDateDisplay(round.startDate)}
+                          </span>
+                        )}
+                      </div>
 
-                  {/* Final Round toggle */}
-                  <div className="flex items-center gap-3 px-4 py-3 bg-white border border-[#e2e8f0] rounded-xl">
-                    <input
-                      id={`final-round-${rIdx}`}
-                      type="checkbox"
-                      checked={round.isFinal}
-                      onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
-                      className="w-4 h-4 rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
-                    />
-                    <label htmlFor={`final-round-${rIdx}`} className="cursor-pointer">
-                      <span className="text-sm font-semibold text-[#0f172a]">Mark as Final Round</span>
-                      <p className="text-xs text-[#64748b] mt-0.5">This is the last round — no teams advance after this.</p>
-                    </label>
-                  </div>
-
-                  {/* Row 2 – Dates */}
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Start Date & Time</span>
-                      <input
-                        type="datetime-local"
-                        value={round.startDate}
-                        onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
-                      />
-                      {round.startDate && (
-                        <span className="text-[10px] text-[#64748b] block">{formatDateDisplay(round.startDate)}</span>
-                      )}
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          End Date &amp; Time
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={round.endDate}
+                          onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
+                          className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-medium text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
+                        />
+                        {round.endDate && (
+                          <span className="text-[10px] text-[#6B7280] block font-medium">
+                            {formatDateDisplay(round.endDate)}
+                          </span>
+                        )}
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">End Date & Time</span>
-                      <input
-                        type="datetime-local"
-                        value={round.endDate}
-                        onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
-                        className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
-                      />
-                      {round.endDate && (
-                        <span className="text-[10px] text-[#64748b] block">{formatDateDisplay(round.endDate)}</span>
-                      )}
+                    {/* Row 3: Deadline & Max Teams */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          Submission Deadline
+                        </label>
+                        <input
+                          type="datetime-local"
+                          value={round.submissionDeadline}
+                          onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
+                          className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-medium text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
+                        />
+                        {round.submissionDeadline && (
+                          <span className="text-[10px] text-[#6B7280] block font-medium">
+                            {formatDateDisplay(round.submissionDeadline)}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="space-y-1.5">
+                        <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                          Max Teams Allowed
+                        </label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={round.maxTeamsAllowed}
+                          onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
+                          placeholder="e.g. 50"
+                          className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-bold text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
+                        />
+                      </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Submission Deadline</span>
-                      <input
-                        type="datetime-local"
-                        value={round.submissionDeadline}
-                        onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
-                        className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
-                      />
-                      {round.submissionDeadline && (
-                        <span className="text-[10px] text-[#64748b] block">{formatDateDisplay(round.submissionDeadline)}</span>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Row 3 – Max Teams */}
-                  <div className="space-y-2">
-                    <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Max Teams Allowed</span>
-                    <input
-                      type="number"
-                      min="1"
-                      value={round.maxTeamsAllowed}
-                      onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
-                      className="w-full sm:w-48 px-3 py-2.5 text-sm bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 font-semibold text-[#0f172a]"
-                    />
-                  </div>
-
-                  <div className="p-4 bg-white border border-[#e2e8f0] rounded-xl space-y-3">
-                    <div>
-                      <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider block mb-1">
-                        What to Evaluate (Required Submissions)
-                      </span>
-                      <p className="text-xs text-[#64748b]">
-                        Select what teams must upload for <span className="font-semibold text-[#0f172a]">{round.name || 'this round'}</span>. Project title and description are always required.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-2.5 pt-1">
-                      {[
-                        { key: 'github', label: 'GitHub link' },
-                        { key: 'ppt', label: 'PPT link' },
-                        { key: 'video', label: 'Video link' },
-                        { key: 'document', label: 'Document link' },
-                        { key: 'techStack', label: 'Tech stack' },
-                      ].map((item) => {
-                        const checked = (round.requiredSubmissions as any)[item.key];
-                        return (
-                          <button
-                            key={item.key}
-                            type="button"
-                            onClick={() => {
-                              const updatedReqs = {
-                                ...round.requiredSubmissions,
-                                [item.key]: !checked,
-                              };
-                              updateRound(rIdx, 'requiredSubmissions', updatedReqs);
-                            }}
-                            className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center space-x-1.5 transition-all cursor-pointer ${
-                              checked
-                                ? 'bg-[#2563eb] text-white border-[#2563eb] shadow-xs'
-                                : 'bg-white text-[#64748b] border-[#e2e8f0] hover:bg-[#f8fafc]'
-                            }`}
-                          >
-                            <span>{checked ? '✓' : '+'}</span>
-                            <span>{item.label}</span>
-                          </button>
-                        );
-                      })}
+                    {/* Row 4: What to Evaluate */}
+                    <div className="p-4 bg-white border border-[#E5E0D8] rounded-xl space-y-2.5 shadow-2xs">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider flex items-center gap-1.5">
+                          <CheckCircle2 className="w-3.5 h-3.5 text-[#FA541C]" />
+                          <span>What to Evaluate (Required Submissions)</span>
+                        </span>
+                        <span className="text-[10px] text-[#9CA3AF] font-medium hidden sm:inline">
+                          Select deliverables required from teams in this round
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2 pt-0.5">
+                        {[
+                          { key: 'github', label: 'GitHub link' },
+                          { key: 'ppt', label: 'PPT link' },
+                          { key: 'video', label: 'Video link' },
+                          { key: 'document', label: 'Document link' },
+                          { key: 'techStack', label: 'Tech stack' },
+                        ].map((item) => {
+                          const checked = (round.requiredSubmissions as any)[item.key];
+                          return (
+                            <button
+                              key={item.key}
+                              type="button"
+                              onClick={() => {
+                                const updatedReqs = {
+                                  ...round.requiredSubmissions,
+                                  [item.key]: !checked,
+                                };
+                                updateRound(rIdx, 'requiredSubmissions', updatedReqs);
+                              }}
+                              className={`px-3.5 py-1.5 rounded-full text-xs font-bold border flex items-center space-x-1.5 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
+                                checked
+                                  ? 'bg-[#FFF5ED] text-[#FA541C] border-[#FED7AA] shadow-2xs'
+                                  : 'bg-[#FAF8F5] text-[#4B5563] border-[#E5E0D8] hover:border-[#CBD5E1] hover:bg-white'
+                              }`}
+                            >
+                              <span className="text-xs">{checked ? '✓' : '+'}</span>
+                              <span>{item.label}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
                     </div>
                   </div>
 
