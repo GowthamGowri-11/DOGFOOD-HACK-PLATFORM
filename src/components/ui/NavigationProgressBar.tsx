@@ -11,6 +11,11 @@ export const NavigationProgressBar: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [progress, setProgress] = useState(0);
   const [visible, setVisible] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Trigger completion when pathname or searchParams change
   useEffect(() => {
@@ -102,7 +107,7 @@ export const NavigationProgressBar: React.FC = () => {
     };
   }, [router]);
 
-  if (!visible && progress === 0) return null;
+  if (!mounted || (!visible && progress === 0)) return null;
 
   return (
     <div

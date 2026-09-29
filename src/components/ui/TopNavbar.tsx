@@ -95,37 +95,22 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   }, [pathname, propUser]);
 
   const handleLogout = async () => {
+    // Optimistically clear UI state immediately
     setHasLoggedOut(true);
     setInternalUser(null);
     setProfileDropdownOpen(false);
+
+    // Call the centralized logout (clears localStorage + calls /api/v1/auth/logout)
     if (onLogout) {
-      onLogout();
+      await onLogout();
+    } else {
+      try {
+        await fetch('/api/v1/auth/logout', { method: 'POST' });
+      } catch {}
     }
 
-    try {
-      await fetch('/api/v1/auth/logout', { method: 'POST' });
-    } catch (err) {
-      console.error('Logout error:', err);
-    } finally {
-      setHasLoggedOut(true);
-      setInternalUser(null);
-      setProfileDropdownOpen(false);
-      if (onLogout) {
-        onLogout();
-      }
-
-      if (
-        pathname.startsWith('/admin') ||
-        pathname.startsWith('/organizer') ||
-        pathname.startsWith('/judge') ||
-        pathname.startsWith('/participant')
-      ) {
-        router.push('/');
-        router.refresh();
-      } else {
-        router.refresh();
-      }
-    }
+    // Navigate to home page using the client-side router (no hard reload)
+    router.replace('/');
   };
 
   const pathSegments = pathname.split('/').filter(Boolean);

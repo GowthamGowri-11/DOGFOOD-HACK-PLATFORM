@@ -163,12 +163,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
     setMounted(true);
   }, []);
 
-  // Select items list: GUEST gets ONLY the 3 constant pages!
+  // Select items list: on SSR and client, honor role from layout to prevent hydration mismatch
   const navItems = useMemo(() => {
-    if (!isAuthenticated) {
-      return GUEST_ITEMS;
-    }
-
     switch (currentRole) {
       case 'ORGANIZER':
         return ORGANIZER_ITEMS;
@@ -176,10 +172,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return JUDGE_ITEMS;
       case 'ADMIN':
         return ADMIN_ITEMS;
+      case 'PARTICIPANT':
+        return isAuthenticated ? PARTICIPANT_ITEMS : GUEST_ITEMS;
       default:
-        return PARTICIPANT_ITEMS;
+        return GUEST_ITEMS;
     }
-  }, [isAuthenticated, currentRole]);
+  }, [currentRole, isAuthenticated]);
 
   return (
     <>
