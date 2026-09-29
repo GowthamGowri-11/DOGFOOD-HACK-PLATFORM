@@ -173,4 +173,48 @@ export class RegistrationService {
 
     return updated;
   }
+
+  /**
+   * Updates registration check-in status (Organizer/Admin check-in desk).
+   */
+  public static async updateCheckIn(
+    actorId: string,
+    registrationId: string,
+    checkedIn: boolean
+  ) {
+    const reg = await RegistrationRepository.findById(registrationId);
+    if (!reg) {
+      throw { message: 'Registration not found.', code: 'NOT_FOUND', status: 404 };
+    }
+
+    const updated = await RegistrationRepository.updateCheckIn(registrationId, checkedIn);
+
+    await AuditService.log({
+      userId: actorId,
+      hackathonId: reg.hackathon.id,
+      action: checkedIn ? 'PARTICIPANT_CHECKED_IN' : 'PARTICIPANT_CHECKED_OUT',
+      entityType: 'Registration',
+      entityId: registrationId,
+      beforeState: { checkedIn: reg.checkedIn },
+      afterState: { checkedIn: updated.checkedIn },
+    });
+
+    await eventBus.publish({
+      type: 'ATTENDANCE_UPDATED',
+      hackathonId: reg.hackathon.id,
+      userId: reg.userId,
+      actorId,
+      rooms: [
+        RealtimeRoomBuilder.hackathon(reg.hackathon.id),
+        RealtimeRoomBuilder.organizer(reg.hackathon.id),
+        RealtimeRoomBuilder.user(reg.userId),
+      ],
+      payload: {
+        registrationId,
+        checkedIn: updated.checkedIn,
+      },
+    });
+
+    return updated;
+  }
 }

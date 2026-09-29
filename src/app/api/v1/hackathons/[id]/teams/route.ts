@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { z } from 'zod';
+import { getSession } from '@/server/auth/session';
 import { requireAuth, requireRole } from '@/server/permissions/guards';
 import { TeamRepository } from '@/server/repositories/team.repository';
 import { TeamService } from '@/server/services/team.service';
@@ -14,12 +15,15 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    const session = await requireAuth();
+    const session = await getSession();
     const hackathonId = params.id;
     const { searchParams } = new URL(req.url);
     const my = searchParams.get('my') === 'true';
 
     if (my) {
+      if (!session) {
+        return successResponse({ team: null, readiness: null });
+      }
       const team = await TeamRepository.findByHackathonAndUser(hackathonId, session.id);
       if (!team) {
         return successResponse({ team: null, readiness: null });
