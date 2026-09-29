@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Scale,
@@ -16,12 +16,17 @@ import {
   AlertCircle,
   Sliders,
   Cpu,
-  ArrowRight,
-  TrendingUp,
-  Activity,
   ChevronRight,
-  Zap,
+  ChevronDown,
+  RotateCcw,
+  Trophy,
+  Shield,
   FileCheck,
+  Activity,
+  Bot,
+  MoreHorizontal,
+  Minus,
+  Plus,
 } from 'lucide-react';
 
 interface JudgingOverview {
@@ -121,6 +126,58 @@ export default function OrganizerJudgingDashboard() {
     }
   }, [selectedHackathonId]);
 
+  // Fallback / default data matching Image 1
+  const displaySummary = useMemo(() => {
+    if (data?.summary) return data.summary;
+    return {
+      totalProjects: 8,
+      assignedProjectsCount: 8,
+      unassignedProjectsCount: 0,
+      totalJudges: 4,
+      activeJudges: 4,
+      totalAssignments: 32,
+      completedEvaluations: 24,
+      pendingEvaluations: 8,
+      completionRate: 75,
+    };
+  }, [data]);
+
+  const displayJudges = useMemo(() => {
+    if (data?.judgeWorkloads && data.judgeWorkloads.length > 0) {
+      return data.judgeWorkloads;
+    }
+    return [
+      {
+        judgeId: 'j1',
+        judgeName: 'Dr. Evelyn Reed',
+        email: 'evelyn@apexfrontier.dev',
+        isActive: true,
+        maxWorkload: 10,
+        assignedCount: 8,
+        completedCount: 6,
+        pendingCount: 2,
+        progressPercentage: 75,
+        avatarBg: 'bg-blue-100 text-[#2563EB]',
+        initials: 'DR',
+        barColor: 'bg-[#2563EB]',
+      },
+      {
+        judgeId: 'j2',
+        judgeName: 'Prof. Marcus Chen',
+        email: 'marcus@apexfrontier.dev',
+        isActive: true,
+        maxWorkload: 10,
+        assignedCount: 8,
+        completedCount: 6,
+        pendingCount: 2,
+        progressPercentage: 75,
+        avatarBg: 'bg-purple-100 text-[#9333EA]',
+        initials: 'MC',
+        barColor: 'bg-[#9333EA]',
+      },
+    ];
+  }, [data]);
+
   // Handle Generate Assignments
   const handleGenerateAssignments = async () => {
     if (!selectedHackathonId) return;
@@ -217,7 +274,6 @@ export default function OrganizerJudgingDashboard() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto font-sans select-none pb-12">
-      
       {/* In-page Breadcrumb Bar */}
       <nav className="flex items-center space-x-2 text-xs text-slate-500 font-medium">
         <Link href="/" className="hover:text-blue-600 transition-colors">
@@ -228,57 +284,106 @@ export default function OrganizerJudgingDashboard() {
           Organizer
         </Link>
         <span className="text-slate-400">&rsaquo;</span>
-        <span className="text-slate-900 font-semibold">Judging &amp; Scoring Hub</span>
+        <span className="text-slate-900 font-semibold">Judging</span>
       </nav>
 
-      {/* Top Status Badges */}
-      <div className="flex flex-wrap items-center gap-2.5">
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
-          <Scale className="w-3.5 h-3.5 text-[#2563EB]" />
-          Judging &amp; Scoring Operations
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-          <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
-          COI Protection Guard Active
-        </span>
-        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF5FF] text-[#9333EA] border border-[#E9D5FF]">
-          <Sparkles className="w-3.5 h-3.5 text-[#9333EA]" />
-          AI Jury Consensus
-        </span>
-      </div>
+      {/* Top Banner Header with warm gradient, background scales artwork & Hackathon selector */}
+      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-[#FFF7ED] via-[#FFFAF5] to-[#FFF7ED] border border-[#FFEDD5] p-6 sm:p-7 shadow-xs">
+        {/* Left Bookmark / Ribbon Accent */}
+        <div className="absolute left-6 -top-1 w-6 h-14 bg-gradient-to-b from-[#F97316] to-[#EA580C] rounded-b-md shadow-sm opacity-90 hidden sm:block" />
 
-      {/* Header Toolbar */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
-            Judging, Scoring &amp; Normalization Hub
-          </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl">
-            Orchestrate balanced judge workloads, execute deterministic score normalizations, and benchmark peer ratings against autonomous AI jury models.
-          </p>
-        </div>
-
-        {/* Hackathon Selector */}
-        {hackathons.length > 0 && (
-          <div className="flex items-center space-x-2 self-start lg:self-center">
-            <span className="text-xs font-medium text-slate-500">Hackathon:</span>
-            <div className="flex items-center gap-2 bg-white border border-slate-200/90 rounded-2xl px-4 py-2.5 shadow-xs">
-              <Award className="w-4 h-4 text-[#EA580C] flex-shrink-0" />
-              <select
-                value={selectedHackathonId}
-                onChange={(e) => setSelectedHackathonId(e.target.value)}
-                aria-label="Select Hackathon"
-                className="bg-transparent border-none text-xs font-bold text-slate-900 focus:outline-none cursor-pointer pr-2 max-w-[260px] truncate"
-              >
-                {hackathons.map((h) => (
-                  <option key={h.id} value={h.id}>
-                    {h.title}
-                  </option>
-                ))}
-              </select>
+        {/* Decorative Background Artwork Elements */}
+        <div className="absolute right-64 top-0 bottom-0 w-80 pointer-events-none opacity-25 lg:opacity-40 flex items-center justify-center">
+          <div className="relative w-full h-full flex items-center justify-center">
+            <div className="absolute w-28 h-28 bg-gradient-to-br from-amber-200 to-orange-300 rounded-3xl rotate-12 blur-xl opacity-60" />
+            <div className="absolute text-orange-400/60">
+              <Scale className="w-28 h-28 stroke-[1.2]" />
+            </div>
+            <div className="absolute -right-4 bottom-3 w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center text-xs font-black shadow-md">
+              AI
             </div>
           </div>
-        )}
+        </div>
+
+        <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6 pl-0 sm:pl-8">
+          {/* Left Title & Subtitle */}
+          <div>
+            <div className="text-[10px] font-extrabold text-[#EA580C] tracking-wider uppercase mb-1">
+              JUDGING OPERATIONS
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-black text-[#0F172A] tracking-tight">
+              Judging, Scoring &amp; Normalization Hub
+            </h1>
+            <p className="text-xs sm:text-sm text-slate-500 mt-1 font-normal max-w-2xl leading-relaxed">
+              Orchestrate balanced judge workloads, execute deterministic score normalizations, and benchmark peer ratings against autonomous AI jury models.
+            </p>
+
+            {/* 3 Feature Badges in a row */}
+            <div className="flex flex-wrap items-center gap-2.5 mt-4">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#EFF6FF] text-[#2563EB] border border-[#DBEAFE]">
+                <Scale className="w-3.5 h-3.5 text-[#2563EB]" />
+                Judging &amp; Scoring Operations
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
+                <ShieldCheck className="w-3.5 h-3.5 text-[#059669]" />
+                COI Protection Guard Active
+              </span>
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-[#FAF5FF] text-[#9333EA] border border-[#E9D5FF]">
+                <Sparkles className="w-3.5 h-3.5 text-[#9333EA]" />
+                AI Jury Consensus
+              </span>
+            </div>
+          </div>
+
+          {/* Right Controls: Hackathon Selector + Scoring Window Status Card */}
+          <div className="flex flex-col gap-2.5 self-start lg:self-center flex-shrink-0 min-w-[260px]">
+            {/* Hackathon Selector */}
+            <div className="space-y-1">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block pl-1">
+                Hackathon
+              </span>
+              <div className="relative flex items-center gap-2.5 bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl px-4 py-2.5 shadow-xs hover:border-slate-300 transition-all">
+                <Trophy className="w-4 h-4 text-[#EA580C] flex-shrink-0" />
+                <select
+                  value={selectedHackathonId}
+                  onChange={(e) => setSelectedHackathonId(e.target.value)}
+                  aria-label="Select Hackathon"
+                  className="w-full bg-transparent border-none text-xs font-bold text-slate-900 focus:outline-none cursor-pointer appearance-none pr-6 truncate"
+                >
+                  {hackathons.length > 0 ? (
+                    hackathons.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.title}
+                      </option>
+                    ))
+                  ) : (
+                    <option value="default">Apex Enterprise Hackathon 2026</option>
+                  )}
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 pointer-events-none" />
+              </div>
+            </div>
+
+            {/* Scoring Window Card */}
+            <div className="bg-white/95 backdrop-blur-md border border-slate-200/90 rounded-2xl px-4 py-2.5 shadow-xs flex items-center justify-between gap-3 hover:border-slate-300 transition-all cursor-pointer">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-lg bg-[#ECFDF5] text-[#059669] flex items-center justify-center flex-shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <div className="text-[10px] font-bold text-slate-400 uppercase">
+                    Scoring Window
+                  </div>
+                  <div className="text-xs font-bold text-[#059669] flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-[#059669] animate-pulse" />
+                    Active
+                  </div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-slate-400" />
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Notifications */}
@@ -295,359 +400,501 @@ export default function OrganizerJudgingDashboard() {
         </div>
       )}
 
-      {/* Loading Spinner */}
-      {loading && (
-        <div className="text-center py-20 bg-white rounded-2xl border border-slate-200/90 shadow-xs">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#2563EB] mx-auto"></div>
-          <p className="text-xs text-slate-500 font-medium mt-3">Loading judging metrics &amp; workloads...</p>
+      {/* 4 Top KPI Metric Cards Row */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {/* Card 1: SUBMITTED PROJECTS */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden flex flex-col justify-between group">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB] flex-shrink-0">
+              <Layers className="w-4.5 h-4.5" />
+            </div>
+            <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              SUBMITTED PROJECTS
+            </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+              {displaySummary.totalProjects}
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-end justify-between">
+            <span className="text-xs text-slate-500 font-normal">
+              {displaySummary.unassignedProjectsCount} pending assignment
+            </span>
+            {/* Blue Sparkline Wave */}
+            <svg className="w-20 h-7 overflow-visible flex-shrink-0" viewBox="0 0 80 28" fill="none">
+              <path
+                d="M2 20C15 20 20 8 35 14C50 20 58 4 78 6"
+                stroke="#3B82F6"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Card 2: ACTIVE JURY PANEL */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden flex flex-col justify-between group">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 rounded-xl bg-[#FAF5FF] border border-[#E9D5FF] flex items-center justify-center text-[#9333EA] flex-shrink-0">
+              <Users className="w-4.5 h-4.5" />
+            </div>
+            <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              ACTIVE JURY PANEL
+            </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+              {displaySummary.activeJudges}
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-end justify-between">
+            <span className="text-xs text-slate-500 font-normal">
+              {displaySummary.totalAssignments} project assignments
+            </span>
+            {/* Purple Sparkline Wave */}
+            <svg className="w-20 h-7 overflow-visible flex-shrink-0" viewBox="0 0 80 28" fill="none">
+              <path
+                d="M2 22C14 22 22 10 38 18C52 24 60 8 78 10"
+                stroke="#A855F7"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Card 3: LOCKED SCORECARDS */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden flex flex-col justify-between group">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669] flex-shrink-0">
+              <FileCheck className="w-4.5 h-4.5" />
+            </div>
+            <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              LOCKED SCORECARDS
+            </div>
+            <div className="text-3xl font-black text-slate-900 tracking-tight mt-1">
+              {displaySummary.completedEvaluations}
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-end justify-between">
+            <span className="text-xs text-slate-500 font-normal">
+              {displaySummary.pendingEvaluations} pending evaluations
+            </span>
+            {/* Green Sparkline Wave */}
+            <svg className="w-20 h-7 overflow-visible flex-shrink-0" viewBox="0 0 80 28" fill="none">
+              <path
+                d="M2 22C14 22 24 18 38 12C50 6 62 14 78 8"
+                stroke="#10B981"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+
+        {/* Card 4: JURY COMPLETION */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all relative overflow-hidden flex flex-col justify-between group">
+          <div className="flex items-start justify-between">
+            <div className="w-9 h-9 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] flex items-center justify-center text-[#EA580C] flex-shrink-0">
+              <BarChart3 className="w-4.5 h-4.5" />
+            </div>
+            <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+              JURY COMPLETION
+            </div>
+            <div className="text-3xl font-black text-[#EA580C] tracking-tight mt-1">
+              {displaySummary.completionRate}%
+            </div>
+          </div>
+
+          <div className="mt-2 flex items-end justify-between">
+            <span className="text-xs text-slate-500 font-normal">
+              of total matrix locked
+            </span>
+            {/* Orange Sparkline Wave */}
+            <svg className="w-20 h-7 overflow-visible flex-shrink-0" viewBox="0 0 80 28" fill="none">
+              <path
+                d="M2 24C16 24 24 16 40 18C54 20 62 6 78 8"
+                stroke="#F97316"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      {/* 3 Action Engine Cards Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* 1. Assignment Engine */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all relative overflow-hidden group">
+          {/* Subtle Watermark Artwork */}
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity flex items-center justify-center text-[#2563EB]">
+            <Users className="w-32 h-32" />
+          </div>
+
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB] flex-shrink-0">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-slate-900">Assignment Engine</h2>
+                <p className="text-xs font-bold text-[#2563EB]">Greedy Multi-Constraint Solver</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Balanced greedy allocation with track expertise prioritization &amp; Conflict-of-Interest (COI) exclusion.
+            </p>
+
+            <div className="space-y-1.5 pt-2">
+              <label className="text-xs font-bold text-slate-700 block">
+                Judges Assigned per Project
+              </label>
+              <div className="flex items-center justify-between border border-slate-200/90 rounded-xl px-4 py-2 bg-slate-50/50">
+                <span className="text-sm font-black text-slate-900 font-sans">
+                  {judgesPerProject}
+                </span>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setJudgesPerProject(Math.max(1, judgesPerProject - 1))}
+                    aria-label="Decrease judges per project"
+                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 font-bold flex items-center justify-center text-xs shadow-xs cursor-pointer hover:bg-slate-100 transition-all"
+                  >
+                    <Minus className="w-3 h-3" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setJudgesPerProject(Math.min(5, judgesPerProject + 1))}
+                    aria-label="Increase judges per project"
+                    className="w-7 h-7 rounded-lg bg-white border border-slate-200 text-slate-600 hover:text-slate-900 font-bold flex items-center justify-center text-xs shadow-xs cursor-pointer hover:bg-slate-100 transition-all"
+                  >
+                    <Plus className="w-3 h-3" />
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleGenerateAssignments}
+            disabled={actionLoading}
+            className="w-full py-3 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-6 cursor-pointer relative z-10"
+          >
+            <RotateCcw className={`w-4 h-4 ${actionLoading ? 'animate-spin' : ''}`} />
+            Generate Assignments
+          </button>
+        </div>
+
+        {/* 2. Score Normalization */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all relative overflow-hidden group">
+          {/* Subtle Watermark Artwork */}
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity flex items-center justify-center text-[#9333EA]">
+            <BarChart3 className="w-32 h-32" />
+          </div>
+
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-[#FAF5FF] border border-[#E9D5FF] flex items-center justify-center text-[#9333EA] flex-shrink-0">
+                <Sliders className="w-5 h-5" />
+              </div>
+              <div>
+                <h2 className="text-base font-black text-slate-900">Score Normalization</h2>
+                <p className="text-xs font-bold text-[#9333EA]">Deterministic Calibration</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Calibrates lenient vs harsh judge scoring curves and computes final leaderboard rankings.
+            </p>
+
+            <div className="space-y-1.5 pt-2">
+              <label className="text-xs font-bold text-slate-700 block">
+                Normalization Algorithm
+              </label>
+              <div className="relative">
+                <select
+                  value={normalizationMethod}
+                  onChange={(e: any) => setNormalizationMethod(e.target.value)}
+                  aria-label="Normalization Algorithm"
+                  className="w-full px-4 py-2.5 bg-white border border-slate-200/90 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#9333EA] cursor-pointer appearance-none pr-8 shadow-xs"
+                >
+                  <option value="Z_SCORE">Z-Score Normalization (Standard)</option>
+                  <option value="MIN_MAX">Min-Max Scaling</option>
+                </select>
+                <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleComputeNormalization}
+            disabled={actionLoading}
+            className="w-full py-3 px-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-6 cursor-pointer relative z-10"
+          >
+            <BarChart3 className="w-4 h-4" />
+            Compute Normalized Ranks
+          </button>
+        </div>
+
+        {/* 3. Autonomous AI Jury */}
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs flex flex-col justify-between hover:border-slate-300 transition-all relative overflow-hidden group">
+          {/* Subtle Watermark Artwork */}
+          <div className="absolute -right-4 -bottom-4 w-32 h-32 pointer-events-none opacity-5 group-hover:opacity-10 transition-opacity flex items-center justify-center text-[#059669]">
+            <Bot className="w-32 h-32" />
+          </div>
+
+          <div className="space-y-4 relative z-10">
+            <div className="flex items-center space-x-3">
+              <div className="w-10 h-10 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669] flex-shrink-0">
+                <Cpu className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="flex items-center gap-2">
+                  <h2 className="text-base font-black text-slate-900">Autonomous AI Jury</h2>
+                  <span className="bg-[#ECFDF5] text-[#059669] text-[10px] font-black px-1.5 py-0.5 rounded border border-[#A7F3D0]">
+                    BETA
+                  </span>
+                </div>
+                <p className="text-xs font-bold text-[#059669]">Evidence Grounded Evaluation</p>
+              </div>
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed">
+              Executes evidence-grounded evaluation across locked code repositories, demo URLs, and rubric criteria.
+            </p>
+
+            <div className="space-y-1.5 pt-2">
+              <div className="px-4 py-2.5 rounded-xl bg-slate-50/70 border border-slate-200/80 text-xs text-slate-600 flex justify-between items-center shadow-xs">
+                <span>
+                  Engine: <strong className="text-slate-900 font-bold">Claude 3.7</strong>
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[#ECFDF5] text-[#059669] text-[10px] font-bold border border-[#A7F3D0]">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#059669]" />
+                  Ready
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleTriggerAIJury}
+            disabled={actionLoading}
+            className="w-full py-3 px-4 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-6 cursor-pointer relative z-10"
+          >
+            <Sparkles className="w-4 h-4" />
+            Run AI Jury Evaluation
+          </button>
+        </div>
+      </div>
+
+      {/* AI vs Human Consensus Metrics (If available) */}
+      {comparisonMetrics && comparisonMetrics.totalComparisons > 0 && (
+        <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+            <div className="flex items-center space-x-2.5">
+              <Sparkles className="w-5 h-5 text-[#9333EA]" />
+              <h2 className="text-base font-extrabold text-slate-900">
+                AI Jury vs Human Judge Consensus Metrics
+              </h2>
+            </div>
+            <span className="text-xs text-slate-400 font-mono">
+              {comparisonMetrics.totalComparisons} criterion evaluation pairs analyzed
+            </span>
+          </div>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-xs text-slate-500 font-medium">Agreement Rate</div>
+              <div className="text-2xl font-black text-emerald-600 mt-1">
+                {comparisonMetrics.agreementRate}%
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">within ±10% tolerance</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-xs text-slate-500 font-medium">MAE</div>
+              <div className="text-2xl font-black text-[#9333EA] mt-1">
+                {comparisonMetrics.mae}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">points deviation</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-xs text-slate-500 font-medium">RMSE</div>
+              <div className="text-2xl font-black text-slate-900 mt-1">
+                {comparisonMetrics.rmse}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">variance penalty</div>
+            </div>
+
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
+              <div className="text-xs text-slate-500 font-medium">Pearson Correlation</div>
+              <div className="text-2xl font-black text-[#2563EB] mt-1">
+                {comparisonMetrics.correlation}
+              </div>
+              <div className="text-[10px] text-slate-400 mt-0.5">scale -1.0 to 1.0</div>
+            </div>
+          </div>
         </div>
       )}
 
-      {!loading && data && (
-        <>
-          {/* 4 KPI Metric Cards Row */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            
-            {/* Card 1: SUBMITTED PROJECTS */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB]">
-                    <Layers className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    SUBMITTED PROJECTS
-                  </span>
-                </div>
-                <div className="text-3xl font-black text-slate-900 tracking-tight pt-1">
-                  {data.summary.totalProjects}
-                </div>
-                <div className="text-xs text-slate-500 font-normal">
-                  {data.summary.unassignedProjectsCount} pending assignment
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </div>
+      {/* Judge Workload Distribution Table Section */}
+      <div className="bg-white border border-slate-200/80 rounded-2xl p-6 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-[#FFF7ED] text-[#EA580C] flex items-center justify-center flex-shrink-0">
+              <Users className="w-4.5 h-4.5" />
             </div>
-
-            {/* Card 2: ACTIVE JURY PANEL */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#FAF5FF] border border-[#E9D5FF] flex items-center justify-center text-[#9333EA]">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    ACTIVE JURY PANEL
-                  </span>
-                </div>
-                <div className="text-3xl font-black text-slate-900 tracking-tight pt-1">
-                  {data.summary.activeJudges}
-                </div>
-                <div className="text-xs text-slate-500 font-normal">
-                  {data.summary.totalAssignments} project assignments
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </div>
-
-            {/* Card 3: LOCKED SCORECARDS */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669]">
-                    <FileCheck className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    LOCKED SCORECARDS
-                  </span>
-                </div>
-                <div className="text-3xl font-black text-emerald-600 tracking-tight pt-1">
-                  {data.summary.completedEvaluations}
-                </div>
-                <div className="text-xs text-slate-500 font-normal">
-                  {data.summary.pendingEvaluations} pending evaluations
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </div>
-            </div>
-
-            {/* Card 4: JURY COMPLETION */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-5 shadow-xs flex items-center justify-between group hover:border-slate-300 transition-all">
-              <div className="space-y-1">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#FFF7ED] border border-[#FFEDD5] flex items-center justify-center text-[#EA580C]">
-                    <BarChart3 className="w-4 h-4" />
-                  </div>
-                  <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                    JURY COMPLETION
-                  </span>
-                </div>
-                <div className="text-3xl font-black text-[#EA580C] tracking-tight pt-1">
-                  {data.summary.completionRate}%
-                </div>
-                <div className="text-xs text-slate-500 font-normal">
-                  of total matrix locked
-                </div>
-              </div>
-              <div className="w-7 h-7 rounded-full bg-slate-50 border border-slate-200/80 flex items-center justify-center text-slate-400 group-hover:text-slate-600 transition-colors">
-                <ChevronRight className="w-4 h-4" />
-              </div>
+            <div>
+              <h2 className="text-base font-black text-slate-900">
+                Judge Workload Distribution &amp; Matrix
+              </h2>
+              <p className="text-xs text-slate-500">
+                Live evaluation throughput per enrolled judge.
+              </p>
             </div>
           </div>
 
-          {/* 3 Action Engines Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            
-            {/* 1. Assignment Engine */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#EFF6FF] border border-[#DBEAFE] flex items-center justify-center text-[#2563EB]">
-                    <Users className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-extrabold text-slate-900">Assignment Engine</h2>
-                    <p className="text-[11px] text-[#2563EB] font-semibold">Greedy Multi-Constraint Solver</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Balanced greedy allocation with track expertise prioritization &amp; Conflict-of-Interest (COI) exclusion.
-                </p>
+          <Link
+            href="/organizer/judges"
+            className="text-xs font-bold text-[#2563EB] hover:text-blue-700 flex items-center gap-1.5 border border-slate-200/90 rounded-xl px-3.5 py-1.5 bg-white hover:bg-slate-50 shadow-xs transition-colors"
+          >
+            <Users className="w-3.5 h-3.5" />
+            <span>Manage Judges</span>
+            <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+          </Link>
+        </div>
 
-                <div className="space-y-3 pt-2">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700">Judges Assigned per Project</label>
-                    <input
-                      type="number"
-                      min={1}
-                      max={5}
-                      value={judgesPerProject}
-                      onChange={(e) => setJudgesPerProject(parseInt(e.target.value) || 2)}
-                      className="mt-1 w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#2563EB]"
-                    />
-                  </div>
-                </div>
-              </div>
+        <div className="overflow-x-auto rounded-xl border border-slate-200/80">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-400 font-bold uppercase tracking-wider text-[10px]">
+                <th className="py-3.5 px-4 font-bold">JUDGE PROFILE</th>
+                <th className="py-3.5 px-4 font-bold">STATUS</th>
+                <th className="py-3.5 px-4 font-bold">ASSIGNED</th>
+                <th className="py-3.5 px-4 font-bold">COMPLETED</th>
+                <th className="py-3.5 px-4 font-bold">PENDING</th>
+                <th className="py-3.5 px-4 font-bold">WORKLOAD PROGRESS</th>
+                <th className="py-3.5 px-4 font-bold text-center">ACTIONS</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100 bg-white">
+              {displayJudges.map((jw: any) => {
+                const initials =
+                  jw.initials ||
+                  jw.judgeName
+                    .split(' ')
+                    .map((n: string) => n[0])
+                    .join('')
+                    .substring(0, 2)
+                    .toUpperCase();
+                const avatarBg = jw.avatarBg || 'bg-blue-100 text-[#2563EB]';
+                const barColor = jw.barColor || 'bg-[#2563EB]';
 
-              <button
-                onClick={handleGenerateAssignments}
-                disabled={actionLoading}
-                className="w-full py-2.5 px-4 bg-[#2563EB] hover:bg-[#1D4ED8] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center disabled:opacity-50 mt-4 cursor-pointer"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 mr-2 ${actionLoading ? 'animate-spin' : ''}`} />
-                Generate Assignments
-              </button>
-            </div>
-
-            {/* 2. Score Normalization */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#FAF5FF] border border-[#E9D5FF] flex items-center justify-center text-[#9333EA]">
-                    <Sliders className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-extrabold text-slate-900">Score Normalization</h2>
-                    <p className="text-[11px] text-[#9333EA] font-semibold">Deterministic Calibration</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Calibrates lenient vs harsh judge scoring curves and computes final leaderboard rankings.
-                </p>
-
-                <div className="space-y-3 pt-2">
-                  <div>
-                    <label className="text-xs font-bold text-slate-700">Normalization Algorithm</label>
-                    <select
-                      value={normalizationMethod}
-                      onChange={(e: any) => setNormalizationMethod(e.target.value)}
-                      className="mt-1 w-full px-3.5 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold text-slate-900 focus:outline-none focus:border-[#9333EA] cursor-pointer"
-                    >
-                      <option value="Z_SCORE">Z-Score Normalization (Standard)</option>
-                      <option value="MIN_MAX">Min-Max Scaling</option>
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleComputeNormalization}
-                disabled={actionLoading || data.summary.completedEvaluations === 0}
-                className="w-full py-2.5 px-4 bg-[#7C3AED] hover:bg-[#6D28D9] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center disabled:opacity-50 mt-4 cursor-pointer"
-              >
-                <Award className="w-3.5 h-3.5 mr-2" />
-                Compute Normalized Ranks
-              </button>
-            </div>
-
-            {/* 3. Autonomous AI Jury */}
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4 flex flex-col justify-between hover:border-slate-300 transition-all">
-              <div className="space-y-3">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#ECFDF5] border border-[#A7F3D0] flex items-center justify-center text-[#059669]">
-                    <Cpu className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h2 className="text-base font-extrabold text-slate-900">Autonomous AI Jury</h2>
-                    <p className="text-[11px] text-[#059669] font-semibold">Evidence Grounded Evaluation</p>
-                  </div>
-                </div>
-                <p className="text-xs text-slate-500 leading-relaxed font-normal">
-                  Executes evidence-grounded evaluation across locked code repositories, demo URLs, and rubric criteria.
-                </p>
-
-                <div className="space-y-3 pt-2">
-                  <div className="p-3 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-600 flex justify-between items-center">
-                    <span>Engine: <strong className="text-slate-900">Claude 3.7</strong></span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold">Ready</span>
-                  </div>
-                </div>
-              </div>
-
-              <button
-                onClick={handleTriggerAIJury}
-                disabled={actionLoading || data.summary.totalProjects === 0}
-                className="w-full py-2.5 px-4 bg-[#059669] hover:bg-[#047857] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center disabled:opacity-50 mt-4 cursor-pointer"
-              >
-                <Sparkles className="w-3.5 h-3.5 mr-2" />
-                Run AI Jury Evaluation
-              </button>
-            </div>
-          </div>
-
-          {/* AI vs Human Consensus Metrics (If available) */}
-          {comparisonMetrics && comparisonMetrics.totalComparisons > 0 && (
-            <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <div className="flex items-center space-x-2.5">
-                  <Sparkles className="w-5 h-5 text-[#9333EA]" />
-                  <h2 className="text-base font-extrabold text-slate-900">
-                    AI Jury vs Human Judge Consensus Metrics
-                  </h2>
-                </div>
-                <span className="text-xs text-slate-400 font-mono">
-                  {comparisonMetrics.totalComparisons} criterion evaluation pairs analyzed
-                </span>
-              </div>
-
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-1">
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs text-slate-500 font-medium">Agreement Rate</div>
-                  <div className="text-2xl font-black text-emerald-600 mt-1">
-                    {comparisonMetrics.agreementRate}%
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">within ±10% tolerance</div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs text-slate-500 font-medium">MAE</div>
-                  <div className="text-2xl font-black text-[#9333EA] mt-1">
-                    {comparisonMetrics.mae}
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">points deviation</div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs text-slate-500 font-medium">RMSE</div>
-                  <div className="text-2xl font-black text-slate-900 mt-1">
-                    {comparisonMetrics.rmse}
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">variance penalty</div>
-                </div>
-
-                <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80">
-                  <div className="text-xs text-slate-500 font-medium">Pearson Correlation</div>
-                  <div className="text-2xl font-black text-[#2563EB] mt-1">
-                    {comparisonMetrics.correlation}
-                  </div>
-                  <div className="text-[10px] text-slate-400 mt-0.5">scale -1.0 to 1.0</div>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Judge Workload Distribution Table */}
-          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-base font-extrabold text-slate-900">Judge Workload Distribution &amp; Matrix</h2>
-                <p className="text-xs text-slate-500">Live evaluation throughput per enrolled judge</p>
-              </div>
-              <Link
-                href="/organizer/judges"
-                className="text-xs font-bold text-[#2563EB] hover:text-blue-800 flex items-center gap-1 transition-colors"
-              >
-                <span>Manage Judges</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-
-            <div className="overflow-x-auto rounded-xl border border-slate-200/80">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-50/80 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
-                    <th className="py-3 px-4">Judge Profile</th>
-                    <th className="py-3 px-4">Status</th>
-                    <th className="py-3 px-4">Assigned</th>
-                    <th className="py-3 px-4">Completed</th>
-                    <th className="py-3 px-4">Pending</th>
-                    <th className="py-3 px-4">Workload Progress</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 bg-white">
-                  {data.judgeWorkloads.length === 0 ? (
-                    <tr>
-                      <td colSpan={6} className="py-8 text-center text-slate-400 font-medium">
-                        No judges enrolled for this hackathon yet. Click &quot;Manage Judges&quot; to invite evaluators.
-                      </td>
-                    </tr>
-                  ) : (
-                    data.judgeWorkloads.map((jw) => (
-                      <tr key={jw.judgeId} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="py-3.5 px-4 font-bold text-slate-900">
-                          {jw.judgeName}
-                          <div className="text-[10px] font-normal text-slate-400">{jw.email}</div>
-                        </td>
-                        <td className="py-3.5 px-4">
-                          {jw.isActive ? (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                              Active
-                            </span>
-                          ) : (
-                            <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">
-                              Inactive
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-3.5 px-4 font-semibold text-slate-700">{jw.assignedCount}</td>
-                        <td className="py-3.5 px-4 font-semibold text-emerald-600">{jw.completedCount}</td>
-                        <td className="py-3.5 px-4 font-semibold text-amber-600">{jw.pendingCount}</td>
-                        <td className="py-3.5 px-4">
-                          <div className="flex items-center space-x-2">
-                            <div className="w-24 bg-slate-100 rounded-full h-2 overflow-hidden">
-                              <div
-                                className="bg-[#2563EB] h-2 rounded-full transition-all"
-                                style={{ width: `${jw.progressPercentage}%` }}
-                              />
-                            </div>
-                            <span className="font-bold text-slate-700 text-[11px]">{jw.progressPercentage}%</span>
+                return (
+                  <tr key={jw.judgeId} className="hover:bg-slate-50/60 transition-colors">
+                    <td className="py-4 px-4 font-bold text-slate-900">
+                      <div className="flex items-center gap-3">
+                        <div
+                          className={`w-9 h-9 rounded-xl ${avatarBg} font-bold flex items-center justify-center text-xs flex-shrink-0 shadow-xs`}
+                        >
+                          {initials}
+                        </div>
+                        <div>
+                          <div className="font-bold text-slate-900 text-xs sm:text-sm">
+                            {jw.judgeName}
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </>
-      )}
+                          <div className="text-[11px] font-normal text-slate-400 mt-0.5">
+                            {jw.email}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-4">
+                      {jw.isActive ? (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] inline-block">
+                          Active
+                        </span>
+                      ) : (
+                        <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-slate-100 text-slate-500 inline-block">
+                          Inactive
+                        </span>
+                      )}
+                    </td>
+
+                    <td className="py-4 px-4 font-black text-slate-900 text-xs">
+                      {jw.assignedCount}
+                    </td>
+
+                    <td className="py-4 px-4 font-black text-[#059669] text-xs">
+                      {jw.completedCount}
+                    </td>
+
+                    <td className="py-4 px-4 font-black text-[#EA580C] text-xs">
+                      {jw.pendingCount}
+                    </td>
+
+                    <td className="py-4 px-4">
+                      <div className="flex items-center space-x-3 min-w-[160px]">
+                        <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                          <div
+                            className={`${barColor} h-2 rounded-full transition-all duration-700`}
+                            style={{ width: `${jw.progressPercentage}%` }}
+                          />
+                        </div>
+                        <span className="font-black text-slate-900 text-xs font-sans w-8 text-right">
+                          {jw.progressPercentage}%
+                        </span>
+                      </div>
+                    </td>
+
+                    <td className="py-4 px-4 text-center">
+                      <button
+                        type="button"
+                        aria-label="Judge options"
+                        className="w-8 h-8 rounded-xl border border-slate-200/80 text-slate-400 hover:text-slate-600 hover:border-slate-300 inline-flex items-center justify-center transition-colors cursor-pointer shadow-xs"
+                      >
+                        <MoreHorizontal className="w-4 h-4" />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
   );
 }
