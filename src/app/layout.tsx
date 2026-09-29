@@ -15,7 +15,6 @@ export const metadata: Metadata = {
 };
 
 import { AuthProvider } from '@/context/AuthContext';
-import GlobalProgressBar from '@/components/ui/NavigationProgressBar';
 
 export default function RootLayout({
   children,
@@ -25,7 +24,6 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen text-[#111827] bg-[#FFFFFF] antialiased" suppressHydrationWarning>
-        <GlobalProgressBar />
         <AuthProvider>
           {children}
         </AuthProvider>
