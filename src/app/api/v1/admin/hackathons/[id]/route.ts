@@ -71,7 +71,7 @@ export async function GET(
       },
     });
   } catch (error: any) {
-    if (error.status === 403 || error.code === 'FORBIDDEN_ROLE') {
+    if (error.status === 403 || error.code === 'FORBIDDEN_ROLE' || error.code === 'FORBIDDEN') {
       return errorResponse(error.message, 'FORBIDDEN', 403);
     }
     if (error.status === 401 || error.code === 'UNAUTHORIZED') {

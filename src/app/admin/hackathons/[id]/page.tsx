@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
   Trophy,
@@ -71,9 +71,10 @@ interface EvaluationRound {
 export default function AdminEditHackathonPage({
   params,
 }: {
-  params: { id: string };
+  params?: { id?: string };
 }) {
-  const { id } = params;
+  const routeParams = useParams();
+  const id = (params?.id || (routeParams?.id as string) || '') as string;
   const router = useRouter();
 
   const [loading, setLoading] = useState(true);
