@@ -60,7 +60,6 @@ const PARTICIPANT_NAV: NavItem[] = [
   { label: 'Project Gallery', href: '/gallery', icon: Layers },
   { label: 'Leaderboard', href: '/leaderboard', icon: BarChart3 },
   { label: 'Notifications', href: '/participant/notifications', icon: Bell },
-  { label: 'Settings', href: '/participant/settings', icon: Settings },
 ];
 
 

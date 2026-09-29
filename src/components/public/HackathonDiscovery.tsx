@@ -114,7 +114,7 @@ const DEFAULT_EXPLORE_HACKATHONS: HackathonData[] = [
     tagline: 'Generative UI & Agentic Systems On-Site',
     description: 'In-person San Francisco hackathon constructing real-time autonomous systems',
     organizationName: 'Bay Area Builders',
-    bannerUrl: '/banners/code_terminal.jpg',
+    bannerUrl: '/banners/hacker_judge.jpg',
     status: 'REGISTRATION_OPEN',
     minTeamSize: 1,
     maxTeamSize: 4,

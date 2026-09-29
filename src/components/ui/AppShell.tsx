@@ -129,7 +129,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* APPLICATION AREA */}
-        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827] page-enter">
+        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827]">
           <div className="max-w-[1440px] mx-auto">
             {/* If NOT logged in and accessing a protected workspace: show Access Wall */}
             {!authLoading && !currentUser && isProtectedRoute ? (
