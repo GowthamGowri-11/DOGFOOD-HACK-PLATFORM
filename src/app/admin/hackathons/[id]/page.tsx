@@ -1035,7 +1035,12 @@ export default function AdminEditHackathonPage({
               </div>
             </div>
           </div>
+        </div>
 
+        {/* ======================================================== */}
+        {/* ROW 2: PARTICIPATION & TIMING (2-COLUMN GRID) */}
+        {/* ======================================================== */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
           {/* ====================================================== */}
           {/* ROW 2 - LEFT: TEAM SETTINGS & RULES */}
           {/* ====================================================== */}
@@ -1184,19 +1189,20 @@ export default function AdminEditHackathonPage({
               )}
             </div>
           </div>
+        </div>
 
-          {/* ====================================================== */}
-          {/* ROW 3 - LEFT: EVALUATION ROUNDS */}
-          {/* ====================================================== */}
-          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-5">
-            <div className="border-b border-zinc-100 pb-3 flex items-center justify-between gap-2">
-              <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
+        {/* ======================================================== */}
+        {/* ROW 3: EVALUATION ROUNDS (FULL WIDTH) */}
+        {/* ======================================================== */}
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl sm:rounded-3xl p-6 sm:p-7 shadow-xs space-y-6">
+            <div className="border-b border-[#F4EFEA] pb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-[#FFF5ED] border border-[#FED7AA] flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
                   <Layers className="w-4 h-4 stroke-[2.2]" />
                 </div>
                 <div>
-                  <h2 className="text-base font-extrabold text-zinc-900">Evaluation Rounds</h2>
-                  <p className="text-xs text-zinc-500 font-normal">
+                  <h2 className="text-base font-extrabold text-[#18181B]">Evaluation Rounds</h2>
+                  <p className="text-xs text-[#6B7280] font-normal mt-0.5">
                     Define the sequence of evaluation rounds and their specific problem statements.
                   </p>
                 </div>
@@ -1205,7 +1211,7 @@ export default function AdminEditHackathonPage({
               <button
                 type="button"
                 onClick={addRound}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100/70 border border-orange-200/80 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-[#FA541C] bg-[#FFF5ED] hover:bg-[#FFE8D6] border border-[#FED7AA] rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shadow-2xs cursor-pointer self-start sm:self-auto"
               >
                 <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
                 <span>Add Round</span>
@@ -1222,41 +1228,41 @@ export default function AdminEditHackathonPage({
                   <div
                     key={rIdx}
                     onClick={() => setActiveRoundIdx(rIdx)}
-                    className={`border rounded-2xl p-4.5 space-y-4 transition-all duration-200 ${
+                    className={`rounded-2xl p-5 space-y-4 transition-all duration-200 ${
                       isSelected
-                        ? 'border-orange-300 bg-zinc-50/60 ring-2 ring-orange-500/10 shadow-xs'
-                        : 'border-zinc-200 bg-white hover:border-zinc-300 hover:bg-zinc-50/40'
+                        ? 'border-2 border-[#FA541C]/40 bg-[#FFFAF5] shadow-sm ring-1 ring-[#FA541C]/10'
+                        : 'border border-[#E5E0D8] bg-white hover:border-[#CBD5E1] shadow-2xs'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-2">
+                    <div className="flex items-center justify-between pb-1">
+                      <div className="flex items-center flex-wrap gap-2">
                         <button
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
                             setRoundCollapsed((prev) => ({ ...prev, [rIdx]: !prev[rIdx] }));
                           }}
-                          className="flex items-center space-x-1.5 text-xs font-extrabold text-zinc-800 hover:text-orange-600 transition-colors"
+                          className="flex items-center space-x-2 text-sm font-extrabold text-[#18181B] hover:text-[#FA541C] transition-colors cursor-pointer"
                         >
                           <ChevronDown
-                            className={`w-4 h-4 text-zinc-500 transition-transform ${
+                            className={`w-4 h-4 text-[#6B7280] transition-transform ${
                               isCollapsed ? '-rotate-90' : ''
                             }`}
                           />
                           <span>Round {rIdx + 1}</span>
                         </button>
                         {round.isFinal && (
-                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+                          <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2.5 py-0.5 rounded-full border border-amber-300 shadow-2xs">
                             FINALE
                           </span>
                         )}
                         {isSelected && (
-                          <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                          <span className="text-[10px] font-bold text-[#FA541C] bg-[#FFF5ED] px-2.5 py-0.5 rounded-full border border-[#FED7AA] shadow-2xs">
                             Active Round
                           </span>
                         )}
                         {progressionMode === 'SELECTION_BASED' && round.selectionCount && (
-                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          <span className="text-[10px] font-bold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-300 shadow-2xs">
                             Top {round.selectionCount} Advance
                           </span>
                         )}
@@ -1269,7 +1275,7 @@ export default function AdminEditHackathonPage({
                           removeRound(rIdx);
                         }}
                         disabled={rounds.length <= 1}
-                        className="p-1.5 text-rose-500 hover:bg-rose-50 rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                        className="w-8 h-8 rounded-xl flex items-center justify-center text-red-500 hover:text-red-700 hover:bg-red-50 transition-all disabled:opacity-30 cursor-pointer"
                         title="Delete Round"
                       >
                         <Trash2 className="w-4 h-4" />
@@ -1277,42 +1283,30 @@ export default function AdminEditHackathonPage({
                     </div>
 
                     {!isCollapsed && (
-                      <div className="space-y-4 pt-1">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                ROUND NAME
-                              </span>
-                              <label className="flex items-center space-x-1 cursor-pointer">
-                                <span className="text-[10px] font-bold text-zinc-500 uppercase">
-                                  FINAL ROUND
-                                </span>
-                                <input
-                                  type="checkbox"
-                                  checked={round.isFinal}
-                                  onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
-                                  className="rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
-                                />
-                              </label>
-                            </div>
+                      <div className="space-y-4 pt-2 border-t border-[#F4EFEA]">
+                        {/* Row 1: Name, Type, Status */}
+                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3.5 items-end">
+                          <div className={progressionMode === 'SELECTION_BASED' ? 'sm:col-span-5 space-y-1.5' : 'sm:col-span-6 space-y-1.5'}>
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              Round Name <span className="text-red-500">*</span>
+                            </label>
                             <input
                               type="text"
                               value={round.name}
                               onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
                               placeholder="e.g. The Qualifiers"
-                              className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl font-bold text-zinc-900 focus:outline-none focus:border-orange-500"
+                              className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-bold text-[#18181B] placeholder-[#9CA3AF] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
                             />
                           </div>
 
-                          <div className={progressionMode === 'SELECTION_BASED' ? 'space-y-1' : 'sm:col-span-2 space-y-1'}>
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              ROUND TYPE
-                            </span>
+                          <div className={progressionMode === 'SELECTION_BASED' ? 'sm:col-span-3 space-y-1.5' : 'sm:col-span-4 space-y-1.5'}>
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              Round Type
+                            </label>
                             <select
                               value={round.roundType}
                               onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
-                              className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-semibold cursor-pointer"
+                              className="w-full h-[40px] px-3 text-xs bg-white border border-[#E5E0D8] rounded-xl font-semibold text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs cursor-pointer"
                             >
                               <option value="Mock Hackathon">Mock Hackathon</option>
                               <option value="Hackathon">Hackathon</option>
@@ -1323,11 +1317,11 @@ export default function AdminEditHackathonPage({
                           </div>
 
                           {progressionMode === 'SELECTION_BASED' && (
-                            <div className="space-y-1">
-                              <span className="text-[10px] font-bold text-orange-600 uppercase flex items-center justify-between">
-                                <span>TEAMS ADVANCING*</span>
-                                <span className="text-[9px] text-zinc-400 normal-case">(Cutoff)</span>
-                              </span>
+                            <div className="sm:col-span-2 space-y-1.5">
+                              <label className="text-[11px] font-bold text-[#FA541C] uppercase tracking-wider flex items-center justify-between">
+                                <span>Cutoff</span>
+                                <span className="text-[9px] text-[#9CA3AF] normal-case">Top</span>
+                              </label>
                               <input
                                 type="number"
                                 min="1"
@@ -1335,69 +1329,97 @@ export default function AdminEditHackathonPage({
                                 value={round.selectionCount ?? ''}
                                 onChange={(e) => updateRound(rIdx, 'selectionCount', e.target.value)}
                                 placeholder={rIdx === 0 ? "25" : rIdx === 1 ? "10" : "5"}
-                                className="w-full px-3 py-2 text-xs bg-orange-50/50 border border-orange-200 rounded-xl font-bold text-orange-700 focus:outline-none focus:border-orange-500"
+                                className="w-full h-[40px] px-3 text-xs bg-[#FFF5ED] border border-[#FED7AA] rounded-xl font-bold text-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
                               />
                             </div>
                           )}
+
+                          <div className={progressionMode === 'SELECTION_BASED' ? 'sm:col-span-2 space-y-1.5' : 'sm:col-span-2 space-y-1.5'}>
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              Status
+                            </label>
+                            <label className={`flex items-center justify-center gap-2 h-[40px] px-3 rounded-xl border cursor-pointer select-none transition-all shadow-2xs ${
+                              round.isFinal
+                                ? 'bg-amber-50 border-amber-300 text-amber-900 font-bold'
+                                : 'bg-white border-[#E5E0D8] text-[#4B5563] hover:border-zinc-300 font-semibold'
+                            }`}>
+                              <input
+                                type="checkbox"
+                                checked={round.isFinal}
+                                onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
+                                className="w-4 h-4 rounded text-[#FA541C] focus:ring-[#FA541C] border-[#CBD5E1] cursor-pointer"
+                              />
+                              <span className="text-xs whitespace-nowrap">Finale</span>
+                            </label>
+                          </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              START DATE &amp; TIME
-                            </span>
+                        {/* Row 2: Dates */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              Start Date &amp; Time
+                            </label>
                             <input
                               type="datetime-local"
                               value={round.startDate}
                               onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                              className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-medium text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              END DATE &amp; TIME
-                            </span>
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              End Date &amp; Time
+                            </label>
                             <input
                               type="datetime-local"
                               value={round.endDate}
                               onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                              className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-medium text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
                             />
                           </div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              SUBMISSION DEADLINE
-                            </span>
+                        {/* Row 3: Deadline & Max Teams */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              Submission Deadline
+                            </label>
                             <input
                               type="datetime-local"
                               value={round.submissionDeadline}
                               onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                              className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-medium text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
                             />
                           </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              MAX TEAMS ALLOWED
-                            </span>
+                          <div className="space-y-1.5">
+                            <label className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider block">
+                              Max Teams Allowed
+                            </label>
                             <input
                               type="number"
                               min="1"
                               value={round.maxTeamsAllowed}
                               onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-bold"
+                              placeholder="e.g. 50"
+                              className="w-full h-[40px] px-3.5 text-xs bg-white border border-[#E5E0D8] rounded-xl font-bold text-[#18181B] focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] outline-none transition-all shadow-2xs"
                             />
                           </div>
                         </div>
 
-                        {/* What to Evaluate (Required Submissions) */}
-                        <div className="space-y-2 pt-1">
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">
-                            WHAT TO EVALUATE (REQUIRED SUBMISSIONS)
-                          </span>
-                          <div className="flex flex-wrap gap-2">
+                        {/* Row 4: What to Evaluate (Required Submissions) */}
+                        <div className="p-4 bg-white border border-[#E5E0D8] rounded-xl space-y-2.5 shadow-2xs">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[11px] font-bold text-[#4B5563] uppercase tracking-wider flex items-center gap-1.5">
+                              <CheckCircle2 className="w-3.5 h-3.5 text-[#FA541C]" />
+                              <span>What to Evaluate (Required Submissions)</span>
+                            </span>
+                            <span className="text-[10px] text-[#9CA3AF] font-medium hidden sm:inline">
+                              Select deliverables required from teams in this round
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-2 pt-0.5">
                             {[
                               { key: 'github', label: 'GitHub link' },
                               { key: 'ppt', label: 'PPT link' },
@@ -1418,18 +1440,139 @@ export default function AdminEditHackathonPage({
                                     };
                                     updateRound(rIdx, 'requiredSubmissions', updatedReqs);
                                   }}
-                                  className={`px-3 py-1.5 rounded-full text-xs font-semibold border flex items-center space-x-1.5 transition-all cursor-pointer ${
+                                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold border flex items-center space-x-1.5 transition-all cursor-pointer hover:scale-[1.02] active:scale-95 ${
                                     checked
-                                      ? 'bg-[#FA541C] text-white border-[#FA541C] shadow-xs'
-                                      : 'bg-white text-zinc-600 border-zinc-200 hover:border-orange-300 hover:bg-zinc-50'
+                                      ? 'bg-[#FFF5ED] text-[#FA541C] border-[#FED7AA] shadow-2xs'
+                                      : 'bg-[#FAF8F5] text-[#4B5563] border-[#E5E0D8] hover:border-[#CBD5E1] hover:bg-white'
                                   }`}
                                 >
-                                  <span>{checked ? '✓' : '+'}</span>
+                                  <span className="text-xs">{checked ? '✓' : '+'}</span>
                                   <span>{item.label}</span>
                                 </button>
                               );
                             })}
                           </div>
+                        </div>
+
+                        {/* Marking Criteria for this specific round */}
+                        <div className="p-4 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-3.5">
+                          <div className="flex items-center justify-between pb-2 border-b border-zinc-200/60 gap-2">
+                            <div className="flex items-start gap-2">
+                              <Award className="w-4 h-4 text-[#FA541C] flex-shrink-0 mt-0.5" />
+                              <div>
+                                <span className="text-xs font-bold text-zinc-900 uppercase tracking-wider block">
+                                  Jury Evaluation Marking Criteria
+                                </span>
+                                <p className="text-[11px] text-zinc-500 font-normal">
+                                  Configure evaluation criteria and maximum marks for {round.name || `Round ${rIdx + 1}`}.
+                                </p>
+                              </div>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                addCriterion(rIdx);
+                              }}
+                              className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100/70 border border-orange-200/80 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0 cursor-pointer"
+                            >
+                              <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
+                              <span>Add Criterion</span>
+                            </button>
+                          </div>
+
+                          <div className="space-y-3">
+                            {round.criteria.map((crit, cIdx) => (
+                              <div
+                                key={cIdx}
+                                className="p-3.5 bg-white border border-zinc-200 rounded-xl space-y-2.5 shadow-2xs hover:border-zinc-300 transition-all"
+                              >
+                                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+                                  <div className="sm:col-span-3 space-y-1">
+                                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                                      CRITERION NAME
+                                    </span>
+                                    <input
+                                      type="text"
+                                      value={crit.name}
+                                      onChange={(e) => updateCriterion(rIdx, cIdx, 'name', e.target.value)}
+                                      placeholder="e.g. Technical Execution"
+                                      className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-900 font-semibold"
+                                    />
+                                  </div>
+                                  <div className="space-y-1">
+                                    <div className="flex items-center justify-between">
+                                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                                        MAX MARKS
+                                      </span>
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          removeCriterion(rIdx, cIdx);
+                                        }}
+                                        disabled={round.criteria.length <= 1}
+                                        className="text-rose-500 hover:text-rose-700 disabled:opacity-20 cursor-pointer"
+                                        title="Delete Criterion"
+                                      >
+                                        <Trash2 className="w-3.5 h-3.5" />
+                                      </button>
+                                    </div>
+                                    <input
+                                      type="text"
+                                      inputMode="numeric"
+                                      value={crit.maxMarks ?? ''}
+                                      onChange={(e) => {
+                                        const clean = e.target.value.replace(/[^0-9]/g, '').replace(/^0+(?=[0-9])/, '');
+                                        updateCriterion(rIdx, cIdx, 'maxMarks', clean);
+                                      }}
+                                      onBlur={() => {
+                                        const val = Number(crit.maxMarks);
+                                        if (!val || val < 1) {
+                                          updateCriterion(rIdx, cIdx, 'maxMarks', 10);
+                                        } else {
+                                          updateCriterion(rIdx, cIdx, 'maxMarks', val);
+                                        }
+                                      }}
+                                      className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg font-bold text-orange-600 focus:outline-none focus:border-orange-500"
+                                    />
+                                  </div>
+                                </div>
+
+                                <div className="space-y-1">
+                                  <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                                    DESCRIPTION / GUIDE FOR JURY
+                                  </span>
+                                  <input
+                                    type="text"
+                                    value={crit.description}
+                                    onChange={(e) => updateCriterion(rIdx, cIdx, 'description', e.target.value)}
+                                    placeholder="e.g. Code architecture and robustness"
+                                    className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-800"
+                                  />
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Total Marks Bar for this round */}
+                          {(() => {
+                            const roundTotalMarks = (round.criteria || []).reduce(
+                              (acc: number, c: any) => acc + (Number(c.maxMarks) || 0),
+                              0
+                            );
+                            return (
+                              <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
+                                <span className="text-xs font-bold text-blue-900 tracking-wider">
+                                  Total Round Evaluation Marks:
+                                </span>
+                                <span className="px-3 py-0.5 rounded-full text-xs font-bold text-blue-600 bg-white border border-blue-200 shadow-2xs">
+                                  {roundTotalMarks} Marks
+                                </span>
+                              </div>
+                            );
+                          })()}
                         </div>
                       </div>
                     )}
@@ -1438,117 +1581,6 @@ export default function AdminEditHackathonPage({
               })}
             </div>
           </div>
-
-          {/* ====================================================== */}
-          {/* ROW 3 - RIGHT: JURY EVALUATION MARKING CRITERIA */}
-          {/* ====================================================== */}
-          <div className="bg-white border border-zinc-200/90 rounded-2xl p-6 shadow-xs hover:shadow-md transition-all duration-300 space-y-5">
-            <div className="border-b border-zinc-100 pb-3 flex items-center justify-between gap-2">
-              <div className="flex items-start gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-orange-50 border border-orange-200/80 flex items-center justify-center text-[#FA541C] flex-shrink-0 mt-0.5">
-                  <Award className="w-4 h-4 stroke-[2.2]" />
-                </div>
-                <div>
-                  <h2 className="text-base font-extrabold text-zinc-900">Jury Evaluation Marking Criteria</h2>
-                  <p className="text-xs text-zinc-500 font-normal">
-                    Define the evaluation criteria and maximum marks for each criterion.
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => addCriterion(activeRoundIdx)}
-                className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold text-orange-600 bg-orange-50 hover:bg-orange-100/70 border border-orange-200/80 rounded-xl transition-all hover:scale-[1.02] active:scale-[0.98] shrink-0"
-              >
-                <Plus className="w-3.5 h-3.5 stroke-[2.5]" />
-                <span>Add Criterion</span>
-              </button>
-            </div>
-
-            {/* Criteria Cards */}
-            <div className="space-y-3">
-              {currentRound?.criteria.map((crit, cIdx) => (
-                <div
-                  key={cIdx}
-                  className="p-3.5 bg-zinc-50/70 border border-zinc-200/80 rounded-xl space-y-2.5 hover:border-zinc-300 transition-all"
-                >
-                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-                    <div className="sm:col-span-3 space-y-1">
-                      <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                        CRITERION NAME
-                      </span>
-                      <input
-                        type="text"
-                        value={crit.name}
-                        onChange={(e) => updateCriterion(activeRoundIdx, cIdx, 'name', e.target.value)}
-                        placeholder="e.g. Technical Execution"
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-900 font-semibold"
-                      />
-                    </div>
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                          MAX MARKS
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => removeCriterion(activeRoundIdx, cIdx)}
-                          disabled={currentRound.criteria.length <= 1}
-                          className="text-rose-500 hover:text-rose-700 disabled:opacity-20 cursor-pointer"
-                          title="Delete Criterion"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                      <input
-                        type="text"
-                        inputMode="numeric"
-                        value={crit.maxMarks ?? ''}
-                        onChange={(e) => {
-                          const clean = e.target.value.replace(/[^0-9]/g, '').replace(/^0+(?=[0-9])/, '');
-                          updateCriterion(activeRoundIdx, cIdx, 'maxMarks', clean);
-                        }}
-                        onBlur={() => {
-                          const val = Number(crit.maxMarks);
-                          if (!val || val < 1) {
-                            updateCriterion(activeRoundIdx, cIdx, 'maxMarks', 10);
-                          } else {
-                            updateCriterion(activeRoundIdx, cIdx, 'maxMarks', val);
-                          }
-                        }}
-                        className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg font-bold text-orange-600 focus:outline-none focus:border-orange-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-1">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                      DESCRIPTION / GUIDE FOR JURY
-                    </span>
-                    <input
-                      type="text"
-                      value={crit.description}
-                      onChange={(e) => updateCriterion(activeRoundIdx, cIdx, 'description', e.target.value)}
-                      placeholder="e.g. Code architecture and robustness"
-                      className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-lg focus:outline-none focus:border-orange-500 text-zinc-800"
-                    />
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Total Marks Bar */}
-            <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-xl flex items-center justify-between">
-              <span className="text-xs font-bold text-blue-900 tracking-wider">
-                Total Round Evaluation Marks:
-              </span>
-              <span className="px-3 py-0.5 rounded-full text-xs font-bold text-blue-600 bg-white border border-blue-200 shadow-2xs">
-                {currentTotalMarks} Marks
-              </span>
-            </div>
-          </div>
-        </div>
 
         {/* ======================================================== */}
         {/* ROW 4 - FULL WIDTH: TRACKS & QUESTIONS */}
