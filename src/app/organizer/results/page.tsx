@@ -15,6 +15,7 @@ import {
   BarChart3,
   Globe,
   ChevronRight,
+  Download,
   X,
 } from 'lucide-react';
 
@@ -331,6 +332,30 @@ export default function OrganizerResultsPage() {
     }
   };
 
+  const handleExportCsv = () => {
+    if (!results || results.length === 0) return;
+    const headers = ['Rank', 'Project Title', 'Team Name', 'Track', 'Raw Score', 'Normalized Score', 'Final Score', 'Award'];
+    const rows = results.map((r) => [
+      r.rank,
+      `"${(r.projectTitle || '').replace(/"/g, '""')}"`,
+      `"${(r.teamName || '').replace(/"/g, '""')}"`,
+      `"${(r.trackTitle || '').replace(/"/g, '""')}"`,
+      r.rawAverageScore,
+      r.normalizedScore,
+      r.finalScore,
+      `"${(r.awardCategory || 'None').replace(/"/g, '""')}"`,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((row) => row.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `official_results_${selectedHackathonId || 'event'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="space-y-6 select-none font-sans max-w-7xl mx-auto pb-12">
       {/* ================= IN-PAGE BREADCRUMBS ================= */}
@@ -444,6 +469,17 @@ export default function OrganizerResultsPage() {
           >
             <ShieldCheck className="w-3.5 h-3.5 text-[#EA580C]" />
             <span>Verify Integrity</span>
+          </button>
+
+          {/* Export CSV Button */}
+          <button
+            onClick={handleExportCsv}
+            disabled={results.length === 0}
+            className="px-4 py-2.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5 disabled:opacity-50"
+            title="Download official results as CSV"
+          >
+            <Download className="w-3.5 h-3.5 text-[#2563EB]" />
+            <span>Export CSV</span>
           </button>
 
           {/* View Public Leaderboard Button */}

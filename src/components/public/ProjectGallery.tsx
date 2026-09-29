@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useMemo } from 'react';
-import { Search, Filter, X, ChevronDown, Layers } from 'lucide-react';
+import { Search, Filter, X, ChevronDown, Layers, Code2, Copy, CheckCircle2 } from 'lucide-react';
 import { AppShell } from '@/components/ui/AppShell';
 import { ProjectCard, ProjectCardProps } from '@/components/ui/ProjectCard';
 
@@ -173,6 +173,9 @@ export const ProjectGallery: React.FC<ProjectGalleryProps> = ({
   const [selectedTrack, setSelectedTrack] = useState<string>('all');
   const [selectedTech, setSelectedTech] = useState<string>('all');
   const [sortBy, setSortBy] = useState<'newest' | 'votes' | 'rank'>('newest');
+  const [showEmbedModal, setShowEmbedModal] = useState(false);
+  const [embedTheme, setEmbedTheme] = useState<'dark' | 'light'>('dark');
+  const [copiedEmbed, setCopiedEmbed] = useState(false);
 
   // Filter & sort logic
   const filteredProjects = useMemo(() => {
@@ -259,13 +262,24 @@ export const ProjectGallery: React.FC<ProjectGalleryProps> = ({
           {/* Small Top Orange Accent Bar */}
           <div className="w-10 h-1 bg-[#FA541C] rounded-full mb-3" />
 
-          {/* Heading */}
-          <h1 className="text-2xl sm:text-[34px] font-extrabold text-[#18181B] tracking-tight leading-tight">
-            Project Showcase &amp; Solutions
-          </h1>
-          <p className="text-xs sm:text-[14px] text-[#6B7280] font-normal mt-1 leading-relaxed">
-            Explore cutting-edge prototypes, open-source repositories, and community-voted solutions.
-          </p>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <h1 className="text-2xl sm:text-[34px] font-extrabold text-[#18181B] tracking-tight leading-tight">
+                Project Showcase &amp; Solutions
+              </h1>
+              <p className="text-xs sm:text-[14px] text-[#6B7280] font-normal mt-1 leading-relaxed">
+                Explore cutting-edge prototypes, open-source repositories, and community-voted solutions.
+              </p>
+            </div>
+
+            <button
+              onClick={() => setShowEmbedModal(true)}
+              className="self-start sm:self-auto px-4 py-2 bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#FA541C]/40 text-[#FA541C] text-xs font-bold rounded-xl shadow-xs transition-all flex items-center gap-2 cursor-pointer"
+            >
+              <Code2 className="w-4 h-4" />
+              <span>Embed Widget</span>
+            </button>
+          </div>
         </div>
 
         {/* ================= 2. SEARCH & FILTER CONTROLS ================= */}
@@ -425,6 +439,94 @@ export const ProjectGallery: React.FC<ProjectGalleryProps> = ({
             {filteredProjects.map((project) => (
               <ProjectCard key={project.id} {...project} />
             ))}
+          </div>
+        )}
+
+        {/* ================= 4. EMBED WIDGET MODAL ================= */}
+        {showEmbedModal && (
+          <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in-50">
+            <div className="bg-white rounded-2xl border border-[#E5E0D8] max-w-xl w-full p-6 shadow-2xl space-y-4">
+              <div className="flex items-center justify-between border-b border-[#F4EFEA] pb-3">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#FFE8D6] text-[#FA541C] flex items-center justify-center">
+                    <Code2 className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <h3 className="font-extrabold text-sm text-[#18181B]">Embed Solution Gallery Widget</h3>
+                    <p className="text-[11px] text-[#6B7280]">Embed this live solution showcase on your site or blog.</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowEmbedModal(false)}
+                  className="text-[#9CA3AF] hover:text-[#18181B] p-1 text-sm font-bold"
+                >
+                  ✕
+                </button>
+              </div>
+
+              {/* Theme Selector */}
+              <div className="flex items-center justify-between p-3 bg-[#FAF8F5] rounded-xl border border-[#E5E0D8] text-xs">
+                <span className="font-bold text-[#18181B]">Widget Color Palette:</span>
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setEmbedTheme('dark')}
+                    className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
+                      embedTheme === 'dark' ? 'bg-[#18181B] text-white shadow-xs' : 'text-[#6B7280]'
+                    }`}
+                  >
+                    Dark Theme
+                  </button>
+                  <button
+                    onClick={() => setEmbedTheme('light')}
+                    className={`px-3 py-1 rounded-lg font-bold text-xs transition-all ${
+                      embedTheme === 'light' ? 'bg-white text-[#18181B] border border-[#CBD5E1] shadow-xs' : 'text-[#6B7280]'
+                    }`}
+                  >
+                    Light Theme
+                  </button>
+                </div>
+              </div>
+
+              {/* Code Snippet Box */}
+              <div className="space-y-1.5">
+                <label className="text-xs font-bold text-[#18181B] block">HTML Embed Code (iframe)</label>
+                <div className="relative">
+                  <pre className="p-3 bg-[#131417] text-[#10B981] font-mono text-xs rounded-xl overflow-x-auto select-all leading-relaxed border border-[#27272A]">
+                    {`<iframe\n  src="${typeof window !== 'undefined' ? window.location.origin : 'https://hackathon.dev'}/embed/gallery?theme=${embedTheme}"\n  width="100%"\n  height="620"\n  frameborder="0"\n  allow="clipboard-write"\n></iframe>`}
+                  </pre>
+                  <button
+                    onClick={() => {
+                      const snippet = `<iframe src="${typeof window !== 'undefined' ? window.location.origin : 'https://hackathon.dev'}/embed/gallery?theme=${embedTheme}" width="100%" height="620" frameborder="0" allow="clipboard-write"></iframe>`;
+                      navigator.clipboard.writeText(snippet);
+                      setCopiedEmbed(true);
+                      setTimeout(() => setCopiedEmbed(false), 2500);
+                    }}
+                    className="absolute top-2.5 right-2.5 px-3 py-1 bg-white/10 hover:bg-white/20 text-white rounded-lg text-xs font-bold transition-colors flex items-center gap-1.5"
+                  >
+                    {copiedEmbed ? <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                    <span>{copiedEmbed ? 'Copied!' : 'Copy Code'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Preview Button */}
+              <div className="pt-2 flex items-center justify-between border-t border-[#F4EFEA] text-xs">
+                <a
+                  href={`/embed/gallery?theme=${embedTheme}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[#FA541C] font-bold hover:underline"
+                >
+                  Open Widget in Full Screen Preview &gt;
+                </a>
+                <button
+                  onClick={() => setShowEmbedModal(false)}
+                  className="px-4 py-1.5 bg-[#FAF8F5] border border-[#E5E0D8] text-[#18181B] font-bold rounded-xl hover:bg-neutral-100"
+                >
+                  Close
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

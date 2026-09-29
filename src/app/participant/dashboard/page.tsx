@@ -21,6 +21,7 @@ import {
   FolderGit2,
   Check,
   Hexagon,
+  Vote,
 } from 'lucide-react';
 import { getSession } from '@/server/auth/session';
 import prisma from '@/lib/prisma';
@@ -207,6 +208,13 @@ export default async function ParticipantDashboard() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
+          <Link
+            href="/participant/voting"
+            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-[#FFF7ED] hover:bg-[#FFEDD5] border border-[#FDBA74] text-[#C2410C] text-xs font-bold rounded-xl shadow-xs transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"
+          >
+            <Vote className="w-4 h-4 text-[#C2410C] group-hover:scale-110 transition-transform" />
+            <span>Vote on Questions</span>
+          </Link>
           <Link
             href="/hackathons"
             className="inline-flex items-center space-x-2 px-4 py-2.5 bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#FA541C]/50 text-[#FA541C] text-xs font-bold rounded-xl shadow-xs transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"

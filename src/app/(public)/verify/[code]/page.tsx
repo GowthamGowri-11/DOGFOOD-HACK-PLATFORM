@@ -130,7 +130,14 @@ export default function CertificateVerificationPage({
                 <span className="text-[11px] font-bold text-[#64748B] uppercase tracking-wider block">
                   Credential Title
                 </span>
-                <h2 className="text-xl font-bold text-[#111827] mt-0.5">{cert.title}</h2>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <h2 className="text-xl font-bold text-[#111827]">{cert.title}</h2>
+                  {cert.type === 'JUDGE' && (
+                    <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      ⚖️ Official Judge Record
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">

@@ -33,6 +33,10 @@ import {
   PieChart,
   HelpCircle,
   MessageSquare,
+  Vote,
+  Zap,
+  Database,
+  Terminal,
 } from 'lucide-react';
 
 export type UserRole = 'PARTICIPANT' | 'ORGANIZER' | 'JUDGE' | 'ADMIN';
@@ -58,9 +62,11 @@ export interface SidebarProps {
   onOpenLoginModal?: () => void;
 }
 
-// Constant 3 Pages displayed to all unauthenticated/guest users across all roles
+// Pages displayed to all unauthenticated/guest users across all roles
 const GUEST_ITEMS: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
+  { label: 'API Docs', href: '/docs', icon: Terminal, badge: 'v1' },
+  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
@@ -74,7 +80,10 @@ const PARTICIPANT_ITEMS: NavItem[] = [
   { label: 'My Submissions', href: '/participant/submissions', icon: Upload },
   { label: 'Leaderboard', href: '/leaderboard', icon: BarChart3 },
   { label: 'Project Gallery', href: '/projects', icon: Layers },
+  { label: 'Vote on Questions', href: '/participant/voting', icon: Vote },
   { label: 'Certificates', href: '/participant/certificates', icon: Award },
+  { label: 'API Docs', href: '/docs', icon: Terminal },
+  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'My Activity', href: '/participant/activity', icon: Activity },
   { label: 'My Profile', href: '/participant/settings', icon: UserCheck2 },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
@@ -92,12 +101,18 @@ const ORGANIZER_ITEMS: NavItem[] = [
   { label: 'Assignments', href: '/organizer/assignments', icon: Scale },
   { label: 'Rubrics', href: '/organizer/rubrics', icon: Sliders },
   { label: 'Judging', href: '/organizer/judging', icon: Scale },
+  { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap, badge: 'Proof' },
   { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles, badge: 'AI' },
   { label: 'Results', href: '/organizer/results', icon: Award },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
   { label: 'Certificates', href: '/organizer/certificates', icon: ShieldCheck },
   { label: 'Analytics', href: '/organizer/analytics', icon: PieChart },
   { label: 'Community', href: '/organizer/community', icon: Layers },
+  { label: 'Track & Question Voting', href: '/organizer/voting', icon: Vote },
+  { label: 'REST Webhooks', href: '/organizer/webhooks', icon: Zap },
+  { label: 'Data Portability & Import', href: '/organizer/portability', icon: Database },
+  { label: 'API Docs', href: '/docs', icon: Terminal },
+  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'Audit Logs', href: '/organizer/audit', icon: History },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
@@ -109,7 +124,12 @@ const JUDGE_ITEMS: NavItem[] = [
   { label: 'My Assignments', href: '/judge/assignments', icon: Scale },
   { label: 'Pending Evaluations', href: '/judge/evaluations', icon: FileCheck },
   { label: 'Completed Evaluations', href: '/judge/completed', icon: ShieldCheck },
+  { label: 'Pairwise Judging', href: '/judge/pairwise', icon: Scale, badge: 'Gavel' },
+  { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
   { label: 'Leaderboard', href: '/leaderboard', icon: Award },
+  { label: 'API Docs', href: '/docs', icon: Terminal },
+  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
+  { label: 'My Credential', href: '/judge/credential', icon: ShieldCheck },
   { label: 'Profile', href: '/judge/profile', icon: UserCheck2 },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
@@ -124,6 +144,12 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'Submissions', href: '/admin/submissions', icon: FileCheck },
   { label: 'Judges', href: '/admin/judges', icon: UserCheck2 },
   { label: 'Results & Leaderboard', href: '/admin/results', icon: Award },
+  { label: 'Track & Question Voting', href: '/admin/voting', icon: Vote },
+  { label: 'REST Webhooks', href: '/organizer/webhooks', icon: Zap },
+  { label: 'Data Portability & Import', href: '/organizer/portability', icon: Database },
+  { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
+  { label: 'API Docs', href: '/docs', icon: Terminal },
+  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'Certificates', href: '/admin/certificates', icon: ShieldCheck },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: History },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },

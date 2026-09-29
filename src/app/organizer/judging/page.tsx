@@ -25,6 +25,7 @@ import {
   Activity,
   Bot,
   MoreHorizontal,
+  Download,
   Minus,
   Plus,
 } from 'lucide-react';
@@ -270,6 +271,30 @@ export default function OrganizerJudgingDashboard() {
     } finally {
       setActionLoading(false);
     }
+  };
+
+  const handleExportCsv = () => {
+    if (!displayJudges || displayJudges.length === 0) return;
+    const headers = ['Judge Name', 'Email', 'Status', 'Max Workload', 'Assigned', 'Completed', 'Pending', 'Completion Rate'];
+    const rows = displayJudges.map((j: any) => [
+      `"${(j.judgeName || '').replace(/"/g, '""')}"`,
+      `"${(j.email || '').replace(/"/g, '""')}"`,
+      j.isActive ? 'Active' : 'Inactive',
+      j.maxWorkload,
+      j.assignedCount,
+      j.completedCount,
+      j.pendingCount,
+      `"${j.progressPercentage}%"`,
+    ]);
+    const csvContent = [headers.join(','), ...rows.map((r: any) => r.join(','))].join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `judging_matrix_${selectedHackathonId || 'event'}_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
   return (
@@ -656,14 +681,22 @@ export default function OrganizerJudgingDashboard() {
             </div>
           </div>
 
-          <button
-            onClick={handleComputeNormalization}
-            disabled={actionLoading}
-            className="w-full py-3 px-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 mt-6 cursor-pointer relative z-10"
-          >
-            <BarChart3 className="w-4 h-4" />
-            Compute Normalized Ranks
-          </button>
+          <div className="space-y-2 mt-6 relative z-10">
+            <button
+              onClick={handleComputeNormalization}
+              disabled={actionLoading}
+              className="w-full py-3 px-4 bg-[#8B5CF6] hover:bg-[#7C3AED] text-white rounded-xl text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+            >
+              <BarChart3 className="w-4 h-4" />
+              Compute Normalized Ranks
+            </button>
+            <Link
+              href="/organizer/judging/normalization-proof"
+              className="w-full py-2 px-3 border border-purple-200 hover:bg-purple-50 text-purple-700 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1.5 text-center"
+            >
+              <span>View Mathematical Proof &amp; Audit &rarr;</span>
+            </Link>
+          </div>
         </div>
 
         {/* 3. Autonomous AI Jury */}
@@ -785,14 +818,25 @@ export default function OrganizerJudgingDashboard() {
             </div>
           </div>
 
-          <Link
-            href="/organizer/judges"
-            className="text-xs font-bold text-[#2563EB] hover:text-blue-700 flex items-center gap-1.5 border border-slate-200/90 rounded-xl px-3.5 py-1.5 bg-white hover:bg-slate-50 shadow-xs transition-colors"
-          >
-            <Users className="w-3.5 h-3.5" />
-            <span>Manage Judges</span>
-            <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
-          </Link>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportCsv}
+              className="text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center gap-1.5 border border-slate-200/90 rounded-xl px-3.5 py-1.5 bg-white hover:bg-slate-50 shadow-xs transition-colors cursor-pointer"
+              title="Download live judge matrix as CSV"
+            >
+              <Download className="w-3.5 h-3.5 text-[#2563EB]" />
+              <span>Export CSV</span>
+            </button>
+
+            <Link
+              href="/organizer/judges"
+              className="text-xs font-bold text-[#2563EB] hover:text-blue-700 flex items-center gap-1.5 border border-slate-200/90 rounded-xl px-3.5 py-1.5 bg-white hover:bg-slate-50 shadow-xs transition-colors"
+            >
+              <Users className="w-3.5 h-3.5" />
+              <span>Manage Judges</span>
+              <ChevronRight className="w-3.5 h-3.5 ml-0.5" />
+            </Link>
+          </div>
         </div>
 
         <div className="overflow-x-auto rounded-xl border border-slate-200/80">
