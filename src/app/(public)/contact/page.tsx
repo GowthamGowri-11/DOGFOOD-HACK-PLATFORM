@@ -153,10 +153,10 @@ export default function ContactPage() {
           </div>
 
           <h1 className="text-2xl sm:text-[34px] font-extrabold text-[#18181B] tracking-tight leading-tight">
-            Let's Connect &amp; Build Together
+            Let&apos;s Connect &amp; Build Together
           </h1>
           <p className="text-xs sm:text-[14px] text-[#6B7280] font-normal mt-1 leading-relaxed max-w-3xl">
-            Whether you're organizing a premier global hackathon, reporting a technical issue, or seeking partnership opportunities, our operations squad is on standby.
+            Whether you&apos;re organizing a premier global hackathon, reporting a technical issue, or seeking partnership opportunities, our operations squad is on standby.
           </p>
         </div>
 

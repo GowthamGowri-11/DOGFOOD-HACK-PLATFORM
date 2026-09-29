@@ -127,12 +127,12 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* APPLICATION AREA */}
-        <main className="flex-1 w-full bg-[#FAF8F5] pt-6 pb-12 px-4 sm:px-6 lg:px-8">
+        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827]">
           <div className="max-w-[1440px] mx-auto">
             {/* If NOT logged in and accessing a protected workspace: show Access Wall */}
             {!authLoading && !currentUser && isProtectedRoute ? (
               <div className="min-h-[500px] flex items-center justify-center py-12 px-4">
-                <div className="max-w-md w-full bg-white rounded-3xl border border-[#E5E0D8] p-8 text-center shadow-lg shadow-black/5 space-y-6">
+                <div className="max-w-md w-full bg-white rounded-3xl border border-[#E2E8F0] p-8 text-center shadow-lg shadow-black/5 space-y-6">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-[#FA541C] to-[#E03A00] text-white flex items-center justify-center mx-auto shadow-md shadow-[#FA541C]/30">
                     <Lock className="w-8 h-8 stroke-[2.2]" />
                   </div>

@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -144,6 +144,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenLoginModal,
 }) => {
   const pathname = usePathname();
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Select items list: GUEST gets ONLY the 3 constant pages!
   const getNavItems = () => {
@@ -257,8 +262,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* BOTTOM: Profile Summary Card */}
-        {isAuthenticated && (
-          <div className="p-3 border-t border-[#202228] bg-[#101114]">
+        {mounted && isAuthenticated && (
+          <div className="p-3 border-t border-[#202228] bg-[#101114]" suppressHydrationWarning>
             {!collapsed ? (
               <div className="flex items-center justify-between p-2 rounded-xl bg-[#16181D] border border-[#23262E]">
                 <div className="flex items-center space-x-2.5 truncate">

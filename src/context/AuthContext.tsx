@@ -49,9 +49,9 @@ const getCachedRole = (): UserRole => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(getCachedUser);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [authLoading, setAuthLoading] = useState(true);
-  const [currentRole, setCurrentRoleState] = useState<UserRole>(getCachedRole);
+  const [currentRole, setCurrentRoleState] = useState<UserRole>('PARTICIPANT');
 
   const setCurrentRole = useCallback((role: UserRole) => {
     setCurrentRoleState(role);
@@ -102,6 +102,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   useEffect(() => {
+    const cachedUser = getCachedUser();
+    const cachedRole = getCachedRole();
+    if (cachedUser) {
+      setCurrentUser(cachedUser);
+    }
+    if (cachedRole) {
+      setCurrentRoleState(cachedRole);
+    }
     refreshAuth();
   }, [refreshAuth]);
 
