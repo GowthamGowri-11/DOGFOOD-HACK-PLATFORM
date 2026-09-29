@@ -230,6 +230,25 @@ export class RegistrationRepository {
     });
   }
 
+  public static async updateCheckIn(id: string, checkedIn: boolean) {
+    return prisma.registration.update({
+      where: { id },
+      data: {
+        checkedIn,
+        checkedInAt: checkedIn ? new Date() : null,
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            fullName: true,
+            email: true,
+          },
+        },
+      },
+    });
+  }
+
   public static async delete(id: string) {
     return prisma.registration.delete({
       where: { id },

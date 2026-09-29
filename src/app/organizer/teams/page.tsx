@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import {
   Users,
@@ -9,24 +9,26 @@ import {
   AlertCircle,
   Trophy,
   ChevronDown,
-  ChevronRight,
   Eye,
   FileText,
   Copy,
   Check,
   Package,
   X,
+  Layers,
+  Sparkles,
+  RotateCcw,
 } from 'lucide-react';
 
 interface MemberItem {
   id: string;
   userId: string;
   isLeader: boolean;
-  user: {
+  user?: {
     id: string;
-    fullName: string;
+    fullName?: string | null;
     email: string;
-  };
+  } | null;
   formResponse?: Record<string, any> | null;
 }
 
@@ -149,7 +151,10 @@ const DEFAULT_DEMO_TEAMS: TeamItem[] = [
         },
       },
     ],
-    project: null,
+    project: {
+      id: 'proj_001',
+      title: 'Polaris Real-Time Agent Guardrails',
+    },
   },
   {
     id: 'team_004',
@@ -320,10 +325,11 @@ const DEFAULT_DEMO_TEAMS: TeamItem[] = [
 
 export default function OrganizerTeamsPage() {
   const [hackathons, setHackathons] = useState<any[]>([]);
-  const [selectedHackathonId, setSelectedHackathonId] = useState<string>('');
-  const [teams, setTeams] = useState<TeamItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [selectedHackathonId, setSelectedHackathonId] = useState<string>('hack_buildathon_2026');
+  const [teams, setTeams] = useState<TeamItem[]>(DEFAULT_DEMO_TEAMS);
+  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
+  const [sizeFilter, setSizeFilter] = useState<'ALL' | 'FULL' | 'FORMING' | 'PROJECT'>('ALL');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   // Selected Member Details Modal
@@ -342,17 +348,15 @@ export default function OrganizerTeamsPage() {
           setSelectedHackathonId(json.data.hackathons[0].id);
         } else {
           setHackathons([
-            { id: 'hack_apex_2026', title: 'Apex Enterprise Hackathon 2026' },
-            { id: 'hack_frontier_2026', title: 'Frontier AI Global Summit' },
+            { id: 'hack_buildathon_2026', title: 'Apex Enterprise Hackathon 2026' },
+            { id: 'a1aa837b-592e-4dcf-a25f-dfa82195482c', title: 'Hacked by Judge' },
           ]);
-          setSelectedHackathonId('hack_apex_2026');
         }
       } catch {
         setHackathons([
-          { id: 'hack_apex_2026', title: 'Apex Enterprise Hackathon 2026' },
-          { id: 'hack_frontier_2026', title: 'Frontier AI Global Summit' },
+          { id: 'hack_buildathon_2026', title: 'Apex Enterprise Hackathon 2026' },
+          { id: 'a1aa837b-592e-4dcf-a25f-dfa82195482c', title: 'Hacked by Judge' },
         ]);
-        setSelectedHackathonId('hack_apex_2026');
       }
     }
     loadHackathons();
@@ -365,21 +369,12 @@ export default function OrganizerTeamsPage() {
       const res = await fetch(`/api/v1/hackathons/${hId}/teams`);
       const json = await res.json();
       if (res.ok && json.data?.teams && json.data.teams.length > 0) {
-        const teamsWithResponses = await Promise.all(
-          json.data.teams.map(async (t: any) => {
-            try {
-              const memRes = await fetch(`/api/v1/teams/${t.id}/members`);
-              const memJson = await memRes.json();
-              if (memRes.ok && memJson.data?.members && memJson.data.members.length > 0) {
-                return { ...t, members: memJson.data.members };
-              }
-            } catch {
-              // fallback
-            }
-            return t;
-          })
-        );
-        setTeams(teamsWithResponses);
+        // Safe mapping to guarantee members is always an array
+        const formattedTeams = json.data.teams.map((t: any) => ({
+          ...t,
+          members: Array.isArray(t.members) ? t.members : [],
+        }));
+        setTeams(formattedTeams);
       } else {
         setTeams(DEFAULT_DEMO_TEAMS);
       }
@@ -402,18 +397,30 @@ export default function OrganizerTeamsPage() {
     setTimeout(() => setCopiedCode(null), 2000);
   };
 
+  // Metrics
+  const stats = useMemo(() => {
+    const totalTeams = teams.length;
+    const totalBuilders = teams.reduce((acc, t) => acc + (t.members?.length || 0), 0);
+    const withProject = teams.filter((t) => Boolean(t.project)).length;
+    return { totalTeams, totalBuilders, withProject };
+  }, [teams]);
+
   const filtered = teams.filter((t) => {
+    const memberList = t.members || [];
+    if (sizeFilter === 'FULL' && memberList.length < 3) return false;
+    if (sizeFilter === 'FORMING' && memberList.length >= 3) return false;
+    if (sizeFilter === 'PROJECT' && !t.project) return false;
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      return (
-        t.name.toLowerCase().includes(q) ||
-        t.inviteCode.toLowerCase().includes(q) ||
-        t.members.some(
-          (m) =>
-            m.user?.fullName?.toLowerCase().includes(q) ||
-            m.user?.email?.toLowerCase().includes(q)
-        )
+      const matchName = t.name?.toLowerCase().includes(q);
+      const matchCode = t.inviteCode?.toLowerCase().includes(q);
+      const matchMember = memberList.some(
+        (m) =>
+          m.user?.fullName?.toLowerCase().includes(q) ||
+          m.user?.email?.toLowerCase().includes(q)
       );
+      return matchName || matchCode || matchMember;
     }
     return true;
   });
@@ -424,11 +431,11 @@ export default function OrganizerTeamsPage() {
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
         <div className="space-y-1.5">
           <div className="flex items-center space-x-2">
-            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#FFF7ED] text-[#EA580C] border border-[#FFEDD5]">
+            <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-[#FFF5ED] text-[#FA541C] border border-[#FED7AA]">
               Builder Arena
             </span>
             <span className="text-xs font-semibold text-slate-500">
-              {teams.length} Formed Teams
+              {stats.totalTeams} Formed Teams
             </span>
           </div>
           <h1 className="text-2xl sm:text-3xl font-extrabold text-[#0F172A] tracking-tight">
@@ -444,15 +451,15 @@ export default function OrganizerTeamsPage() {
           {selectedHackathonId && (
             <Link
               href={`/organizer/hackathons/${selectedHackathonId}/team-form`}
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-[#EA580C] bg-[#FFF7ED] border border-[#FFEDD5] hover:bg-[#FFEDD5] rounded-xl shadow-xs transition-colors self-end sm:self-auto"
+              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-[#FA541C] bg-[#FFF5ED] border border-[#FED7AA] hover:bg-[#FED7AA]/40 rounded-xl shadow-xs transition-colors self-end sm:self-auto"
             >
-              <FileText className="w-3.5 h-3.5 text-[#EA580C]" />
+              <FileText className="w-3.5 h-3.5 text-[#FA541C]" />
               <span>Team Form Builder</span>
             </Link>
           )}
 
           {hackathons.length > 0 && (
-            <div className="flex items-center gap-2 bg-white border border-slate-200 hover:border-slate-300 rounded-2xl px-4 py-2 shadow-xs transition-colors">
+            <div className="flex items-center gap-2 bg-white border border-[#E5E0D8] hover:border-slate-300 rounded-2xl px-4 py-2 shadow-xs transition-colors">
               <span className="text-xs font-bold text-slate-500">Hackathon:</span>
               <div className="flex items-center gap-1.5 text-xs font-bold text-slate-900">
                 <Trophy className="w-4 h-4 text-amber-500 flex-shrink-0" />
@@ -474,27 +481,114 @@ export default function OrganizerTeamsPage() {
         </div>
       </div>
 
-      {/* ================= 2. SEARCH INPUT ================= */}
-      <div className="relative w-full max-w-lg">
-        <Search className="w-4 h-4 text-slate-400 absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none" />
-        <input
-          type="text"
-          placeholder="Search team name, invite code, or member..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full h-11 pl-11 pr-4 bg-white border border-slate-200 hover:border-slate-300 rounded-full text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#FF5500]/20 focus:border-[#FF5500] shadow-xs placeholder:text-slate-400 transition-all"
-        />
+      {/* ================= 2. STATS ROW ================= */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl p-4 shadow-2xs">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+            Formed Squads
+          </span>
+          <div className="text-2xl font-extrabold text-slate-900 mt-1">{stats.totalTeams}</div>
+          <span className="text-[11px] text-slate-400 font-medium">Active competing teams</span>
+        </div>
+
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl p-4 shadow-2xs">
+          <span className="text-[11px] font-bold text-[#FA541C] uppercase tracking-wider block">
+            Builders in Teams
+          </span>
+          <div className="text-2xl font-extrabold text-[#FA541C] mt-1">{stats.totalBuilders}</div>
+          <span className="text-[11px] text-slate-400 font-medium">Assigned to squads</span>
+        </div>
+
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl p-4 shadow-2xs">
+          <span className="text-[11px] font-bold text-emerald-600 uppercase tracking-wider block">
+            Projects Linked
+          </span>
+          <div className="text-2xl font-extrabold text-slate-900 mt-1">{stats.withProject}</div>
+          <span className="text-[11px] text-slate-400 font-medium">Submitted projects</span>
+        </div>
       </div>
 
-      {/* ================= 3. TEAMS 2-COLUMN GRID ================= */}
+      {/* ================= 3. SEARCH & SIZE FILTER CONTROLS ================= */}
+      <div className="bg-white border border-[#E5E0D8] rounded-2xl p-4 shadow-2xs flex flex-col lg:flex-row gap-3 items-stretch lg:items-center justify-between">
+        {/* Search Input */}
+        <div className="relative flex-1 max-w-md">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+          <input
+            type="text"
+            placeholder="Search team name, invite code, or member..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full h-10 pl-10 pr-4 bg-[#FBF9F7] border border-[#E5E0D8] hover:border-slate-300 rounded-xl text-xs sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#FA541C]/20 focus:border-[#FA541C] shadow-2xs placeholder:text-slate-400 transition-all"
+          />
+        </div>
+
+        {/* Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 lg:pb-0">
+          <button
+            onClick={() => setSizeFilter('ALL')}
+            className={`h-8 px-3 rounded-full text-xs font-bold transition-all shadow-2xs border ${
+              sizeFilter === 'ALL'
+                ? 'bg-[#FA541C] text-white border-[#FA541C]'
+                : 'bg-white text-slate-700 border-[#E5E0D8] hover:bg-[#FBF9F7]'
+            }`}
+          >
+            All Squads ({stats.totalTeams})
+          </button>
+          <button
+            onClick={() => setSizeFilter('FULL')}
+            className={`h-8 px-3 rounded-full text-xs font-bold transition-all shadow-2xs border ${
+              sizeFilter === 'FULL'
+                ? 'bg-[#FA541C] text-white border-[#FA541C]'
+                : 'bg-white text-slate-700 border-[#E5E0D8] hover:bg-[#FBF9F7]'
+            }`}
+          >
+            Full Teams (3+)
+          </button>
+          <button
+            onClick={() => setSizeFilter('FORMING')}
+            className={`h-8 px-3 rounded-full text-xs font-bold transition-all shadow-2xs border ${
+              sizeFilter === 'FORMING'
+                ? 'bg-[#FA541C] text-white border-[#FA541C]'
+                : 'bg-white text-slate-700 border-[#E5E0D8] hover:bg-[#FBF9F7]'
+            }`}
+          >
+            Forming (1-2)
+          </button>
+          <button
+            onClick={() => setSizeFilter('PROJECT')}
+            className={`h-8 px-3 rounded-full text-xs font-bold transition-all shadow-2xs border ${
+              sizeFilter === 'PROJECT'
+                ? 'bg-[#FA541C] text-white border-[#FA541C]'
+                : 'bg-white text-slate-700 border-[#E5E0D8] hover:bg-[#FBF9F7]'
+            }`}
+          >
+            With Project ({stats.withProject})
+          </button>
+
+          {(searchQuery || sizeFilter !== 'ALL') && (
+            <button
+              onClick={() => {
+                setSearchQuery('');
+                setSizeFilter('ALL');
+              }}
+              className="text-xs font-bold text-[#FA541C] hover:text-[#D94111] flex items-center gap-1 ml-2"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* ================= 4. TEAMS 2-COLUMN GRID ================= */}
       {loading ? (
-        <div className="py-24 text-center space-y-3 bg-white border border-slate-200/90 rounded-2xl shadow-xs">
-          <div className="w-8 h-8 border-3 border-orange-200 border-t-[#FF5500] rounded-full animate-spin mx-auto" />
+        <div className="py-24 text-center space-y-3 bg-white border border-[#E5E0D8] rounded-2xl shadow-xs">
+          <div className="w-8 h-8 border-2 border-orange-200 border-t-[#FA541C] rounded-full animate-spin mx-auto" />
           <p className="text-xs text-slate-500 font-semibold">Loading team rosters...</p>
         </div>
       ) : filtered.length === 0 ? (
-        <div className="bg-white border border-slate-200/90 rounded-2xl p-12 text-center space-y-3 shadow-xs">
-          <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FF5500] flex items-center justify-center mx-auto">
+        <div className="bg-white border border-[#E5E0D8] rounded-2xl p-12 text-center space-y-3 shadow-xs">
+          <div className="w-12 h-12 rounded-2xl bg-[#FFF5ED] border border-[#FED7AA] text-[#FA541C] flex items-center justify-center mx-auto">
             <Users className="w-6 h-6" />
           </div>
           <h3 className="text-base font-bold text-slate-900">No Teams Found</h3>
@@ -504,114 +598,124 @@ export default function OrganizerTeamsPage() {
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {filtered.map((t) => (
-            <div
-              key={t.id}
-              className="bg-white border border-slate-200/90 hover:border-slate-300 rounded-2xl p-6 shadow-xs space-y-4 transition-all border-l-4 border-l-[#FF5500]"
-            >
-              {/* Card Header */}
-              <div className="flex items-start justify-between">
-                <div className="space-y-1.5">
-                  <h3 className="text-lg font-extrabold text-slate-900 tracking-tight">{t.name}</h3>
-                  <div className="flex items-center space-x-1.5">
-                    <span className="font-mono text-xs text-[#EA580C] bg-[#FFF7ED] border border-[#FFEDD5] px-2.5 py-1 rounded-md font-bold inline-flex items-center gap-1.5">
-                      <span>Code : {t.inviteCode}</span>
-                      <button
-                        onClick={() => handleCopyCode(t.inviteCode)}
-                        className="text-slate-400 hover:text-[#EA580C] transition-colors ml-1"
-                        title="Copy Invite Code"
-                      >
-                        {copiedCode === t.inviteCode ? (
-                          <Check className="w-3.5 h-3.5 text-emerald-600" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5" />
-                        )}
-                      </button>
+          {filtered.map((t) => {
+            const memberCount = (t.members || []).length;
+            return (
+              <div
+                key={t.id}
+                className="bg-white border border-[#E5E0D8] hover:border-slate-300 rounded-2xl p-5 sm:p-6 shadow-2xs space-y-4 transition-all border-l-4 border-l-[#FA541C]"
+              >
+                {/* Card Header */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="space-y-1.5 min-w-0">
+                    <h3 className="text-base sm:text-lg font-extrabold text-slate-900 tracking-tight truncate">
+                      {t.name}
+                    </h3>
+                    <div className="flex items-center space-x-1.5">
+                      <span className="font-mono text-xs text-[#FA541C] bg-[#FFF5ED] border border-[#FED7AA] px-2.5 py-0.5 rounded-md font-bold inline-flex items-center gap-1.5 shadow-2xs">
+                        <span>Code : {t.inviteCode}</span>
+                        <button
+                          onClick={() => handleCopyCode(t.inviteCode)}
+                          className="text-slate-400 hover:text-[#FA541C] transition-colors ml-1 cursor-pointer"
+                          title="Copy Invite Code"
+                        >
+                          {copiedCode === t.inviteCode ? (
+                            <Check className="w-3.5 h-3.5 text-emerald-600" />
+                          ) : (
+                            <Copy className="w-3.5 h-3.5" />
+                          )}
+                        </button>
+                      </span>
+                    </div>
+                  </div>
+
+                  <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0] shadow-2xs flex-shrink-0">
+                    <Users className="w-3.5 h-3.5" />
+                    <span>
+                      {memberCount} {memberCount === 1 ? 'Member' : 'Members'}
                     </span>
+                  </span>
+                </div>
+
+                {/* Roster & Form Responses Section */}
+                <div className="space-y-2.5 pt-1">
+                  <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
+                    ROSTER &amp; FORM RESPONSES
+                  </span>
+
+                  <div className="space-y-2">
+                    {(t.members || []).map((m) => {
+                      const initial = m.user?.fullName
+                        ? m.user.fullName.charAt(0).toUpperCase()
+                        : m.user?.email
+                        ? m.user.email.charAt(0).toUpperCase()
+                        : 'U';
+
+                      return (
+                        <div
+                          key={m.id}
+                          className="p-3 bg-[#FBF9F7] border border-[#E5E0D8]/80 hover:border-[#E5E0D8] rounded-xl flex items-center justify-between gap-3 transition-colors shadow-2xs"
+                        >
+                          <div className="flex items-center space-x-3 truncate">
+                            <div className="w-8 h-8 rounded-full bg-[#FFF5ED] text-[#FA541C] font-bold text-xs flex items-center justify-center flex-shrink-0 border border-[#FED7AA]">
+                              {initial}
+                            </div>
+                            <div className="truncate">
+                              <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate leading-tight">
+                                {m.user?.fullName || m.user?.email || 'Squad Member'}
+                              </span>
+                              <span className="text-[11px] text-slate-500 truncate block mt-0.5 font-normal">
+                                {m.user?.email}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center space-x-2 flex-shrink-0">
+                            {m.isLeader && (
+                              <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] uppercase tracking-wider">
+                                LEADER
+                              </span>
+                            )}
+
+                            <button
+                              onClick={() => setSelectedMember({ teamName: t.name, member: m })}
+                              className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-[#FA541C] bg-[#FFF5ED] hover:bg-[#FED7AA]/40 border border-[#FED7AA] rounded-full transition-colors shadow-2xs cursor-pointer"
+                            >
+                              <Eye className="w-3 h-3 text-[#FA541C]" />
+                              <span>View Details</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-                  <Users className="w-3.5 h-3.5" />
-                  <span>
-                    {t.members.length} {t.members.length === 1 ? 'Member' : 'Members'}
-                  </span>
-                </span>
-              </div>
-
-              {/* Roster & Form Responses Section */}
-              <div className="space-y-2.5 pt-1">
-                <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider block">
-                  ROSTER &amp; FORM RESPONSES
-                </span>
-
-                <div className="space-y-2">
-                  {t.members.map((m) => {
-                    const initial = m.user?.fullName ? m.user.fullName.charAt(0).toUpperCase() : 'U';
-                    return (
-                      <div
-                        key={m.id}
-                        className="p-3 bg-white border border-slate-200/90 hover:border-slate-300 rounded-xl flex items-center justify-between gap-3 transition-colors shadow-2xs"
-                      >
-                        <div className="flex items-center space-x-3 truncate">
-                          <div className="w-8 h-8 rounded-full bg-[#EFF6FF] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0 border border-[#BFDBFE]">
-                            {initial}
-                          </div>
-                          <div className="truncate">
-                            <span className="font-bold text-slate-900 text-xs sm:text-sm block truncate leading-tight">
-                              {m.user?.fullName}
-                            </span>
-                            <span className="text-[11px] text-slate-500 truncate block mt-0.5">
-                              {m.user?.email}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center space-x-2 flex-shrink-0">
-                          {m.isLeader && (
-                            <span className="px-2.5 py-0.5 rounded-md text-[10px] font-extrabold bg-[#FFFBEB] text-[#D97706] border border-[#FDE68A] uppercase tracking-wider">
-                              LEADER
-                            </span>
-                          )}
-
-                          <button
-                            onClick={() => setSelectedMember({ teamName: t.name, member: m })}
-                            className="inline-flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold text-[#EA580C] bg-[#FFF7ED] hover:bg-[#FFEDD5] border border-[#FFEDD5] rounded-full transition-colors shadow-2xs"
-                          >
-                            <Eye className="w-3 h-3 text-[#EA580C]" />
-                            <span>View Details</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Bottom Project Status */}
+                <div className="pt-3 border-t border-[#E5E0D8]/60 flex items-center text-xs text-slate-500 gap-2">
+                  <Package className="w-4 h-4 text-slate-400" />
+                  {t.project ? (
+                    <span className="font-medium text-slate-900">
+                      Project: <strong className="text-[#2563EB]">{t.project.title}</strong>
+                    </span>
+                  ) : (
+                    <span className="text-slate-400">No project submitted yet</span>
+                  )}
                 </div>
               </div>
-
-              {/* Bottom Project Status */}
-              <div className="pt-3 border-t border-slate-100 flex items-center text-xs text-slate-500 gap-2">
-                <Package className="w-4 h-4 text-slate-400" />
-                {t.project ? (
-                  <span className="font-medium text-slate-900">
-                    Project: <strong className="text-[#2563EB]">{t.project.title}</strong>
-                  </span>
-                ) : (
-                  <span className="text-slate-400">No project submitted yet</span>
-                )}
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
-      {/* ================= 4. MEMBER DETAILS MODAL ================= */}
+      {/* ================= 5. MEMBER DETAILS MODAL ================= */}
       {selectedMember && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-start justify-between pb-3 border-b border-slate-100">
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-white border border-[#E5E0D8] rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-start justify-between pb-3 border-b border-[#E5E0D8]">
               <div>
                 <div className="flex items-center space-x-2">
-                  <span className="text-xs font-bold text-[#EA580C] bg-[#FFF7ED] px-2.5 py-0.5 rounded-md border border-[#FFEDD5]">
+                  <span className="text-xs font-bold text-[#FA541C] bg-[#FFF5ED] px-2.5 py-0.5 rounded-md border border-[#FED7AA]">
                     {selectedMember.teamName}
                   </span>
                   {selectedMember.member.isLeader && (
@@ -620,8 +724,8 @@ export default function OrganizerTeamsPage() {
                     </span>
                   )}
                 </div>
-                <h3 className="text-lg font-extrabold text-slate-900 mt-1.5">
-                  {selectedMember.member.user?.fullName}
+                <h3 className="text-lg font-extrabold text-slate-900 mt-2">
+                  {selectedMember.member.user?.fullName || 'Squad Member'}
                 </h3>
                 <p className="text-xs text-slate-500">
                   {selectedMember.member.user?.email}
@@ -630,7 +734,7 @@ export default function OrganizerTeamsPage() {
 
               <button
                 onClick={() => setSelectedMember(null)}
-                className="p-1 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -646,18 +750,21 @@ export default function OrganizerTeamsPage() {
               Object.keys(selectedMember.member.formResponse).length > 0 ? (
                 <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
                   {Object.entries(selectedMember.member.formResponse).map(([key, val]) => (
-                    <div key={key} className="p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs space-y-1">
-                      <span className="text-slate-500 font-bold block capitalize">
+                    <div
+                      key={key}
+                      className="p-3 bg-[#FBF9F7] border border-[#E5E0D8] rounded-xl text-xs space-y-1"
+                    >
+                      <span className="text-slate-500 font-bold block capitalize text-[11px]">
                         {key.replace(/([A-Z])/g, ' $1').replace(/_/g, ' ')}
                       </span>
-                      <span className="text-slate-900 font-semibold block">
+                      <span className="text-slate-900 font-semibold block text-xs">
                         {typeof val === 'object' ? JSON.stringify(val) : String(val)}
                       </span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="p-6 bg-slate-50 border border-slate-200 rounded-xl text-center text-xs text-slate-400">
+                <div className="p-6 bg-[#FBF9F7] border border-[#E5E0D8] rounded-xl text-center text-xs text-slate-400">
                   No custom team form responses recorded for this member.
                 </div>
               )}
@@ -666,7 +773,7 @@ export default function OrganizerTeamsPage() {
             <div className="pt-2 flex justify-end">
               <button
                 onClick={() => setSelectedMember(null)}
-                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
+                className="px-5 py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
               >
                 Close
               </button>

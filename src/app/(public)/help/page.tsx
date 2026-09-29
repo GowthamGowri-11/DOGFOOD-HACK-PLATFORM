@@ -148,7 +148,7 @@ export default function HelpCenterPage() {
 
   return (
     <AppShell
-      showFeaturedRail={true}
+      showFeaturedRail={false}
       pageTitle="ATLYX Help Center & Knowledge Base"
       pageSubtitle="Documentation, step-by-step onboarding guides, FAQs, and rules for builders, organizers, and judges."
     >

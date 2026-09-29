@@ -130,7 +130,7 @@ export default function ContactPage() {
 
   return (
     <AppShell
-      showFeaturedRail={true}
+      showFeaturedRail={false}
       pageTitle="Contact & Support Arena"
       pageSubtitle="Get in touch with the ATLYX platform team, organizers, or jury operations."
     >
