@@ -17,6 +17,21 @@ jobs:
     name: Build, Lint & Test
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:15-alpine
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: dogfood_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     env:
       DATABASE_URL: "postgresql://postgres:postgres@localhost:5432/dogfood_test?schema=public"
       DIRECT_URL: "postgresql://postgres:postgres@localhost:5432/dogfood_test?schema=public"
@@ -38,6 +53,9 @@ jobs:
 
       - name: Generate Prisma Client
         run: npx prisma generate
+
+      - name: Push Schema to Test Database
+        run: npx prisma db push --skip-generate
 
       - name: Run TypeScript Type Check
         run: npx tsc --noEmit
