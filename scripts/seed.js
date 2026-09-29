@@ -1,11 +1,11 @@
-import { PrismaClient, RoleType, EventStatus, SubmissionStatus, AssignmentStatus, EvaluationStatus, RegistrationStatus } from '@prisma/client';
-import bcrypt from 'bcryptjs';
-import fs from 'fs';
-import path from 'path';
+const { PrismaClient, RoleType, EventStatus, SubmissionStatus, AssignmentStatus, EvaluationStatus, RegistrationStatus } = require('@prisma/client');
+const bcrypt = require('bcryptjs');
+const fs = require('fs');
+const path = require('path');
 
 const prisma = new PrismaClient();
 
-function slugify(text: string): string {
+function slugify(text) {
   return text
     .toLowerCase()
     .trim()
@@ -15,59 +15,11 @@ function slugify(text: string): string {
 }
 
 const TRACK_COLORS = [
-  '#2563EB', // Blue
-  '#059669', // Emerald
-  '#D97706', // Amber
-  '#DC2626', // Red
-  '#7C3AED', // Violet
-  '#0891B2', // Cyan
-  '#DB2777', // Pink
-  '#EA580C', // Orange
+  '#2563EB', '#059669', '#D97706', '#DC2626',
+  '#7C3AED', '#0891B2', '#DB2777', '#EA580C',
 ];
 
-interface FixtureData {
-  event: {
-    id: string;
-    name: string;
-    submissions_close: string;
-  };
-  tracks: Array<{
-    id: string;
-    name: string;
-  }>;
-  judges: Array<{
-    id: string;
-    name: string;
-    email: string;
-    tracks: string[];
-  }>;
-  teams: Array<{
-    id: string;
-    name: string;
-    members: string[];
-  }>;
-  projects: Array<{
-    id: string;
-    team: string;
-    track: string;
-    title: string;
-    summary: string;
-    repo_url: string;
-    submitted_at: string;
-  }>;
-  scores: Array<{
-    judge: string;
-    project: string;
-    criteria: {
-      functionality: number;
-      quality: number;
-      innovation: number;
-    };
-    comment: string;
-  }>;
-}
-
-export async function seedDatabase(options: { reset?: boolean } = {}) {
+async function seedDatabase(options = {}) {
   console.log('🚀 Starting Hackathon Platform Seeding...');
 
   // 1. Locate Fixture File
@@ -77,11 +29,11 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
   }
   console.log(`📂 Using fixture source: ${fixturesPath}`);
   const raw = fs.readFileSync(fixturesPath, 'utf-8');
-  const data: FixtureData = JSON.parse(raw);
+  const data = JSON.parse(raw);
 
   const defaultPasswordHash = await bcrypt.hash('Password123!', 10);
 
-  // 2. Clear Existing Hackathon Data (Preserve Base Users)
+  // 2. Clear Existing Hackathon Records Idempotently
   console.log('🧹 Clearing existing hackathon records...');
   await prisma.$transaction([
     prisma.evaluationScore.deleteMany(),
@@ -136,7 +88,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
 
   // 4. Seed Judges as Users
   console.log(`👨‍⚖️ Seeding ${data.judges.length} judges...`);
-  const userMap = new Map<string, string>(); // email -> userId
+  const userMap = new Map();
   userMap.set('admin@hackathon.dev', admin.id);
   userMap.set('organizer@hackathon.dev', organizer.id);
 
@@ -195,7 +147,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       title: data.event.name || 'Sample Hack 2026',
       tagline: 'Global Premier Innovation Arena & Software Competition',
       description:
-        'A comprehensive competitive hackathon spanning developer tools, security, climate, health, and open hardware. Featuring peer review, verified artifact submissions, and transparent rubric-based adjudication.',
+        'A comprehensive competitive hackathon spanning developer tools, security, climate, health, and open hardware.',
       organizationName: 'Global Hackathon Arena Foundation',
       organizerId: organizer.id,
       status: EventStatus.JUDGING,
@@ -217,7 +169,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
 
   // 7. Seed Tracks and Problem Statements
   console.log(`🛤️ Seeding ${data.tracks.length} tracks and problem statements...`);
-  const problemMap = new Map<string, string>(); // trackId -> problemStatementId
+  const problemMap = new Map();
 
   for (let i = 0; i < data.tracks.length; i++) {
     const t = data.tracks[i];
@@ -267,7 +219,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
     { key: 'innovation', title: 'Innovation', weight: 33.34, desc: 'Novelty, creativity, and real-world value.' },
   ];
 
-  const criteriaMap = new Map<string, string>();
+  const criteriaMap = new Map();
   for (let i = 0; i < criteriaConfigs.length; i++) {
     const c = criteriaConfigs[i];
     const crit = await prisma.rubricCriterion.create({
@@ -287,7 +239,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
 
   // 9. Seed Judges & Track Expertise
   console.log(`⚖️ Linking ${data.judges.length} judges to hackathon...`);
-  const judgeEntityMap = new Map<string, string>(); // fixture jdg_id -> prisma Judge.id
+  const judgeEntityMap = new Map();
 
   for (const j of data.judges) {
     const userId = userMap.get(j.email.toLowerCase().trim());
@@ -308,15 +260,14 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
 
   // 10. Seed Teams and Registrations
   console.log(`🛡️ Seeding ${data.teams.length} teams and member rosters...`);
-  const registeredUsers = new Set<string>();
-  const seenTeamNames = new Set<string>();
+  const registeredUsers = new Set();
+  const seenTeamNames = new Set();
 
   for (let i = 0; i < data.teams.length; i++) {
     const t = data.teams[i];
     const leaderEmail = t.members[0].toLowerCase().trim();
-    const leaderId = userMap.get(leaderEmail)!;
+    const leaderId = userMap.get(leaderEmail);
 
-    // Register all team members for this hackathon
     for (const m of t.members) {
       const uId = userMap.get(m.toLowerCase().trim());
       if (uId && !registeredUsers.has(uId)) {
@@ -333,14 +284,12 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       }
     }
 
-    // Ensure unique team name
     let teamName = t.name;
     if (seenTeamNames.has(teamName.toLowerCase())) {
       teamName = `${t.name} (${t.id.toUpperCase()})`;
     }
     seenTeamNames.add(teamName.toLowerCase());
 
-    // Create Team
     await prisma.team.create({
       data: {
         id: t.id,
@@ -352,7 +301,6 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       },
     });
 
-    // Add Team Members
     for (let mIdx = 0; mIdx < t.members.length; mIdx++) {
       const uId = userMap.get(t.members[mIdx].toLowerCase().trim());
       if (uId) {
@@ -367,14 +315,14 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
     }
   }
 
-  // Handle prj_41 duplicate team requirement by creating a dedicated resubmission team
-  const extraTeam = await prisma.team.create({
+  // Companion team for prj_41 (duplicate team tm_07 in fixture)
+  await prisma.team.create({
     data: {
       id: 'tm_41',
       hackathonId: hackathon.id,
       name: 'Dry Harbour (Iteration 2)',
       inviteCode: 'DRY2-4141',
-      leaderId: userMap.get(data.teams[6].members[0].toLowerCase().trim())!,
+      leaderId: userMap.get(data.teams[6].members[0].toLowerCase().trim()),
       highestRound: 1,
     },
   });
@@ -404,7 +352,6 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       },
     });
 
-    // Create Submission snapshot
     const leaderUser = await prisma.team.findUnique({ where: { id: teamId } });
     await prisma.submission.create({
       data: {
@@ -425,7 +372,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
 
   // 12. Seed Scores, Assignments & Evaluations
   console.log(`📊 Seeding ${data.scores.length} judge evaluation scores...`);
-  const projectScoreMap = new Map<string, number[]>();
+  const projectScoreMap = new Map();
 
   for (let i = 0; i < data.scores.length; i++) {
     const s = data.scores[i];
@@ -435,7 +382,6 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
     const judgeRecord = await prisma.judge.findUnique({ where: { id: judgeId } });
     if (!judgeRecord) continue;
 
-    // Ensure JudgeAssignment
     let assignment = await prisma.judgeAssignment.findUnique({
       where: {
         judgeId_projectId: {
@@ -456,7 +402,6 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       });
     }
 
-    // Compute raw sum & weighted average
     const fScore = s.criteria.functionality || 3;
     const qScore = s.criteria.quality || 3;
     const iScore = s.criteria.innovation || 3;
@@ -479,12 +424,11 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       },
     });
 
-    // Evaluation scores per criterion
     if (criteriaMap.has('functionality')) {
       await prisma.evaluationScore.create({
         data: {
           evaluationId: evalRecord.id,
-          criterionId: criteriaMap.get('functionality')!,
+          criterionId: criteriaMap.get('functionality'),
           rawScore: fScore,
           originalScore: fScore,
         },
@@ -495,7 +439,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       await prisma.evaluationScore.create({
         data: {
           evaluationId: evalRecord.id,
-          criterionId: criteriaMap.get('quality')!,
+          criterionId: criteriaMap.get('quality'),
           rawScore: qScore,
           originalScore: qScore,
         },
@@ -506,23 +450,22 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
       await prisma.evaluationScore.create({
         data: {
           evaluationId: evalRecord.id,
-          criterionId: criteriaMap.get('innovation')!,
+          criterionId: criteriaMap.get('innovation'),
           rawScore: iScore,
           originalScore: iScore,
         },
       });
     }
 
-    // Record for ranking calculation
     if (!projectScoreMap.has(s.project)) {
       projectScoreMap.set(s.project, []);
     }
-    projectScoreMap.get(s.project)!.push(weightedAvg);
+    projectScoreMap.get(s.project).push(weightedAvg);
   }
 
   // 13. Calculate Ranks and Populate Results
   console.log('🏅 Computing final standings and leaderboards...');
-  const projectAverages: Array<{ projectId: string; avgScore: number }> = [];
+  const projectAverages = [];
 
   for (const p of data.projects) {
     const scores = projectScoreMap.get(p.id) || [3.5];
@@ -539,7 +482,7 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
         hackathonId: hackathon.id,
         projectId: item.projectId,
         rawAverageScore: item.avgScore,
-        normalizedScore: item.avgScore * 20, // scale to 100
+        normalizedScore: item.avgScore * 20,
         finalScore: Math.round(item.avgScore * 20 * 10) / 10,
         rank,
         isWinner: rank <= 3,
@@ -557,7 +500,6 @@ export async function seedDatabase(options: { reset?: boolean } = {}) {
   console.log(`   • Teams: ${data.teams.length}`);
   console.log(`   • Projects: ${data.projects.length}`);
   console.log(`   • Evaluated Scores: ${data.scores.length}`);
-  console.log('   • Default Credentials: admin@hackathon.dev | organizer@hackathon.dev | Password123!');
 }
 
 async function main() {
@@ -574,3 +516,5 @@ async function main() {
 if (require.main === module) {
   main();
 }
+
+module.exports = { seedDatabase };

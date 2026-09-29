@@ -1,6 +1,41 @@
 version: '3.8'
 
 services:
+  # Local MongoDB Service (with persistent volume)
+  mongo:
+    image: mongo:7-jammy
+    container_name: dogfood_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Local PostgreSQL Service (with persistent volume)
+  postgres:
+    image: postgres:16-alpine
+    container_name: dogfood_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: dogfood
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d dogfood"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # Main Application
   app:
     build:
       context: .
@@ -10,8 +45,20 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
-      - DATABASE_URL=${DATABASE_URL}
-      - DIRECT_URL=${DIRECT_URL}
-      - JWT_SECRET=${JWT_SECRET}
-      - NEXT_PUBLIC_APP_URL=${NEXT_PUBLIC_APP_URL:-http://localhost:3000}
+      - DATABASE_URL=postgresql://postgres:postgrespassword@postgres:5432/dogfood?schema=public
+      - DIRECT_URL=postgresql://postgres:postgrespassword@postgres:5432/dogfood?schema=public
+      - MONGODB_URI=mongodb://mongo:27017/dogfood
+      - JWT_SECRET=dev-jwt-secret-key-at-least-32-characters-long-12345
+      - NEXT_PUBLIC_APP_URL=http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+      mongo:
+        condition: service_healthy
     restart: unless-stopped
+
+volumes:
+  mongo_data:
+    driver: local
+  postgres_data:
+    driver: local

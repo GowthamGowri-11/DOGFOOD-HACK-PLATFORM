@@ -12,6 +12,7 @@ out/
 
 # local database
 .pgdata/
+.local-db/
 
 # build / cache
 *.tsbuildinfo
