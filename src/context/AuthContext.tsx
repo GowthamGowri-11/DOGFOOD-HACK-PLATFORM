@@ -49,12 +49,9 @@ const getCachedRole = (): UserRole => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getCachedUser());
-  const [currentRole, setCurrentRoleState] = useState<UserRole>(() => getCachedRole());
-  const [authLoading, setAuthLoading] = useState<boolean>(() => {
-    // If we have cached user, don't block the UI
-    return getCachedUser() === null;
-  });
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
+  const [currentRole, setCurrentRoleState] = useState<UserRole>('PARTICIPANT');
+  const [authLoading, setAuthLoading] = useState<boolean>(true);
 
   const setCurrentRole = useCallback((role: UserRole) => {
     setCurrentRoleState(role);
@@ -109,6 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const cachedRole = getCachedRole();
     if (cachedUser) {
       setCurrentUser(cachedUser);
+      setAuthLoading(false);
     }
     if (cachedRole) {
       setCurrentRoleState(cachedRole);
@@ -126,21 +124,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const logout = useCallback(async () => {
+    // Clear local state immediately for instant UI feedback
+    setCurrentUser(null);
+    setCurrentRoleState('PARTICIPANT');
+    setAuthLoading(false);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('dogfood_auth_user');
+        localStorage.removeItem('dogfood_auth_role');
+      } catch {}
+    }
+    // Fire-and-forget the server logout – don't block on it
     try {
       await fetch('/api/v1/auth/logout', { method: 'POST' });
     } catch {
-      // ignore
-    } finally {
-      if (typeof window !== 'undefined') {
-        try {
-          localStorage.removeItem('dogfood_auth_user');
-          localStorage.removeItem('dogfood_auth_role');
-        } catch {}
-      }
-      setCurrentUser(null);
-      setCurrentRoleState('PARTICIPANT');
-      window.location.href = '/';
+      // ignore network errors on logout
     }
+    // Navigation is handled by the caller (TopNavbar)
   }, []);
 
   const isAuthenticated = !authLoading && currentUser !== null;

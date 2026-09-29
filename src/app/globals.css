@@ -48,6 +48,22 @@ html {
   100% { transform: translateX(100%); }
 }
 
+@keyframes skeletonPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.3; }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    #f1f5f9 0%,
+    #e2e8f0 50%,
+    #f1f5f9 100%
+  );
+  background-size: 200% 100%;
+  animation: skeletonPulse 1.4s ease-in-out infinite;
+}
+
 /* Ultra-fast GPU-accelerated Modal & Popup Animations */
 @keyframes modalBackdropFadeIn {
   from { opacity: 0; }
@@ -66,24 +82,24 @@ html {
 }
 
 @keyframes pageFadeIn {
-  from { opacity: 0.9; transform: translateY(4px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0.92; }
+  to { opacity: 1; }
 }
 
 .modal-backdrop-enter {
-  animation: modalBackdropFadeIn 0.14s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalBackdropFadeIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .modal-content-enter {
-  animation: modalContentPopIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation: modalContentPopIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: transform, opacity;
   transform: translateZ(0);
   backface-visibility: hidden;
 }
 
 .page-enter {
-  animation: pageFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  will-change: opacity, transform;
+  animation: pageFadeIn 0.14s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity;
 }
 
 /* Fast animation helper fallbacks for smooth popups */

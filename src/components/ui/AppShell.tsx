@@ -195,11 +195,11 @@ export const AppShell: React.FC<AppShellProps> = ({
                   </div>
                 )}
 
-                {/* Split layout or Full Width */}
+                {/* Split layout or Full Width with fast fluid page transition */}
                 {showFeaturedRail ? (
                   <div className="flex flex-col xl:flex-row items-start gap-6 xl:gap-8">
                     {/* Main Content Area */}
-                    <div className="w-full xl:flex-1 min-w-0 space-y-6">
+                    <div key={pathname} className="w-full xl:flex-1 min-w-0 space-y-6 page-enter">
                       {children}
                     </div>
 
@@ -210,7 +210,9 @@ export const AppShell: React.FC<AppShellProps> = ({
                   </div>
                 ) : (
                   /* Full Width Workspaces */
-                  <div className="w-full space-y-6">{children}</div>
+                  <div key={pathname} className="w-full space-y-6 page-enter">
+                    {children}
+                  </div>
                 )}
               </>
             )}

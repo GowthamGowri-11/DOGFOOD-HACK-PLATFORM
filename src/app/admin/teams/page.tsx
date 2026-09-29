@@ -109,6 +109,30 @@ export default function AdminTeamsPage() {
   const [actionInProgress, setActionInProgress] = useState(false);
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
+  // Lock background body scroll and listen for Escape key when modals are open
+  const isAnyModalOpen = Boolean(viewingTeam || deletingTeam);
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setViewingTeam(null);
+          setDeletingTeam(null);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isAnyModalOpen]);
+
   // Toast feedback
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
 
@@ -819,10 +843,16 @@ export default function AdminTeamsPage() {
       {/* VIEW TEAM MODAL */}
       {/* ======================================================== */}
       {viewingTeam && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-2xl w-full border border-zinc-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setViewingTeam(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-2xl w-full max-h-[85vh] flex flex-col border border-zinc-200/90 shadow-2xl shadow-slate-900/25 overflow-hidden modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-start justify-between bg-gradient-to-r from-white to-orange-50/20">
+            <div className="flex-shrink-0 p-6 border-b border-zinc-100 flex items-start justify-between bg-gradient-to-r from-white via-orange-50/10 to-orange-50/20">
               <div className="space-y-1">
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-xl font-bold text-zinc-900">{viewingTeam.name}</h2>
@@ -861,7 +891,10 @@ export default function AdminTeamsPage() {
             </div>
 
             {/* Modal Content */}
-            <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto">
+            <div
+              className="p-6 space-y-6 flex-1 overflow-y-auto overscroll-contain custom-scrollbar"
+              onWheel={(e) => e.stopPropagation()}
+            >
               {/* Leader Info Card */}
               <div className="p-4 bg-orange-50/30 border border-orange-200/80 rounded-2xl space-y-2">
                 <div className="text-[10px] font-bold text-orange-700 uppercase tracking-wider flex items-center gap-1.5">
@@ -971,8 +1004,14 @@ export default function AdminTeamsPage() {
       {/* DELETE TEAM CONFIRMATION MODAL */}
       {/* ======================================================== */}
       {deletingTeam && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-zinc-200 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setDeletingTeam(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-md w-full border border-zinc-200/90 shadow-2xl shadow-slate-900/25 p-6 space-y-4 modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
               <Trash2 className="w-6 h-6 stroke-[2.2]" />
             </div>

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Trophy,
   Compass,
@@ -19,7 +19,6 @@ import {
   BarChart3,
   Activity,
   Sliders,
-  Sparkles,
   QrCode,
   ShieldCheck,
   History,
@@ -30,12 +29,7 @@ import {
   Scale,
   Server,
   PieChart,
-  HelpCircle,
-  MessageSquare,
   Vote,
-  Zap,
-  Database,
-  Terminal,
 } from 'lucide-react';
 
 export type UserRole = 'PARTICIPANT' | 'ORGANIZER' | 'JUDGE' | 'ADMIN';
@@ -67,8 +61,6 @@ const GUEST_ITEMS: NavItem[] = [
   { label: 'Explore Hackathons', href: '/hackathons', icon: Trophy },
   { label: 'Leaderboard', href: '/leaderboard', icon: BarChart3 },
   { label: 'Project Gallery', href: '/projects', icon: Layers },
-  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
-  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const PARTICIPANT_ITEMS: NavItem[] = [
@@ -83,8 +75,6 @@ const PARTICIPANT_ITEMS: NavItem[] = [
   { label: 'Vote on Questions', href: '/participant/voting', icon: Vote },
   { label: 'Certificates', href: '/participant/certificates', icon: Award },
   { label: 'My Activity', href: '/participant/activity', icon: Activity },
-  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
-  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const ORGANIZER_ITEMS: NavItem[] = [
@@ -98,19 +88,13 @@ const ORGANIZER_ITEMS: NavItem[] = [
   { label: 'Assignments', href: '/organizer/assignments', icon: Scale },
   { label: 'Rubrics', href: '/organizer/rubrics', icon: Sliders },
   { label: 'Judging', href: '/organizer/judging', icon: Scale },
-  { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap, badge: 'Proof' },
-  { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles, badge: 'AI' },
   { label: 'Results', href: '/organizer/results', icon: Award },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
   { label: 'Certificate Management', href: '/organizer/certificates', icon: ShieldCheck, badge: 'Templates' },
   { label: 'Analytics', href: '/organizer/analytics', icon: PieChart },
   { label: 'Community', href: '/organizer/community', icon: Layers },
   { label: 'Track & Question Voting', href: '/organizer/voting', icon: Vote },
-  { label: 'REST Webhooks', href: '/organizer/webhooks', icon: Zap },
-  { label: 'Data Portability & Import', href: '/organizer/portability', icon: Database },
   { label: 'Audit Logs', href: '/organizer/audit', icon: History },
-  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
-  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const JUDGE_ITEMS: NavItem[] = [
@@ -120,11 +104,8 @@ const JUDGE_ITEMS: NavItem[] = [
   { label: 'Pending Evaluations', href: '/judge/evaluations', icon: FileCheck },
   { label: 'Completed Evaluations', href: '/judge/completed', icon: ShieldCheck },
   { label: 'Pairwise Judging', href: '/judge/pairwise', icon: Scale, badge: 'Gavel' },
-  { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
   { label: 'Leaderboard', href: '/leaderboard', icon: Award },
   { label: 'My Credential', href: '/judge/credential', icon: ShieldCheck },
-  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
-  { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
 
 const ADMIN_ITEMS: NavItem[] = [
@@ -139,8 +120,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'Track & Question Voting', href: '/admin/voting', icon: Vote },
   { label: 'Certificate Management', href: '/organizer/certificates', icon: ShieldCheck, badge: 'Templates' },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: History },
-  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
-  { label: 'Help Center', href: '/help', icon: HelpCircle },
+
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -157,18 +137,15 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenLoginModal,
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Select items list: GUEST gets ONLY the 3 constant pages!
+  // Select items list: on SSR and client, honor role from layout to prevent hydration mismatch
   const navItems = useMemo(() => {
-    if (!isAuthenticated) {
-      return GUEST_ITEMS;
-    }
-
     switch (currentRole) {
       case 'ORGANIZER':
         return ORGANIZER_ITEMS;
@@ -176,10 +153,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         return JUDGE_ITEMS;
       case 'ADMIN':
         return ADMIN_ITEMS;
+      case 'PARTICIPANT':
+        return isAuthenticated ? PARTICIPANT_ITEMS : GUEST_ITEMS;
       default:
-        return PARTICIPANT_ITEMS;
+        return GUEST_ITEMS;
     }
-  }, [isAuthenticated, currentRole]);
+  }, [currentRole, isAuthenticated]);
 
   return (
     <>
@@ -237,13 +216,33 @@ export const Sidebar: React.FC<SidebarProps> = ({
               const isActive =
                 item.href === '/'
                   ? pathname === '/'
-                  : pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/');
+                  : pathname === item.href ||
+                    (item.href !== '/' &&
+                      pathname.startsWith(item.href) &&
+                      (pathname[item.href.length] === '/' || pathname[item.href.length] === undefined) &&
+                      // Prevent parent matching child: only match if no deeper sidebar item covers this path
+                      !navItems.some(
+                        (other) =>
+                          other.href !== item.href &&
+                          other.href !== '/' &&
+                          pathname === other.href
+                      ));
 
               return (
                 <Link
                   key={item.label}
                   href={item.href}
                   prefetch={true}
+                  onMouseEnter={() => {
+                    try {
+                      router.prefetch(item.href);
+                    } catch {}
+                  }}
+                  onPointerDown={() => {
+                    try {
+                      router.prefetch(item.href);
+                    } catch {}
+                  }}
                   onClick={onCloseMobile}
                   className={`flex items-center group h-[42px] px-3.5 rounded-xl text-[13.5px] transition-all relative ${
                     isActive
