@@ -21,6 +21,7 @@ import {
   FolderGit2,
   Check,
   Hexagon,
+  Vote,
 } from 'lucide-react';
 import { getSession } from '@/server/auth/session';
 import prisma from '@/lib/prisma';
@@ -179,12 +180,16 @@ export default async function ParticipantDashboard() {
   ];
 
   return (
-    <div className="space-y-6 select-none max-w-[1400px] mx-auto pb-8">
-      {/* ================= 1. HERO BANNER ================= */}
-      <div className="bg-white rounded-2xl border border-[#E5E0D8] p-6 sm:p-7 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-5 shadow-xs hover:shadow-md transition-all duration-300">
+    <div className="space-y-6 select-none max-w-[1440px] mx-auto pb-10">
+      {/* ================= 1. HEADER ROW ================= */}
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-1">
         <div>
-          {/* Top Tag */}
-          <div className="flex items-center space-x-2 mb-2.5">
+          {/* Tag Badges */}
+          <div className="flex items-center space-x-2 mb-2">
+            <span className="inline-flex items-center space-x-1.5 px-3 py-1 rounded-full bg-[#FFE8D6] text-[#FA541C] text-[11.5px] font-bold border border-[#FED7AA]/60">
+              <Users className="w-3.5 h-3.5 text-[#FA541C]" />
+              <span>Participant Workspace</span>
+            </span>
             <span className="inline-flex items-center space-x-1 px-3 py-1 rounded-full bg-[#F3F4F6] text-[#4B5563] text-[11px] font-medium border border-[#E5E7EB]">
               <Hexagon className="w-3 h-3 text-[#6B7280]" />
               <span>Builder Arena</span>
@@ -203,6 +208,13 @@ export default async function ParticipantDashboard() {
 
         {/* Action Buttons */}
         <div className="flex flex-wrap items-center gap-2.5 self-start lg:self-center">
+          <Link
+            href="/participant/voting"
+            className="inline-flex items-center space-x-2 px-4 py-2.5 bg-[#FFF7ED] hover:bg-[#FFEDD5] border border-[#FDBA74] text-[#C2410C] text-xs font-bold rounded-xl shadow-xs transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"
+          >
+            <Vote className="w-4 h-4 text-[#C2410C] group-hover:scale-110 transition-transform" />
+            <span>Vote on Questions</span>
+          </Link>
           <Link
             href="/hackathons"
             className="inline-flex items-center space-x-2 px-4 py-2.5 bg-white hover:bg-[#FAF8F5] border border-[#E5E0D8] hover:border-[#FA541C]/50 text-[#FA541C] text-xs font-bold rounded-xl shadow-xs transition-all duration-200 hover:-translate-y-0.5 cursor-pointer group"

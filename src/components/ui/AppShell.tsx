@@ -89,7 +89,7 @@ export const AppShell: React.FC<AppShellProps> = ({
   }, [authLoading, currentUser, isProtectedRoute, pathname, openAuthModal]);
 
   return (
-    <div className="min-h-screen bg-[#F8FAFC] flex flex-col font-sans antialiased text-[#111827]">
+    <div className="min-h-screen bg-[#FAF8F5] flex flex-col font-sans antialiased text-[#111827]">
       {/* Permanent Desktop Sidebar (w-260 or w-72 when collapsed) */}
       <Sidebar
         currentRole={effectiveRole}
@@ -116,7 +116,7 @@ export const AppShell: React.FC<AppShellProps> = ({
           sidebarCollapsed ? 'lg:pl-[72px]' : 'lg:pl-[260px]'
         }`}
       >
-        {/* Top Global Navbar (height: 72px, centered search, breadcrumb) */}
+        {/* Top Global Navbar */}
         <TopNavbar
           onToggleSidebar={() => setMobileMenuOpen(!mobileMenuOpen)}
           userRole={effectiveRole}

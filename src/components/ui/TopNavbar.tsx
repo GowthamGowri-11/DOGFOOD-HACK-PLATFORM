@@ -12,8 +12,8 @@ import {
   LogOut,
   Trophy,
   Menu,
-  Bell,
   LayoutDashboard,
+  Bell,
   ArrowRight,
 } from 'lucide-react';
 
@@ -49,6 +49,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   const [internalUser, setInternalUser] = useState<AuthUser | null>(null);
   const [internalLoading, setInternalLoading] = useState(true);
   const [hasLoggedOut, setHasLoggedOut] = useState(false);
+
+  const formatRole = (role?: string) => (role ? role.toUpperCase() : 'PARTICIPANT');
 
   const currentUser = hasLoggedOut
     ? null
@@ -148,7 +150,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
   };
 
   return (
-    <header className="h-[72px] bg-[#0E141D] border-b border-[#1E293B] px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 select-none">
+    <header className="h-[70px] bg-[#FAF8F5] border-b border-[#ECE6DD] px-4 sm:px-6 lg:px-8 flex items-center justify-between sticky top-0 z-30 select-none">
       {/* LEFT: Mobile toggle & Breadcrumb */}
       <div className="flex items-center space-x-3">
         {onToggleSidebar && (
@@ -161,40 +163,26 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           </button>
         )}
 
-        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center space-x-2 text-xs text-slate-400 font-medium">
-          {breadcrumbItems.slice(0, 3).map((item, idx) => (
-            <React.Fragment key={item.href}>
-              {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-slate-600" />}
-              {idx === breadcrumbItems.length - 1 ? (
-                <span className="font-bold text-white max-w-[160px] truncate">
-                  {item.label}
-                </span>
-              ) : (
-                <Link
-                  href={item.href}
-                  className="hover:text-white transition-colors max-w-[120px] truncate font-normal"
-                >
-                  {item.label}
-                </Link>
-              )}
-            </React.Fragment>
-          ))}
+        <nav aria-label="Breadcrumb" className="hidden sm:flex items-center space-x-1.5 text-[14px]">
+          <span className="font-semibold text-[#18181B] text-[15px]">
+            {pathname === '/' ? 'Home' : (breadcrumbItems[breadcrumbItems.length - 1]?.label || 'Home')}
+          </span>
         </nav>
       </div>
 
-      {/* CENTER: Prominent Dark Search Bar */}
+      {/* CENTER: Prominent Centered Global Search (rounded-full pill matching screenshot) */}
       <div className="flex-1 max-w-[480px] mx-4 relative hidden md:block">
         <form onSubmit={handleSearchSubmit} className="relative w-full">
           <div className="relative flex items-center">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-[#9CA3AF] absolute left-4 pointer-events-none" />
             <input
               type="text"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search Hackathons, Tracks, Projects..."
-              className="w-full h-10 pl-10 pr-16 bg-[#151D28] border border-[#273549] hover:border-slate-600 focus:border-[#FF5500] rounded-xl text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-1 focus:ring-[#FF5500] transition-all"
+              className="w-full h-[40px] pl-11 pr-16 bg-white border border-[#E5E0D8] hover:border-[#D1D5DB] focus:border-[#FA541C] rounded-full text-[13.5px] text-[#111827] placeholder-[#9CA3AF] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-[#FA541C]/15 shadow-[0_1px_2px_rgba(0,0,0,0.03)]"
             />
-            <div className="absolute right-3 pointer-events-none flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-[#1E293B] border border-slate-700 text-[10px] font-mono text-slate-400">
+            <div className="absolute right-3 pointer-events-none flex items-center gap-0.5 px-1.5 py-0.5 rounded bg-slate-100 border border-slate-200 text-[10px] font-mono text-slate-500">
               <span>Ctrl</span>
               <span>K</span>
             </div>
@@ -205,112 +193,144 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
       {/* RIGHT: Live Sync + Notifications + User Profile Pill */}
       <div className="flex items-center space-x-3.5">
         {/* Live Sync Status */}
-        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#151D28] border border-[#273549] text-xs font-semibold text-slate-200">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+        <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-700">
+          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
           <span>Live Sync</span>
         </div>
 
         {/* Notification Bell */}
         <button
-          className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800/60 transition-colors relative"
+          className="p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors relative"
           aria-label="Notifications"
         >
           <Bell className="w-4 h-4" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FF5500] rounded-full ring-2 ring-[#0E141D]" />
+          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-[#FA541C] rounded-full ring-2 ring-white" />
         </button>
 
-        {/* User Profile Pill */}
-        <div className="relative">
-          <button
-            onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl bg-[#151D28] hover:bg-[#1E293B] border border-[#273549] transition-all cursor-pointer"
+        {/* Backdrop for profile dropdown */}
+        {profileDropdownOpen && (
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setProfileDropdownOpen(false)}
+          />
+        )}
+
+        {!authLoading && !currentUser && (
+          /* Guest: Show Get Started Button with Rich Glow & Interactive Animations */
+          <Link
+            href="/login"
+            className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FA541C] via-[#FF6636] to-[#E03A00] hover:from-[#FF5722] hover:via-[#FA541C] hover:to-[#D4380D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_4px_14px_rgba(250,84,28,0.30)] hover:shadow-[0_6px_22px_rgba(250,84,28,0.48)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 whitespace-nowrap cursor-pointer overflow-hidden flex-shrink-0"
           >
-            <div className="w-7 h-7 rounded-full bg-slate-800 border border-slate-700 text-white font-bold text-xs flex items-center justify-center">
-              {currentUser?.name
-                ? currentUser.name.charAt(0).toUpperCase()
-                : userRole === 'JUDGE'
-                ? 'D'
-                : 'A'}
-            </div>
-            <div className="text-left hidden lg:block">
-              <div className="text-xs font-bold text-white leading-tight">
-                {currentUser?.name ||
-                  userName ||
-                  (userRole === 'JUDGE'
-                    ? 'Dr. Sarah Chen'
-                    : userRole === 'ADMIN'
-                    ? 'System Administrator'
-                    : 'Apex Event Lead')}
-              </div>
-              <div className="text-[10px] font-extrabold text-[#FF5500] uppercase tracking-wider">
-                {currentUser?.role || userRole || 'ORGANIZER'}
-              </div>
-            </div>
-            <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block" />
-          </button>
+            {/* Ambient Shimmer / Sheen Sweep */}
+            <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-in-out pointer-events-none" />
+            <span className="relative z-10 font-bold tracking-wide">Get Started</span>
+            <ArrowRight className="relative z-10 w-4 h-4 stroke-[2.5] group-hover:translate-x-1.5 transition-transform duration-200 flex-shrink-0" />
+          </Link>
+        )}
 
-          {/* Profile Dropdown Menu */}
-          {profileDropdownOpen && (
-            <div className="absolute right-0 mt-2 w-56 bg-[#151D28] border border-[#273549] rounded-2xl shadow-2xl py-2 z-50 text-xs text-slate-300">
-              <div className="px-4 py-2 border-b border-[#1E293B]">
-                <div className="font-bold text-white truncate">
-                  {currentUser?.name ||
-                    userName ||
-                    (userRole === 'JUDGE'
-                      ? 'Dr. Sarah Chen'
-                      : userRole === 'ADMIN'
-                      ? 'System Administrator'
-                      : 'Apex Event Lead')}
+        {!authLoading && currentUser && (
+          /* Logged In: Show Dynamic Profile Role Pill & Dropdown matching reference */
+          <div className="relative z-50">
+            <button
+              onClick={() => setProfileDropdownOpen(!profileDropdownOpen)}
+              className="flex items-center space-x-2.5 px-3 py-1.5 rounded-xl border border-[#E2E8F0] hover:bg-[#F8FAFC] transition-colors bg-white select-none text-left shadow-xs"
+            >
+              {currentUser.avatarUrl ? (
+                <img
+                  src={currentUser.avatarUrl}
+                  alt={currentUser.name}
+                  className="w-8 h-8 rounded-full object-cover ring-2 ring-rose-200 flex-shrink-0"
+                />
+              ) : (
+                <div className="w-8 h-8 rounded-full bg-[#EFF6FF] border border-[#BFDBFE] text-[#2563EB] font-bold text-xs flex items-center justify-center flex-shrink-0">
+                  {currentUser.name ? currentUser.name.charAt(0).toUpperCase() : 'U'}
                 </div>
-                <div className="text-[11px] text-slate-400 truncate">
-                  {currentUser?.email ||
-                    (userRole === 'JUDGE'
-                      ? 'judge.alpha@hackathon.dev'
-                      : userRole === 'ADMIN'
-                      ? 'admin@hackathon.dev'
-                      : 'organizer@hackathon.dev')}
+              )}
+              <div className="flex flex-col text-left">
+                <span className="font-bold text-[13px] text-[#0F172A] leading-tight max-w-[130px] truncate">
+                  {currentUser.name}
+                </span>
+                <span className="font-extrabold text-[10px] text-[#FA541C] uppercase tracking-wider leading-tight mt-0.5">
+                  {formatRole(currentUser.role)}
+                </span>
+              </div>
+              <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:block ml-1" />
+            </button>
+
+            {/* Profile Dropdown Menu */}
+            {profileDropdownOpen && (
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-[#E2E8F0] shadow-xl p-4 z-50 animate-in fade-in duration-100 select-none text-xs">
+                {/* Header: Name and Email */}
+                <div className="pb-3 border-b border-[#F1F5F9]">
+                  <h4 className="font-bold text-sm text-[#0F172A] truncate">
+                    {currentUser.name}
+                  </h4>
+                  <p className="text-xs text-[#64748B] truncate mt-0.5">
+                    {currentUser.email}
+                  </p>
+                </div>
+
+                {/* Nav links: Role Workspace, Profile & Settings */}
+                <div className="py-2 space-y-1">
+                  {/* Role-Specific Workspace Link */}
+                  <Link
+                    href={
+                      currentUser.role?.toUpperCase() === 'ADMIN'
+                        ? '/admin/dashboard'
+                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
+                        ? '/organizer/dashboard'
+                        : currentUser.role?.toUpperCase() === 'JUDGE'
+                        ? '/judge/dashboard'
+                        : '/participant/dashboard'
+                    }
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#FA541C] hover:bg-[#FFF5ED] font-bold text-xs transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-[#FA541C]" />
+                    <span>
+                      {currentUser.role?.toUpperCase() === 'ADMIN'
+                        ? 'Admin Workspace'
+                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
+                        ? 'Organizer Workspace'
+                        : currentUser.role?.toUpperCase() === 'JUDGE'
+                        ? 'Judge Workspace'
+                        : 'Participant Workspace'}
+                    </span>
+                  </Link>
+
+                  <Link
+                    href={currentUser.role?.toUpperCase() === 'JUDGE' ? '/judge/profile' : '/participant/settings'}
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
+                  >
+                    <User className="w-4 h-4 text-[#64748B]" />
+                    <span>Profile</span>
+                  </Link>
+
+                  <Link
+                    href="/participant/settings"
+                    onClick={() => setProfileDropdownOpen(false)}
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
+                  >
+                    <Settings className="w-4 h-4 text-[#64748B]" />
+                    <span>Settings</span>
+                  </Link>
+                </div>
+
+                {/* Logout Button */}
+                <div className="pt-2 border-t border-[#F1F5F9]">
+                  <button
+                    onClick={handleLogout}
+                    className="w-full flex items-center space-x-3 px-2 py-2 rounded-lg text-[#E11D48] hover:bg-[#FFF1F2] font-bold text-xs transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4 text-[#E11D48]" />
+                    <span>Sign Out</span>
+                  </button>
                 </div>
               </div>
-
-              <div className="py-1">
-                <Link
-                  href={
-                    userRole === 'ADMIN'
-                      ? '/admin/dashboard'
-                      : userRole === 'ORGANIZER'
-                      ? '/organizer/dashboard'
-                      : userRole === 'JUDGE'
-                      ? '/judge/dashboard'
-                      : '/participant/dashboard'
-                  }
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-slate-800/80 hover:text-white transition-colors"
-                >
-                  <LayoutDashboard className="w-4 h-4 text-[#FF5500]" />
-                  <span>Workspace Dashboard</span>
-                </Link>
-                <Link
-                  href={userRole === 'JUDGE' ? '/judge/profile' : '/participant/settings'}
-                  onClick={() => setProfileDropdownOpen(false)}
-                  className="flex items-center gap-2 px-4 py-2 hover:bg-slate-800/80 hover:text-white transition-colors"
-                >
-                  <User className="w-4 h-4 text-slate-400" />
-                  <span>Profile Settings</span>
-                </Link>
-              </div>
-
-              <div className="border-t border-[#1E293B] pt-1">
-                <button
-                  onClick={handleLogout}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-red-400 hover:bg-red-500/10 transition-colors text-left cursor-pointer"
-                >
-                  <LogOut className="w-4 h-4 text-red-400" />
-                  <span>Sign Out</span>
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        )}
       </div>
     </header>
   );

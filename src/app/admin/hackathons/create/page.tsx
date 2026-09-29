@@ -120,7 +120,7 @@ export default function AdminCreateHackathonPage() {
       startDate: formatForInput(addDays(now, 8)),
       endDate: formatForInput(addDays(now, 10)),
       submissionDeadline: formatForInput(addDays(now, 10)),
-      maxTeamsAllowed: 60,
+      maxTeamsAllowed: 50,
       selectionCount: 25,
       requiredSubmissions: {
         github: true,
@@ -648,7 +648,6 @@ export default function AdminCreateHackathonPage() {
                 </label>
               </div>
             </div>
-
             {/* Organizers List */}
             <div className="space-y-2.5 pt-1">
               <div className="flex items-center justify-between">
