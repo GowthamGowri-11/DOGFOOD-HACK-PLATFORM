@@ -967,15 +967,16 @@ export default function OrganizerCreateHackathonPage() {
               return (
                 <div
                   key={rIdx}
-                  className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-5 space-y-5 relative shadow-2xs"
+                  className="bg-[#f8fafc] border border-[#e2e8f0] rounded-2xl p-6 space-y-6 relative shadow-sm"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-2">
-                      <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-2.5 py-0.5 rounded-full border border-[#dbeafe]">
+                  {/* Round header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-[#e2e8f0]">
+                    <div className="flex items-center gap-2.5">
+                      <span className="text-xs font-bold text-[#2563eb] bg-[#eff6ff] px-3 py-1 rounded-full border border-[#dbeafe]">
                         Round {rIdx + 1}
                       </span>
                       {round.isFinal && (
-                        <span className="text-[10px] font-bold text-[#d97706] bg-[#fef3c7] px-2.5 py-0.5 rounded-full border border-[#fde68a]">
+                        <span className="text-[10px] font-bold text-[#d97706] bg-[#fef3c7] px-2.5 py-1 rounded-full border border-[#fde68a]">
                           FINALE
                         </span>
                       )}
@@ -985,42 +986,34 @@ export default function OrganizerCreateHackathonPage() {
                       type="button"
                       onClick={() => removeRound(rIdx)}
                       disabled={rounds.length <= 1}
-                      className="p-1.5 text-[#dc2626] hover:bg-[#fee2e2] rounded-lg transition-colors disabled:opacity-30 cursor-pointer"
+                      className="p-2 text-[#dc2626] hover:bg-[#fee2e2] rounded-xl transition-colors disabled:opacity-30 cursor-pointer"
                       title="Delete Round"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND NAME</span>
-                        <label className="flex items-center space-x-1.5 cursor-pointer">
-                          <span className="text-[10px] font-bold text-[#64748b] uppercase">FINAL ROUND</span>
-                          <input
-                            type="checkbox"
-                            checked={round.isFinal}
-                            onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
-                            className="rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
-                          />
-                        </label>
-                      </div>
+                  {/* Row 1 – Name + Final Round toggle + Round Type */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                    {/* Round Name */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Round Name</span>
                       <input
                         type="text"
                         value={round.name}
                         onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
                         placeholder="e.g. The Qualifiers"
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#2563eb]"
+                        className="w-full px-3 py-2.5 text-sm bg-white border border-[#e2e8f0] rounded-xl font-semibold text-[#0f172a] focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
                       />
                     </div>
 
-                    <div className="sm:col-span-2 space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">ROUND TYPE</span>
+                    {/* Round Type */}
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Round Type</span>
                       <select
                         value={round.roundType}
                         onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] text-[#0f172a] font-semibold"
+                        className="w-full px-3 py-2.5 text-sm bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 text-[#0f172a] font-semibold"
                       >
                         <option value="Mock Hackathon">Mock Hackathon</option>
                         <option value="Hackathon">Hackathon</option>
@@ -1031,75 +1024,85 @@ export default function OrganizerCreateHackathonPage() {
                     </div>
                   </div>
 
-                  {/* Start Date & End Date with formatted date display */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">START DATE & TIME</span>
+                  {/* Final Round toggle */}
+                  <div className="flex items-center gap-3 px-4 py-3 bg-white border border-[#e2e8f0] rounded-xl">
+                    <input
+                      id={`final-round-${rIdx}`}
+                      type="checkbox"
+                      checked={round.isFinal}
+                      onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
+                      className="w-4 h-4 rounded text-[#2563eb] focus:ring-[#2563eb] cursor-pointer"
+                    />
+                    <label htmlFor={`final-round-${rIdx}`} className="cursor-pointer">
+                      <span className="text-sm font-semibold text-[#0f172a]">Mark as Final Round</span>
+                      <p className="text-xs text-[#64748b] mt-0.5">This is the last round — no teams advance after this.</p>
+                    </label>
+                  </div>
+
+                  {/* Row 2 – Dates */}
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Start Date & Time</span>
                       <input
                         type="datetime-local"
                         value={round.startDate}
                         onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                        className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
                       />
                       {round.startDate && (
-                        <span className="text-[10px] text-[#64748b] block">
-                          {formatDateDisplay(round.startDate)}
-                        </span>
+                        <span className="text-[10px] text-[#64748b] block">{formatDateDisplay(round.startDate)}</span>
                       )}
                     </div>
 
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">END DATE & TIME</span>
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">End Date & Time</span>
                       <input
                         type="datetime-local"
                         value={round.endDate}
                         onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                        className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
                       />
                       {round.endDate && (
-                        <span className="text-[10px] text-[#64748b] block">
-                          {formatDateDisplay(round.endDate)}
-                        </span>
+                        <span className="text-[10px] text-[#64748b] block">{formatDateDisplay(round.endDate)}</span>
                       )}
                     </div>
-                  </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">SUBMISSION DEADLINE</span>
+                    <div className="space-y-2">
+                      <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Submission Deadline</span>
                       <input
                         type="datetime-local"
                         value={round.submissionDeadline}
                         onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
+                        className="w-full px-3 py-2.5 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10"
                       />
                       {round.submissionDeadline && (
-                        <span className="text-[10px] text-[#64748b] block">
-                          {formatDateDisplay(round.submissionDeadline)}
-                        </span>
+                        <span className="text-[10px] text-[#64748b] block">{formatDateDisplay(round.submissionDeadline)}</span>
                       )}
-                    </div>
-
-                    <div className="space-y-1">
-                      <span className="text-[10px] font-bold text-[#64748b] uppercase">MAX TEAMS ALLOWED</span>
-                      <input
-                        type="number"
-                        min="1"
-                        value={round.maxTeamsAllowed}
-                        onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
-                        className="w-full px-3 py-2 text-xs bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb]"
-                      />
                     </div>
                   </div>
 
-                  <div className="p-3.5 bg-white border border-[#e2e8f0] rounded-xl space-y-2">
-                    <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider block">
-                      WHAT TO EVALUATE (REQUIRED SUBMISSIONS)
-                    </span>
-                    <p className="text-[11px] text-[#64748b]">
-                      Tick what teams must upload for {round.name}. Project title and description are always required.
-                    </p>
-                    <div className="flex flex-wrap gap-2 pt-1">
+                  {/* Row 3 – Max Teams */}
+                  <div className="space-y-2">
+                    <span className="text-[10px] font-bold text-[#64748b] uppercase tracking-wide">Max Teams Allowed</span>
+                    <input
+                      type="number"
+                      min="1"
+                      value={round.maxTeamsAllowed}
+                      onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
+                      className="w-full sm:w-48 px-3 py-2.5 text-sm bg-white border border-[#e2e8f0] rounded-xl focus:outline-none focus:border-[#2563eb] focus:ring-2 focus:ring-[#2563eb]/10 font-semibold text-[#0f172a]"
+                    />
+                  </div>
+
+                  <div className="p-4 bg-white border border-[#e2e8f0] rounded-xl space-y-3">
+                    <div>
+                      <span className="text-[10px] font-bold text-[#2563eb] uppercase tracking-wider block mb-1">
+                        What to Evaluate (Required Submissions)
+                      </span>
+                      <p className="text-xs text-[#64748b]">
+                        Select what teams must upload for <span className="font-semibold text-[#0f172a]">{round.name || 'this round'}</span>. Project title and description are always required.
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2.5 pt-1">
                       {[
                         { key: 'github', label: 'GitHub link' },
                         { key: 'ppt', label: 'PPT link' },

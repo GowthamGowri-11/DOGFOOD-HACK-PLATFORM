@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Trophy,
   Compass,
@@ -142,8 +142,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
   { label: 'Certificate Management', href: '/organizer/certificates', icon: ShieldCheck, badge: 'Templates' },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: History },
-  { label: 'Contact Us', href: '/contact', icon: MessageSquare },
-  { label: 'Help Center', href: '/help', icon: HelpCircle },
+
 ];
 
 export const Sidebar: React.FC<SidebarProps> = ({
@@ -160,6 +159,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onOpenLoginModal,
 }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -247,6 +247,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
                   key={item.label}
                   href={item.href}
                   prefetch={true}
+                  onMouseEnter={() => {
+                    try {
+                      router.prefetch(item.href);
+                    } catch {}
+                  }}
+                  onPointerDown={() => {
+                    try {
+                      router.prefetch(item.href);
+                    } catch {}
+                  }}
                   onClick={onCloseMobile}
                   className={`flex items-center group h-[42px] px-3.5 rounded-xl text-[13.5px] transition-all relative ${
                     isActive

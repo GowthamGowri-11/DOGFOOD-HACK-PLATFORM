@@ -120,6 +120,24 @@ export default function OrganizerJudgesPage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
 
+  // Lock body scroll and handle Escape key when modal is open
+  useEffect(() => {
+    if (showAddModal) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setShowAddModal(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [showAddModal]);
+
   // Load Hackathons
   useEffect(() => {
     async function loadHackathons() {
@@ -544,8 +562,14 @@ export default function OrganizerJudgesPage() {
 
       {/* ================= ADD JUDGE MODAL ================= */}
       {showAddModal && (
-        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center z-50 p-4 animate-in fade-in duration-150">
-          <div className="bg-white border border-slate-200 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+        <div
+          className="fixed inset-0 bg-slate-900/20 backdrop-blur-md flex items-center justify-center z-50 p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setShowAddModal(false)}
+        >
+          <div
+            className="relative bg-white border border-slate-200/90 rounded-2xl max-w-md w-full p-6 shadow-2xl shadow-slate-900/25 space-y-5 modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             {/* Modal Header */}
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2">

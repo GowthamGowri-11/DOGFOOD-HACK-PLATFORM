@@ -94,6 +94,39 @@ export default function AdminJudgesPage() {
   const [deletingJudge, setDeletingJudge] = useState<JudgeItem | null>(null);
   const [actionInProgress, setActionInProgress] = useState(false);
 
+  // Lock background body scroll and listen for Escape key whenever any modal is open
+  const isAnyModalOpen = Boolean(
+    addJudgeModalOpen ||
+    assignEngineModalOpen ||
+    resetConfirmModalOpen ||
+    viewingJudgeTeams ||
+    deletingJudge
+  );
+
+  useEffect(() => {
+    if (isAnyModalOpen) {
+      const originalOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setAddJudgeModalOpen(false);
+          setAssignEngineModalOpen(false);
+          setResetConfirmModalOpen(false);
+          setViewingJudgeTeams(null);
+          setDeletingJudge(null);
+        }
+      };
+
+      window.addEventListener('keydown', handleKeyDown);
+
+      return () => {
+        document.body.style.overflow = originalOverflow;
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    }
+  }, [isAnyModalOpen]);
+
   // Add Judge Form State
   const [newJudgeName, setNewJudgeName] = useState('');
   const [newJudgeEmail, setNewJudgeEmail] = useState('');
@@ -922,9 +955,16 @@ export default function AdminJudgesPage() {
       {/* ADD JUDGE MODAL */}
       {/* ======================================================== */}
       {addJudgeModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-zinc-200 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="flex items-center justify-between pb-2 border-b border-zinc-100">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setAddJudgeModalOpen(false)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-md w-full max-h-[88vh] flex flex-col border border-zinc-200/90 shadow-2xl shadow-slate-900/25 overflow-hidden modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="flex-shrink-0 p-6 pb-4 border-b border-zinc-100 flex items-center justify-between">
               <div className="flex items-center gap-2.5">
                 <div className="w-9 h-9 rounded-xl bg-orange-50 text-[#FA541C] flex items-center justify-center border border-orange-200">
                   <Plus className="w-4 h-4 stroke-[2.5]" />
@@ -938,13 +978,18 @@ export default function AdminJudgesPage() {
               </div>
               <button
                 onClick={() => setAddJudgeModalOpen(false)}
-                className="p-1.5 text-zinc-400 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            <form onSubmit={handleAddJudge} className="space-y-3.5 text-xs">
+            {/* Form with internal scroll containment */}
+            <form
+              onSubmit={handleAddJudge}
+              className="p-6 pt-4 space-y-3.5 text-xs flex-1 overflow-y-auto overscroll-contain custom-scrollbar"
+              onWheel={(e) => e.stopPropagation()}
+            >
               <div className="space-y-1">
                 <label className="font-bold text-zinc-700">Judge Full Name *</label>
                 <input
@@ -1026,56 +1071,67 @@ export default function AdminJudgesPage() {
       {/* AUTO-ASSIGNMENT ENGINE CONFIRMATION MODAL */}
       {/* ======================================================== */}
       {assignEngineModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-zinc-200 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
-            <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FA541C] flex items-center justify-center mx-auto border border-orange-200">
-              <Sparkles className="w-6 h-6 stroke-[2.2]" />
-            </div>
-
-            <div className="text-center space-y-1">
-              <h3 className="text-lg font-bold text-zinc-900">Auto-Assign Teams Engine</h3>
-              <p className="text-xs text-zinc-500">
-                Evenly and randomly distribute all teams across judges for{' '}
-                <span className="font-bold text-zinc-900">{selectedHackathonObj?.title || 'Selected Event'}</span>.
-              </p>
-            </div>
-
-            {/* Allocation breakdown card */}
-            <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-2 text-xs">
-              <div className="font-bold text-zinc-900 flex items-center justify-between">
-                <span>Distribution Breakdown</span>
-                <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
-                  Random Split
-                </span>
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setAssignEngineModalOpen(false)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-md w-full max-h-[88vh] flex flex-col border border-zinc-200/90 shadow-2xl shadow-slate-900/25 overflow-hidden modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div
+              className="p-6 space-y-4 overflow-y-auto overscroll-contain custom-scrollbar flex-1"
+              onWheel={(e) => e.stopPropagation()}
+            >
+              <div className="w-12 h-12 rounded-2xl bg-orange-50 text-[#FA541C] flex items-center justify-center mx-auto border border-orange-200">
+                <Sparkles className="w-6 h-6 stroke-[2.2]" />
               </div>
-              <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
-                <div className="p-2 bg-white rounded-xl border border-zinc-200">
-                  <span className="text-zinc-500 block">Total Teams:</span>
-                  <span className="font-black text-sm text-zinc-900">{stats.totalTeams}</span>
+
+              <div className="text-center space-y-1">
+                <h3 className="text-lg font-bold text-zinc-900">Auto-Assign Teams Engine</h3>
+                <p className="text-xs text-zinc-500">
+                  Evenly and randomly distribute all teams across judges for{' '}
+                  <span className="font-bold text-zinc-900">{selectedHackathonObj?.title || 'Selected Event'}</span>.
+                </p>
+              </div>
+
+              {/* Allocation breakdown card */}
+              <div className="p-4 bg-zinc-50 border border-zinc-200 rounded-2xl space-y-2 text-xs">
+                <div className="font-bold text-zinc-900 flex items-center justify-between">
+                  <span>Distribution Breakdown</span>
+                  <span className="text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-full border border-orange-200">
+                    Random Split
+                  </span>
                 </div>
-                <div className="p-2 bg-white rounded-xl border border-zinc-200">
-                  <span className="text-zinc-500 block">Active Judges:</span>
-                  <span className="font-black text-sm text-zinc-900">{stats.activeJudges}</span>
+                <div className="grid grid-cols-2 gap-2 pt-1 text-[11px]">
+                  <div className="p-2 bg-white rounded-xl border border-zinc-200">
+                    <span className="text-zinc-500 block">Total Teams:</span>
+                    <span className="font-black text-sm text-zinc-900">{stats.totalTeams}</span>
+                  </div>
+                  <div className="p-2 bg-white rounded-xl border border-zinc-200">
+                    <span className="text-zinc-500 block">Active Judges:</span>
+                    <span className="font-black text-sm text-zinc-900">{stats.activeJudges}</span>
+                  </div>
+                </div>
+                <div className="pt-1 text-orange-600 font-semibold text-[11px] leading-relaxed">
+                  ⚡ Each judge will be randomly assigned ~{calculatedTeamsPerJudge} team
+                  {calculatedTeamsPerJudge !== 1 ? 's' : ''} (Fisher-Yates random shuffle).
                 </div>
               </div>
-              <div className="pt-1 text-orange-600 font-semibold text-[11px] leading-relaxed">
-                ⚡ Each judge will be randomly assigned ~{calculatedTeamsPerJudge} team
-                {calculatedTeamsPerJudge !== 1 ? 's' : ''} (Fisher-Yates random shuffle).
+
+              <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-800 space-y-1">
+                <p className="font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5 text-[#FA541C]" />
+                  <span>Fair &amp; Balanced Assignment:</span>
+                </p>
+                <p className="text-[11px] leading-relaxed text-orange-700">
+                  The engine analyses all participating teams, shuffles them with cryptographic randomness, and splits
+                  workload evenly so no judge is overburdened.
+                </p>
               </div>
             </div>
 
-            <div className="p-3 bg-orange-50 border border-orange-200 rounded-xl text-xs text-orange-800 space-y-1">
-              <p className="font-bold flex items-center gap-1.5">
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#FA541C]" />
-                <span>Fair &amp; Balanced Assignment:</span>
-              </p>
-              <p className="text-[11px] leading-relaxed text-orange-700">
-                The engine analyses all participating teams, shuffles them with cryptographic randomness, and splits
-                workload evenly so no judge is overburdened.
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-2 pt-2">
+            <div className="flex-shrink-0 p-4 border-t border-zinc-100 flex items-center justify-end gap-2 bg-zinc-50/80">
               <button
                 type="button"
                 onClick={() => setAssignEngineModalOpen(false)}
@@ -1112,8 +1168,14 @@ export default function AdminJudgesPage() {
       {/* RESET ASSIGNMENTS CONFIRMATION MODAL */}
       {/* ======================================================== */}
       {resetConfirmModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-zinc-200 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setResetConfirmModalOpen(false)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-md w-full border border-zinc-200/90 shadow-2xl shadow-slate-900/25 p-6 space-y-4 modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
               <RotateCcw className="w-6 h-6 stroke-[2.2]" />
             </div>
@@ -1163,10 +1225,16 @@ export default function AdminJudgesPage() {
       {/* VIEW JUDGE ASSIGNED TEAMS MODAL */}
       {/* ======================================================== */}
       {viewingJudgeTeams && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-xl w-full border border-zinc-200 shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            {/* Header */}
-            <div className="p-6 border-b border-zinc-100 flex items-start justify-between bg-gradient-to-r from-white to-orange-50/20">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setViewingJudgeTeams(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-xl w-full max-h-[82vh] flex flex-col border border-zinc-200/90 shadow-2xl shadow-slate-900/25 overflow-hidden modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header - Pinned at Top */}
+            <div className="flex-shrink-0 p-5 sm:p-6 border-b border-zinc-100 flex items-start justify-between bg-gradient-to-r from-white via-orange-50/10 to-orange-50/20">
               <div className="space-y-1">
                 <div className="flex items-center gap-2">
                   <h3 className="text-lg font-bold text-zinc-900">{viewingJudgeTeams.fullName}</h3>
@@ -1180,16 +1248,20 @@ export default function AdminJudgesPage() {
               </div>
               <button
                 onClick={() => setViewingJudgeTeams(null)}
-                className="p-1.5 text-zinc-400 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                className="p-1.5 text-zinc-400 hover:text-zinc-700 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* Content: List of Assigned Teams */}
-            <div className="p-6 space-y-3 max-h-[60vh] overflow-y-auto text-xs">
+            {/* Content: List of Assigned Teams - Isolated Scroll */}
+            <div
+              className="p-5 sm:p-6 space-y-3 flex-1 overflow-y-auto overscroll-contain custom-scrollbar text-xs"
+              onWheel={(e) => e.stopPropagation()}
+            >
               {viewingJudgeTeams.assignedTeams?.length > 0 ? (
-                <div className="divide-y divide-zinc-100 border border-zinc-200 rounded-2xl overflow-hidden bg-white">
+                <div className="divide-y divide-zinc-100 border border-zinc-200/80 rounded-2xl overflow-hidden bg-white shadow-xs">
                   {viewingJudgeTeams.assignedTeams.map((t, idx) => (
                     <div
                       key={t.assignmentId}
@@ -1202,7 +1274,7 @@ export default function AdminJudgesPage() {
                         </div>
                         <div className="text-[11px] text-zinc-500 font-semibold">{t.projectTitle}</div>
                       </div>
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200">
+                      <span className="px-2.5 py-0.5 rounded-full text-[10px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200">
                         Assigned
                       </span>
                     </div>
@@ -1215,11 +1287,11 @@ export default function AdminJudgesPage() {
               )}
             </div>
 
-            {/* Footer */}
-            <div className="p-4 border-t border-zinc-100 flex items-center justify-end bg-zinc-50">
+            {/* Footer - Pinned at Bottom */}
+            <div className="flex-shrink-0 p-4 border-t border-zinc-100 flex items-center justify-end bg-zinc-50/80">
               <button
                 onClick={() => setViewingJudgeTeams(null)}
-                className="px-4 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-xl transition-colors cursor-pointer"
+                className="px-5 py-2 text-xs font-bold text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-xl transition-all shadow-xs hover:shadow cursor-pointer"
               >
                 Close
               </button>
@@ -1232,8 +1304,14 @@ export default function AdminJudgesPage() {
       {/* REMOVE JUDGE CONFIRMATION MODAL */}
       {/* ======================================================== */}
       {deletingJudge && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-md w-full border border-zinc-200 shadow-2xl p-6 space-y-4 animate-in fade-in zoom-in-95 duration-200">
+        <div
+          className="fixed inset-0 z-50 bg-slate-900/20 backdrop-blur-md flex items-center justify-center p-4 sm:p-6 overflow-hidden overscroll-contain modal-backdrop-enter"
+          onClick={() => setDeletingJudge(null)}
+        >
+          <div
+            className="relative bg-white rounded-3xl max-w-md w-full border border-zinc-200/90 shadow-2xl shadow-slate-900/25 p-6 space-y-4 modal-content-enter select-none"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto border border-rose-200">
               <Trash2 className="w-6 h-6 stroke-[2.2]" />
             </div>

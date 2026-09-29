@@ -1119,42 +1119,30 @@ export default function AdminCreateHackathonPage() {
                     </div>
 
                     {!isCollapsed && (
-                      <div className="space-y-4 pt-1">
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                          <div className="space-y-1">
-                            <div className="flex items-center justify-between">
-                              <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                                ROUND NAME
-                              </span>
-                              <label className="flex items-center space-x-1 cursor-pointer">
-                                <span className="text-[10px] font-bold text-zinc-500 uppercase">
-                                  FINAL ROUND
-                                </span>
-                                <input
-                                  type="checkbox"
-                                  checked={round.isFinal}
-                                  onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
-                                  className="rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
-                                />
-                              </label>
-                            </div>
+                      <div className="space-y-5 pt-2">
+                        {/* Row 1 – Name + Round Type + (optionally Teams Advancing) */}
+                        <div className={`grid grid-cols-1 gap-5 ${progressionMode === 'SELECTION_BASED' ? 'sm:grid-cols-3' : 'sm:grid-cols-2'}`}>
+                          <div className="space-y-2">
+                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                              Round Name
+                            </span>
                             <input
                               type="text"
                               value={round.name}
                               onChange={(e) => updateRound(rIdx, 'name', e.target.value)}
                               placeholder="e.g. The Qualifiers"
-                              className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl font-bold text-zinc-900 focus:outline-none focus:border-orange-500"
+                              className="w-full px-3 py-2.5 text-sm bg-white border border-zinc-200 rounded-xl font-bold text-zinc-900 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10"
                             />
                           </div>
 
-                          <div className={progressionMode === 'SELECTION_BASED' ? 'space-y-1' : 'sm:col-span-2 space-y-1'}>
+                          <div className="space-y-2">
                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              ROUND TYPE
+                              Round Type
                             </span>
                             <select
                               value={round.roundType}
                               onChange={(e) => updateRound(rIdx, 'roundType', e.target.value)}
-                              className="w-full px-3 py-2 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-semibold cursor-pointer"
+                              className="w-full px-3 py-2.5 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-900 font-semibold cursor-pointer"
                             >
                               <option value="Mock Hackathon">Mock Hackathon</option>
                               <option value="Hackathon">Hackathon</option>
@@ -1165,9 +1153,9 @@ export default function AdminCreateHackathonPage() {
                           </div>
 
                           {progressionMode === 'SELECTION_BASED' && (
-                            <div className="space-y-1">
+                            <div className="space-y-2">
                               <span className="text-[10px] font-bold text-orange-600 uppercase flex items-center justify-between">
-                                <span>TEAMS ADVANCING*</span>
+                                <span>Teams Advancing*</span>
                                 <span className="text-[9px] text-zinc-400 normal-case">(Cutoff)</span>
                               </span>
                               <input
@@ -1177,69 +1165,89 @@ export default function AdminCreateHackathonPage() {
                                 value={round.selectionCount ?? ''}
                                 onChange={(e) => updateRound(rIdx, 'selectionCount', e.target.value)}
                                 placeholder={rIdx === 0 ? "25" : rIdx === 1 ? "10" : "5"}
-                                className="w-full px-3 py-2 text-xs bg-orange-50/50 border border-orange-200 rounded-xl font-bold text-orange-700 focus:outline-none focus:border-orange-500"
+                                className="w-full px-3 py-2.5 text-sm bg-orange-50/50 border border-orange-200 rounded-xl font-bold text-orange-700 focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10"
                               />
                             </div>
                           )}
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1">
+                        {/* Final Round toggle */}
+                        <div className="flex items-center gap-3 px-4 py-3 bg-white border border-zinc-200 rounded-xl">
+                          <input
+                            id={`admin-final-round-${rIdx}`}
+                            type="checkbox"
+                            checked={round.isFinal}
+                            onChange={(e) => updateRound(rIdx, 'isFinal', e.target.checked)}
+                            className="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 cursor-pointer"
+                          />
+                          <label htmlFor={`admin-final-round-${rIdx}`} className="cursor-pointer">
+                            <span className="text-sm font-semibold text-zinc-900">Mark as Final Round</span>
+                            <p className="text-xs text-zinc-500 mt-0.5">This is the last round — no teams advance after this.</p>
+                          </label>
+                        </div>
+
+                        {/* Row 2 – Dates */}
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+                          <div className="space-y-2">
                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              START DATE &amp; TIME
+                              Start Date & Time
                             </span>
                             <input
                               type="datetime-local"
                               value={round.startDate}
                               onChange={(e) => updateRound(rIdx, 'startDate', e.target.value)}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                              className="w-full px-3 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-800"
                             />
                           </div>
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              END DATE &amp; TIME
+                              End Date & Time
                             </span>
                             <input
                               type="datetime-local"
                               value={round.endDate}
                               onChange={(e) => updateRound(rIdx, 'endDate', e.target.value)}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
+                              className="w-full px-3 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-800"
                             />
                           </div>
-                        </div>
-
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <div className="space-y-1">
+                          <div className="space-y-2">
                             <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              SUBMISSION DEADLINE
+                              Submission Deadline
                             </span>
                             <input
                               type="datetime-local"
                               value={round.submissionDeadline}
                               onChange={(e) => updateRound(rIdx, 'submissionDeadline', e.target.value)}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-800"
-                            />
-                          </div>
-                          <div className="space-y-1">
-                            <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
-                              MAX TEAMS ALLOWED
-                            </span>
-                            <input
-                              type="number"
-                              min="1"
-                              value={round.maxTeamsAllowed}
-                              onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
-                              className="w-full px-3 py-1.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 text-zinc-900 font-bold"
+                              className="w-full px-3 py-2.5 text-xs bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-800"
                             />
                           </div>
                         </div>
 
-                        {/* What to Evaluate (Required Submissions) */}
-                        <div className="space-y-2 pt-1">
-                          <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">
-                            WHAT TO EVALUATE (REQUIRED SUBMISSIONS)
+                        {/* Row 3 – Max Teams */}
+                        <div className="space-y-2">
+                          <span className="text-[10px] font-bold text-zinc-400 uppercase tracking-wider">
+                            Max Teams Allowed
                           </span>
-                          <div className="flex flex-wrap gap-2">
+                          <input
+                            type="number"
+                            min="1"
+                            value={round.maxTeamsAllowed}
+                            onChange={(e) => updateRound(rIdx, 'maxTeamsAllowed', Number(e.target.value))}
+                            className="w-full sm:w-48 px-3 py-2.5 text-sm bg-white border border-zinc-200 rounded-xl focus:outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 text-zinc-900 font-bold"
+                          />
+                        </div>
+
+                        {/* What to Evaluate (Required Submissions) */}
+                        <div className="space-y-3 pt-1">
+                          <div>
+                            <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block mb-1">
+                              What to Evaluate (Required Submissions)
+                            </span>
+                            <p className="text-xs text-zinc-500">
+                              Select what teams must upload for <span className="font-semibold text-zinc-900">{round.name || 'this round'}</span>.
+                            </p>
+                          </div>
+                          <div className="flex flex-wrap gap-2.5">
                             {[
                               { key: 'github', label: 'GitHub link' },
                               { key: 'ppt', label: 'PPT link' },

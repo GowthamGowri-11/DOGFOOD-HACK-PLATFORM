@@ -220,6 +220,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
           /* Guest: Show Get Started Button with Rich Glow & Interactive Animations */
           <Link
             href="/login"
+            prefetch={true}
             className="group relative inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-gradient-to-r from-[#FA541C] via-[#FF6636] to-[#E03A00] hover:from-[#FF5722] hover:via-[#FA541C] hover:to-[#D4380D] text-white text-xs sm:text-sm font-bold rounded-xl shadow-[0_4px_14px_rgba(250,84,28,0.30)] hover:shadow-[0_6px_22px_rgba(250,84,28,0.48)] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] transition-all duration-200 whitespace-nowrap cursor-pointer overflow-hidden flex-shrink-0"
           >
             {/* Ambient Shimmer / Sheen Sweep */}
@@ -284,6 +285,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                         ? '/judge/dashboard'
                         : '/participant/dashboard'
                     }
+                    prefetch={true}
                     onClick={() => setProfileDropdownOpen(false)}
                     className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#FA541C] hover:bg-[#FFF5ED] font-bold text-xs transition-colors"
                   >
@@ -309,6 +311,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                         ? '/judge/profile'
                         : '/participant/profile'
                     }
+                    prefetch={true}
                     onClick={() => setProfileDropdownOpen(false)}
                     className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#FFF5ED] hover:text-[#FA541C] font-semibold text-xs transition-colors"
                   >
@@ -326,6 +329,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                         ? '/judge/profile'
                         : '/participant/settings'
                     }
+                    prefetch={true}
                     onClick={() => setProfileDropdownOpen(false)}
                     className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#FFF5ED] hover:text-[#FA541C] font-semibold text-xs transition-colors"
                   >
