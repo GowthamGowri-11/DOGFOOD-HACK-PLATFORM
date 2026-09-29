@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import {
   Users,
@@ -26,6 +27,7 @@ import {
   Link2,
   Check,
   UserCheck,
+  X,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 import { Button } from '@/components/ui/Button';
@@ -98,6 +100,32 @@ export default function ParticipantTeamsPage() {
   const [removeModalOpen, setRemoveModalOpen] = useState(false);
   const [memberToRemove, setMemberToRemove] = useState<{ teamId: string; member: any } | null>(null);
   const [removingMember, setRemovingMember] = useState(false);
+
+  // Modal mounted flag for createPortal client rendering
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  // Lock body scroll and handle Escape key for open modals
+  useEffect(() => {
+    if (addMemberModalOpen || removeModalOpen) {
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') {
+          setAddMemberModalOpen(false);
+          setRemoveModalOpen(false);
+        }
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = 'unset';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+  }, [addMemberModalOpen, removeModalOpen]);
 
   const showToast = (type: 'success' | 'error', text: string) => {
     setMessage({ type, text });
@@ -236,36 +264,47 @@ export default function ParticipantTeamsPage() {
   const handleOpenAddMemberModal = async (team: any) => {
     setActiveTeamForMember(team);
     setMemberFormError(null);
-    setFormResponseValues({});
+
+    // 1. Immediately supply default fallback fields so the modal opens with ZERO latency
+    const defaultFallback: TeamMemberFormConfig = {
+      title: `${team.name} • Add Team Member`,
+      description: 'Provide teammate credentials and details to add them to your squad roster.',
+      fields: [
+        { id: 'field_fullname', type: 'TEXT', label: 'Full Name', required: true, placeholder: 'e.g. Alex Johnson' },
+        { id: 'field_email', type: 'EMAIL', label: 'Email Address', required: true, placeholder: 'alex@example.com' },
+        { id: 'field_phone', type: 'PHONE', label: 'Phone Number', required: false, placeholder: '+1 555-0199' },
+        { id: 'field_skills', type: 'TEXT', label: 'Role in Team / Skills', required: false, placeholder: 'e.g. Frontend Developer' },
+      ],
+    };
+
+    const initialVals: Record<string, any> = {
+      field_fullname: '',
+      field_email: '',
+      field_phone: '',
+      field_skills: '',
+    };
+    setFormResponseValues(initialVals);
+    setActiveFormConfig(defaultFallback);
     setAddMemberModalOpen(true);
 
+    // 2. Fetch published hackathon custom form definition in background
     try {
-      const res = await fetch(`/api/v1/hackathons/${team.hackathon.id}/team-form`);
+      const hackathonId = team.hackathon?.id || team.hackathonId;
+      if (!hackathonId) return;
+
+      const res = await fetch(`/api/v1/hackathons/${hackathonId}/team-form`);
       const json = await res.json();
-      if (res.ok && json.data?.form) {
+      if (res.ok && json.data?.form?.fields?.length > 0) {
         setActiveFormConfig(json.data.form);
-        const initialVals: Record<string, any> = {};
+        const dynamicVals: Record<string, any> = {};
         json.data.form.fields.forEach((f: TeamMemberFormField) => {
           if (f.type === 'SELECT' && f.options && f.options.length > 0) {
-            initialVals[f.id] = f.options[0];
+            dynamicVals[f.id] = f.options[0];
           } else {
-            initialVals[f.id] = '';
+            dynamicVals[f.id] = '';
           }
         });
-        setFormResponseValues(initialVals);
-      } else {
-        // Fallback default fields if no custom form configured
-        setActiveFormConfig({
-          title: 'Add Team Member',
-          description: 'Provide teammate details to add them to your squad roster.',
-          fields: [
-            { id: 'fullName', type: 'TEXT', label: 'Full Name', required: true, placeholder: 'Jane Doe' },
-            { id: 'email', type: 'EMAIL', label: 'Email Address', required: true, placeholder: 'jane@example.com' },
-            { id: 'phone', type: 'PHONE', label: 'Phone Number', required: false, placeholder: '+1 555-0199' },
-            { id: 'githubUrl', type: 'URL', label: 'GitHub Profile', required: false, placeholder: 'https://github.com/janedoe' },
-            { id: 'roleDescription', type: 'TEXT', label: 'Role in Team', required: false, placeholder: 'Frontend Developer' },
-          ],
-        });
+        setFormResponseValues(dynamicVals);
       }
     } catch (err) {
       console.error('Error fetching form config:', err);
@@ -280,15 +319,15 @@ export default function ParticipantTeamsPage() {
       setSubmittingMember(true);
       setMemberFormError(null);
 
-      const res = await fetch(`/api/v1/teams/${activeTeamForMember.id}/members/form-submit`, {
+      const res = await fetch(`/api/v1/teams/${activeTeamForMember.id}/members`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ formResponses: formResponseValues }),
+        body: JSON.stringify({ formResponse: formResponseValues }),
       });
 
       const json = await res.json();
       if (!res.ok) {
-        setMemberFormError(json.message || 'Failed to add member via form.');
+        setMemberFormError(json.error?.message || json.message || 'Failed to add member via form.');
         return;
       }
 
@@ -820,157 +859,188 @@ export default function ParticipantTeamsPage() {
         )}
       </div>
 
-      {/* ================= 4. MODALS ================= */}
+      {/* ================= 4. MODALS (RENDERED VIA REACT PORTAL) ================= */}
       {/* Organizer-Defined Team Member Form Modal */}
-      {addMemberModalOpen && activeTeamForMember && activeFormConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-xl w-full p-6 shadow-2xl border border-[#E5E0D8] space-y-4 max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-2 border-b border-[#F4EFEA]">
-              <div>
-                <span className="text-[10px] font-bold text-[#FA541C] uppercase tracking-wider block">
-                  {activeTeamForMember.name} • SQUAD ONBOARDING
-                </span>
-                <h3 className="text-base font-extrabold text-[#18181B]">
-                  {activeFormConfig.title || 'Add Team Member'}
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAddMemberModalOpen(false)}
-                className="p-1 text-[#6B7280] hover:text-[#18181B] rounded-lg cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
+      {mounted &&
+        addMemberModalOpen &&
+        activeTeamForMember &&
+        activeFormConfig &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 sm:p-6 overflow-y-auto">
+            {/* Blurred Backdrop */}
+            <div
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setAddMemberModalOpen(false)}
+            />
 
-            {activeFormConfig.description && (
-              <p className="text-xs text-[#6B7280] bg-[#FAF8F5] p-3 rounded-xl border border-[#E5E0D8]">
-                {activeFormConfig.description}
-              </p>
-            )}
-
-            {memberFormError && (
-              <div className="p-3.5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-xs text-[#DC2626] flex items-center space-x-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{memberFormError}</span>
-              </div>
-            )}
-
-            <form onSubmit={handleSubmitMemberForm} className="space-y-4 pt-1">
-              {activeFormConfig.fields.map((field) => (
-                <div key={field.id} className="space-y-1">
-                  <label className="text-xs font-bold text-[#374151] flex items-center justify-between">
-                    <span>
-                      {field.label} {field.required && <span className="text-[#DC2626]">*</span>}
+            {/* Modal Dialog Card */}
+            <div
+              className="relative bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-[#E5E0D8] space-y-5 max-h-[90vh] overflow-y-auto z-10 animate-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-start justify-between pb-3 border-b border-[#F4EFEA]">
+                <div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-[10.5px] font-bold text-[#FA541C] bg-[#FFE8D6] px-2.5 py-0.5 rounded-full border border-[#FED7AA]">
+                      {activeTeamForMember.name} • SQUAD ONBOARDING
                     </span>
-                  </label>
-                  {field.description && (
-                    <p className="text-[10px] text-[#6B7280]">{field.description}</p>
-                  )}
-
-                  {field.type === 'TEXTAREA' ? (
-                    <textarea
-                      rows={2}
-                      required={field.required}
-                      value={formResponseValues[field.id] || ''}
-                      onChange={(e) =>
-                        setFormResponseValues({
-                          ...formResponseValues,
-                          [field.id]: e.target.value,
-                        })
-                      }
-                      placeholder={field.placeholder || `Enter ${field.label}...`}
-                      className="w-full px-3 py-2 text-xs bg-white border border-[#E5E0D8] rounded-xl focus:outline-none focus:border-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20"
-                    />
-                  ) : field.type === 'SELECT' ? (
-                    <select
-                      required={field.required}
-                      value={formResponseValues[field.id] || ''}
-                      onChange={(e) =>
-                        setFormResponseValues({
-                          ...formResponseValues,
-                          [field.id]: e.target.value,
-                        })
-                      }
-                      className="w-full px-3 py-2 text-xs bg-white border border-[#E5E0D8] rounded-xl focus:outline-none focus:border-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20 text-[#18181B] font-semibold"
-                    >
-                      {field.options?.map((opt) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  ) : (
-                    <input
-                      type={field.type === 'EMAIL' ? 'email' : field.type === 'PHONE' ? 'tel' : 'text'}
-                      required={field.required}
-                      value={formResponseValues[field.id] || ''}
-                      onChange={(e) =>
-                        setFormResponseValues({
-                          ...formResponseValues,
-                          [field.id]: e.target.value,
-                        })
-                      }
-                      placeholder={field.placeholder || `Enter ${field.label}...`}
-                      className="w-full px-3 py-2 text-xs bg-white border border-[#E5E0D8] rounded-xl focus:outline-none focus:border-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20"
-                    />
+                  </div>
+                  <h3 className="text-lg sm:text-xl font-extrabold text-[#18181B] mt-1.5 tracking-tight">
+                    {activeFormConfig.title || 'Add Team Member'}
+                  </h3>
+                  {activeFormConfig.description && (
+                    <p className="text-xs text-[#6B7280] mt-1 leading-relaxed">
+                      {activeFormConfig.description}
+                    </p>
                   )}
                 </div>
-              ))}
-
-              <div className="pt-2 flex items-center justify-end space-x-2">
                 <button
                   type="button"
                   onClick={() => setAddMemberModalOpen(false)}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                  title="Close modal"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {memberFormError && (
+                <div className="p-3.5 bg-[#FEF2F2] border border-[#FECACA] rounded-xl text-xs text-[#DC2626] flex items-center space-x-2.5">
+                  <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                  <span>{memberFormError}</span>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmitMemberForm} className="space-y-4 pt-1">
+                {activeFormConfig.fields.map((field) => (
+                  <div key={field.id} className="space-y-1.5">
+                    <label className="text-xs font-bold text-[#374151] flex items-center justify-between">
+                      <span>
+                        {field.label} {field.required && <span className="text-[#DC2626]">*</span>}
+                      </span>
+                    </label>
+                    {field.description && (
+                      <p className="text-[10px] text-[#6B7280]">{field.description}</p>
+                    )}
+
+                    {field.type === 'TEXTAREA' ? (
+                      <textarea
+                        rows={2}
+                        required={field.required}
+                        value={formResponseValues[field.id] || ''}
+                        onChange={(e) =>
+                          setFormResponseValues({
+                            ...formResponseValues,
+                            [field.id]: e.target.value,
+                          })
+                        }
+                        placeholder={field.placeholder || `Enter ${field.label}...`}
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-[#18181B] focus:outline-none focus:border-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20 transition-all"
+                      />
+                    ) : field.type === 'SELECT' ? (
+                      <div className="relative">
+                        <select
+                          required={field.required}
+                          value={formResponseValues[field.id] || ''}
+                          onChange={(e) =>
+                            setFormResponseValues({
+                              ...formResponseValues,
+                              [field.id]: e.target.value,
+                            })
+                          }
+                          className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl focus:outline-none focus:border-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20 text-[#18181B] font-semibold appearance-none cursor-pointer pr-10"
+                        >
+                          {field.options?.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-slate-400 absolute right-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
+                      </div>
+                    ) : (
+                      <input
+                        type={field.type === 'EMAIL' ? 'email' : field.type === 'PHONE' ? 'tel' : 'text'}
+                        required={field.required}
+                        value={formResponseValues[field.id] || ''}
+                        onChange={(e) =>
+                          setFormResponseValues({
+                            ...formResponseValues,
+                            [field.id]: e.target.value,
+                          })
+                        }
+                        placeholder={field.placeholder || `Enter ${field.label}...`}
+                        className="w-full px-3.5 py-2.5 text-xs bg-[#FAF8F5] border border-[#E5E0D8] rounded-xl text-[#18181B] focus:outline-none focus:border-[#FA541C] focus:ring-2 focus:ring-[#FA541C]/20 transition-all"
+                      />
+                    )}
+                  </div>
+                ))}
+
+                <div className="pt-3 flex items-center justify-end space-x-2.5 border-t border-[#F4EFEA]">
+                  <button
+                    type="button"
+                    onClick={() => setAddMemberModalOpen(false)}
+                    className="px-4 py-2.5 border border-[#E5E0D8] rounded-xl text-xs font-bold text-[#6B7280] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={submittingMember}
+                    className="px-5 py-2.5 bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#EA4812] hover:to-[#C93300] text-white text-xs font-bold rounded-xl shadow-sm hover:shadow-md transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {submittingMember ? 'Adding Teammate...' : 'Submit & Add Member'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>,
+          document.body
+        )}
+
+      {/* Remove Member Confirmation Modal */}
+      {mounted &&
+        removeModalOpen &&
+        memberToRemove &&
+        createPortal(
+          <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4">
+            <div
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity"
+              onClick={() => setRemoveModalOpen(false)}
+            />
+            <div
+              className="relative bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-[#E5E0D8] space-y-4 z-10 animate-in zoom-in-95 duration-150"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 className="text-base font-extrabold text-[#18181B]">Remove Member</h3>
+              <p className="text-xs text-[#6B7280] leading-relaxed">
+                Are you sure you want to remove{' '}
+                <strong className="text-[#18181B]">
+                  {memberToRemove.member.user?.fullName || 'this member'}
+                </strong>{' '}
+                from the squad roster? They will forfeit access to team project submissions.
+              </p>
+              <div className="flex items-center justify-end space-x-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRemoveModalOpen(false)}
                   className="px-4 py-2 border border-[#E5E0D8] rounded-xl text-xs font-bold text-[#6B7280] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  disabled={submittingMember}
-                  className="px-4 py-2 bg-gradient-to-r from-[#FA541C] to-[#E03A00] hover:from-[#EA4812] hover:to-[#C93300] text-white text-xs font-bold rounded-xl shadow-sm transition-all cursor-pointer"
+                  type="button"
+                  onClick={handleConfirmRemoveMember}
+                  disabled={removingMember}
+                  className="px-4 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer disabled:opacity-50"
                 >
-                  {submittingMember ? 'Adding Teammate...' : 'Submit & Add Member'}
+                  {removingMember ? 'Removing...' : 'Remove Member'}
                 </button>
               </div>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {/* Remove Member Confirmation Modal */}
-      {removeModalOpen && memberToRemove && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl border border-[#E5E0D8] space-y-4">
-            <h3 className="text-base font-extrabold text-[#18181B]">Remove Member</h3>
-            <p className="text-xs text-[#6B7280] leading-relaxed">
-              Are you sure you want to remove{' '}
-              <strong className="text-[#18181B]">
-                {memberToRemove.member.user?.fullName || 'this member'}
-              </strong>{' '}
-              from the squad roster? They will forfeit access to team project submissions.
-            </p>
-            <div className="flex items-center justify-end space-x-2 pt-2">
-              <button
-                type="button"
-                onClick={() => setRemoveModalOpen(false)}
-                className="px-4 py-2 border border-[#E5E0D8] rounded-xl text-xs font-bold text-[#6B7280] hover:bg-[#FAF8F5] transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={handleConfirmRemoveMember}
-                disabled={removingMember}
-                className="px-4 py-2 bg-[#DC2626] hover:bg-[#B91C1C] text-white text-xs font-bold rounded-xl shadow-sm transition-colors cursor-pointer"
-              >
-                {removingMember ? 'Removing...' : 'Remove Member'}
-              </button>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </div>
   );
 }
