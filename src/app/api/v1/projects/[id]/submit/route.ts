@@ -17,7 +17,7 @@ export async function POST(
       // Body may be empty
     }
 
-    const result = await SubmissionLockService.submitAndLockProject(params.id, session.id, roundNumber);
+    const result = await SubmissionLockService.submitAndLockProject(params.id, session.id, new Date(), roundNumber);
 
     return successResponse(
       result,

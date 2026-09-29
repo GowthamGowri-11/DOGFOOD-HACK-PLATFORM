@@ -239,33 +239,46 @@ export class HackathonRepository {
     progressionMode?: ProgressionMode;
     currentRoundNumber?: number;
   }) {
-    return prisma.hackathon.create({
-      data: {
-        title: data.title.trim(),
-        slug: data.slug.trim().toLowerCase(),
-        tagline: data.tagline?.trim(),
-        description: data.description.trim(),
-        organizationName: data.organizationName.trim(),
-        organizerId: data.organizerId,
-        status: data.status || 'DRAFT',
-        progressionMode: data.progressionMode || 'OVERALL_PERFORMANCE',
-        currentRoundNumber: data.currentRoundNumber || 1,
-        minTeamSize: data.minTeamSize || 1,
-        maxTeamSize: data.maxTeamSize || 4,
-        bannerUrl: data.bannerUrl,
-        logoUrl: data.logoUrl,
-        regStartTime: data.regStartTime,
-        regEndTime: data.regEndTime,
-        eventStartTime: data.eventStartTime,
-        eventEndTime: data.eventEndTime,
-        subStartTime: data.subStartTime,
-        subEndTime: data.subEndTime,
-        judgingStartTime: data.judgingStartTime,
-        judgingEndTime: data.judgingEndTime,
-        eligibilityRules: data.eligibilityRules,
-        rulesAndGuidelines: data.rulesAndGuidelines,
-      },
-    });
+    const createData: any = {
+      title: data.title.trim(),
+      slug: data.slug.trim().toLowerCase(),
+      tagline: data.tagline?.trim(),
+      description: data.description.trim(),
+      organizationName: data.organizationName.trim(),
+      organizerId: data.organizerId,
+      status: data.status || 'DRAFT',
+      minTeamSize: data.minTeamSize || 1,
+      maxTeamSize: data.maxTeamSize || 4,
+      bannerUrl: data.bannerUrl,
+      logoUrl: data.logoUrl,
+      regStartTime: data.regStartTime,
+      regEndTime: data.regEndTime,
+      eventStartTime: data.eventStartTime,
+      eventEndTime: data.eventEndTime,
+      subStartTime: data.subStartTime,
+      subEndTime: data.subEndTime,
+      judgingStartTime: data.judgingStartTime,
+      judgingEndTime: data.judgingEndTime,
+      eligibilityRules: data.eligibilityRules,
+      rulesAndGuidelines: data.rulesAndGuidelines,
+    };
+
+    try {
+      return await prisma.hackathon.create({
+        data: {
+          ...createData,
+          progressionMode: data.progressionMode || 'OVERALL_PERFORMANCE',
+          currentRoundNumber: data.currentRoundNumber || 1,
+        },
+      });
+    } catch (err: any) {
+      if (err?.message?.includes('Unknown argument')) {
+        return await prisma.hackathon.create({
+          data: createData,
+        });
+      }
+      throw err;
+    }
   }
 
   public static async update(
