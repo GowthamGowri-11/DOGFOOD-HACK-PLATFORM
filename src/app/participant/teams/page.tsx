@@ -240,7 +240,9 @@ export default function ParticipantTeamsPage() {
     setAddMemberModalOpen(true);
 
     try {
-      const res = await fetch(`/api/v1/hackathons/${team.hackathon.id}/team-form`);
+      const hackathonId = team.hackathonId || team.hackathon?.id;
+      if (!hackathonId) return;
+      const res = await fetch(`/api/v1/hackathons/${hackathonId}/team-form`);
       const json = await res.json();
       if (res.ok && json.data?.form) {
         setActiveFormConfig(json.data.form);
