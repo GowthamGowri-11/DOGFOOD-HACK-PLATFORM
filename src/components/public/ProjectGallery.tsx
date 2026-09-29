@@ -252,7 +252,7 @@ export const ProjectGallery: React.FC<ProjectGalleryProps> = ({
 
   return (
     <AppShell
-      showFeaturedRail={true}
+      showFeaturedRail={false}
       pageTitle="Project Showcase & Solutions"
       pageSubtitle="Explore cutting-edge prototypes, open-source repositories, and community-voted solutions."
     >
@@ -435,7 +435,7 @@ export const ProjectGallery: React.FC<ProjectGalleryProps> = ({
             </div>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {filteredProjects.map((project) => (
               <ProjectCard key={project.id} {...project} />
             ))}
