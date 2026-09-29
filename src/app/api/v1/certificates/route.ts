@@ -58,7 +58,7 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { hackathonId, type = 'PARTICIPANT', title } = body;
+    const { hackathonId, type = 'PARTICIPANT', title, participants, templateConfig } = body;
 
     if (!hackathonId) {
       return errorResponse('Hackathon ID is required', 'VALIDATION_ERROR', 422);
@@ -80,6 +80,107 @@ export async function POST(req: NextRequest) {
 
     const issuedCertificates = [];
 
+    // ================= BRANCH A: BULK ISSUANCE FROM DATA SHEET =================
+    if (participants && Array.isArray(participants) && participants.length > 0) {
+      for (const p of participants) {
+        const participantName = (p.participantName || p.name || 'Participant').trim();
+        const teamName = (p.teamName || 'General Team').trim();
+        const email = (
+          p.email ||
+          `${participantName.toLowerCase().replace(/[^a-z0-9]/g, '.')}@participant.dogfood.internal`
+        ).trim().toLowerCase();
+
+        // Find or create User
+        let user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+          user = await prisma.user.create({
+            data: {
+              email,
+              fullName: participantName,
+              passwordHash: '$2a$10$e8wU.R5060r8oX7bV0X8n.eN6N/Z319hIeCq81t5G.r0gWn7vU57O', // standard hashed dummy password
+              role: 'PARTICIPANT',
+            },
+          });
+        }
+
+        // Find or create Team in this hackathon
+        let team = await prisma.team.findFirst({
+          where: { hackathonId: hackathon.id, name: teamName },
+        });
+
+        if (!team) {
+          const inviteCode = `${hackathon.slug.substring(0, 3).toUpperCase()}-${crypto.randomBytes(3).toString('hex').toUpperCase()}`;
+          team = await prisma.team.create({
+            data: {
+              hackathonId: hackathon.id,
+              name: teamName,
+              inviteCode,
+              leaderId: user.id,
+            },
+          });
+        }
+
+        // Ensure user is registered or team member
+        const existingMember = await prisma.teamMember.findFirst({
+          where: { teamId: team.id, userId: user.id },
+        });
+        if (!existingMember) {
+          await prisma.teamMember.create({
+            data: {
+              teamId: team.id,
+              userId: user.id,
+              isLeader: p.role ? p.role.toLowerCase().includes('lead') : false,
+            },
+          }).catch(() => {});
+        }
+
+        // Generate unique cryptographic verification code
+        const randomPart = crypto.randomBytes(4).toString('hex').toUpperCase();
+        const code = `APEX-${hackathon.slug.substring(0, 4).toUpperCase()}-${randomPart}`;
+
+        const awardDetailObj = {
+          teamName,
+          participantName,
+          email,
+          department: p.department || 'Computer Science & Engineering',
+          collaborationDept: p.collaborationDept || 'AI & Data Science',
+          college: p.college || 'Apex Institute of Technology',
+          date: p.date || new Date().toISOString().split('T')[0],
+          hackathonName: hackathon.title,
+          role: p.role || 'Participant',
+          templateConfig: templateConfig || null,
+        };
+
+        const cert = await prisma.certificate.create({
+          data: {
+            hackathonId: hackathon.id,
+            userId: user.id,
+            type: type as any,
+            verificationCode: code,
+            title: title || `Certificate of Achievement • ${hackathon.title}`,
+            recipientName: participantName,
+            awardDetail: JSON.stringify(awardDetailObj),
+            status: 'ISSUED',
+          },
+          include: {
+            user: { select: { id: true, fullName: true, email: true } },
+            hackathon: { select: { id: true, title: true, slug: true } },
+          },
+        });
+
+        issuedCertificates.push(cert);
+      }
+
+      return successResponse(
+        {
+          count: issuedCertificates.length,
+          certificates: issuedCertificates,
+        },
+        `Successfully issued ${issuedCertificates.length} certificates to all participants in teams.`
+      );
+    }
+
+    // ================= BRANCH B: DEFAULT REGISTRATION-BASED ISSUANCE =================
     for (const reg of hackathon.registrations) {
       const randomPart = crypto.randomBytes(4).toString('hex').toUpperCase();
       const code = `APEX-${hackathon.slug.substring(0, 4).toUpperCase()}-${randomPart}`;

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Calendar,
   Clock,
@@ -60,6 +61,7 @@ export interface HackathonDetailProps {
 }
 
 export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon }) => {
+  const router = useRouter();
   const { currentUser, isAuthenticated, openAuthModal } = useAuth();
   const [activeTab, setActiveTab] = useState<'overview' | 'tracks' | 'prizes' | 'timeline' | 'rules' | 'projects'>('overview');
   const [registered, setRegistered] = useState(false);
@@ -133,7 +135,7 @@ export const HackathonDetailView: React.FC<HackathonDetailProps> = ({ hackathon 
     }
 
     if (registered) {
-      window.location.href = '/participant/teams';
+      router.push('/participant/teams');
       return;
     }
 

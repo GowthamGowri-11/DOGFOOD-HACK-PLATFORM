@@ -1,3 +1,7 @@
+'use client';
+
 import ParticipantSettingsPage from '../settings/page';
 
-export default ParticipantSettingsPage;
+export default function ParticipantProfilePage() {
+  return <ParticipantSettingsPage />;
+}

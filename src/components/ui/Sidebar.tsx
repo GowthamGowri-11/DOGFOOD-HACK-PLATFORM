@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -28,7 +28,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Scale,
-  Settings,
   Server,
   PieChart,
   HelpCircle,
@@ -62,11 +61,12 @@ export interface SidebarProps {
   onOpenLoginModal?: () => void;
 }
 
-// Pages displayed to all unauthenticated/guest users across all roles
+// Pages displayed to all unauthenticated/guest users across all roles (NO privileged/management tools)
 const GUEST_ITEMS: NavItem[] = [
   { label: 'Home', href: '/', icon: Home },
-  { label: 'API Docs', href: '/docs', icon: Terminal, badge: 'v1' },
-  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
+  { label: 'Explore Hackathons', href: '/hackathons', icon: Trophy },
+  { label: 'Leaderboard', href: '/leaderboard', icon: BarChart3 },
+  { label: 'Project Gallery', href: '/projects', icon: Layers },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
@@ -82,10 +82,7 @@ const PARTICIPANT_ITEMS: NavItem[] = [
   { label: 'Project Gallery', href: '/projects', icon: Layers },
   { label: 'Vote on Questions', href: '/participant/voting', icon: Vote },
   { label: 'Certificates', href: '/participant/certificates', icon: Award },
-  { label: 'API Docs', href: '/docs', icon: Terminal },
-  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'My Activity', href: '/participant/activity', icon: Activity },
-  { label: 'My Profile', href: '/participant/settings', icon: UserCheck2 },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
@@ -105,14 +102,12 @@ const ORGANIZER_ITEMS: NavItem[] = [
   { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles, badge: 'AI' },
   { label: 'Results', href: '/organizer/results', icon: Award },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
-  { label: 'Certificates', href: '/organizer/certificates', icon: ShieldCheck },
+  { label: 'Certificate Management', href: '/organizer/certificates', icon: ShieldCheck, badge: 'Templates' },
   { label: 'Analytics', href: '/organizer/analytics', icon: PieChart },
   { label: 'Community', href: '/organizer/community', icon: Layers },
   { label: 'Track & Question Voting', href: '/organizer/voting', icon: Vote },
   { label: 'REST Webhooks', href: '/organizer/webhooks', icon: Zap },
   { label: 'Data Portability & Import', href: '/organizer/portability', icon: Database },
-  { label: 'API Docs', href: '/docs', icon: Terminal },
-  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'Audit Logs', href: '/organizer/audit', icon: History },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
@@ -127,10 +122,7 @@ const JUDGE_ITEMS: NavItem[] = [
   { label: 'Pairwise Judging', href: '/judge/pairwise', icon: Scale, badge: 'Gavel' },
   { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
   { label: 'Leaderboard', href: '/leaderboard', icon: Award },
-  { label: 'API Docs', href: '/docs', icon: Terminal },
-  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
   { label: 'My Credential', href: '/judge/credential', icon: ShieldCheck },
-  { label: 'Profile', href: '/judge/profile', icon: UserCheck2 },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
 ];
@@ -148,9 +140,7 @@ const ADMIN_ITEMS: NavItem[] = [
   { label: 'REST Webhooks', href: '/organizer/webhooks', icon: Zap },
   { label: 'Data Portability & Import', href: '/organizer/portability', icon: Database },
   { label: 'Normalization Proof', href: '/organizer/judging/normalization-proof', icon: Zap },
-  { label: 'API Docs', href: '/docs', icon: Terminal },
-  { label: 'Threat Model', href: '/threat-model', icon: ShieldCheck },
-  { label: 'Certificates', href: '/admin/certificates', icon: ShieldCheck },
+  { label: 'Certificate Management', href: '/organizer/certificates', icon: ShieldCheck, badge: 'Templates' },
   { label: 'Audit Logs', href: '/admin/audit-logs', icon: History },
   { label: 'Contact Us', href: '/contact', icon: MessageSquare },
   { label: 'Help Center', href: '/help', icon: HelpCircle },
@@ -177,7 +167,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   }, []);
 
   // Select items list: GUEST gets ONLY the 3 constant pages!
-  const getNavItems = () => {
+  const navItems = useMemo(() => {
     if (!isAuthenticated) {
       return GUEST_ITEMS;
     }
@@ -192,9 +182,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       default:
         return PARTICIPANT_ITEMS;
     }
-  };
-
-  const navItems = getNavItems();
+  }, [isAuthenticated, currentRole]);
 
   return (
     <>
@@ -258,6 +246,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 <Link
                   key={item.label}
                   href={item.href}
+                  prefetch={true}
                   onClick={onCloseMobile}
                   className={`flex items-center group h-[42px] px-3.5 rounded-xl text-[13.5px] transition-all relative ${
                     isActive
@@ -286,72 +275,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
             })}
           </nav>
         </div>
-
-        {/* BOTTOM: Profile Summary Card */}
-        {mounted && isAuthenticated && (
-          <div className="p-3 border-t border-[#202228] bg-[#101114]" suppressHydrationWarning>
-            {!collapsed ? (
-              <div className="flex items-center justify-between p-2 rounded-xl bg-[#16181D] border border-[#23262E]">
-                <div className="flex items-center space-x-2.5 truncate">
-                  {userAvatarUrl ? (
-                    <img
-                      src={userAvatarUrl}
-                      alt={userName || 'User'}
-                      className="w-[30px] h-[30px] rounded-full object-cover ring-1 ring-neutral-700 flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="w-[30px] h-[30px] rounded-full bg-[#FA541C]/20 text-[#FA541C] font-bold text-xs flex items-center justify-center border border-[#FA541C]/30 flex-shrink-0">
-                      {userName
-                        ? userName.charAt(0).toUpperCase()
-                        : currentRole === 'JUDGE'
-                        ? 'D'
-                        : 'A'}
-                    </div>
-                  )}
-                  <div className="truncate">
-                    <div className="font-bold text-xs text-white truncate">
-                      {userName ||
-                        (currentRole === 'JUDGE'
-                          ? 'Dr. Sarah Chen'
-                          : currentRole === 'ADMIN'
-                          ? 'System Administrator'
-                          : 'Apex Event Lead')}
-                    </div>
-                    <div className="text-[10px] text-[#9CA3AF] truncate">
-                      {userEmail ||
-                        (currentRole === 'JUDGE'
-                          ? 'judge.alpha@hackathon.dev'
-                          : currentRole === 'ADMIN'
-                          ? 'admin@hackathon.dev'
-                          : 'organizer@hackathon.dev')}
-                    </div>
-                  </div>
-                </div>
-                <Link
-                  href={
-                    userName
-                      ? currentRole === 'JUDGE'
-                        ? '/judge/profile'
-                        : currentRole === 'ADMIN'
-                        ? '/admin/dashboard'
-                        : currentRole === 'ORGANIZER'
-                        ? '/organizer/dashboard'
-                        : '/participant/settings'
-                      : '/login'
-                  }
-                  className="p-1 text-[#9CA3AF] hover:text-white transition-colors"
-                  title="Settings / Workspace"
-                >
-                  <Settings className="w-3.5 h-3.5" />
-                </Link>
-              </div>
-            ) : (
-              <div className="w-8 h-8 mx-auto rounded-full bg-[#FA541C]/20 text-[#FA541C] font-bold text-xs flex items-center justify-center border border-[#FA541C]/30">
-                {userName ? userName.charAt(0).toUpperCase() : 'A'}
-              </div>
-            )}
-          </div>
-        )}
       </aside>
     </>
   );

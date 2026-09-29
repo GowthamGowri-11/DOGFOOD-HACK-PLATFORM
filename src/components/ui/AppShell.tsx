@@ -49,13 +49,15 @@ export const AppShell: React.FC<AppShellProps> = ({
     : null;
   const effectiveRole: UserRole = authenticatedRole || userRole || contextRole || 'PARTICIPANT';
 
-  // Check if current route is a role-protected workspace
+  // Check if current route is a role-protected workspace or sensitive resource
   const isProtectedRoute =
     pathname.startsWith('/participant') ||
     pathname.startsWith('/organizer') ||
     pathname.startsWith('/judge') ||
     pathname.startsWith('/admin') ||
-    pathname.startsWith('/overview');
+    pathname.startsWith('/overview') ||
+    pathname.startsWith('/docs') ||
+    pathname.startsWith('/threat-model');
 
   // Role routing enforcement:
   // If an ADMIN is logged in, ensure they are routed to the Admin workspace (/admin/dashboard),
@@ -127,7 +129,7 @@ export const AppShell: React.FC<AppShellProps> = ({
         />
 
         {/* APPLICATION AREA */}
-        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827]">
+        <main className="flex-1 w-full bg-[#F8FAFC] pt-6 pb-12 px-4 sm:px-6 lg:px-8 text-[#111827] page-enter">
           <div className="max-w-[1440px] mx-auto">
             {/* If NOT logged in and accessing a protected workspace: show Access Wall */}
             {!authLoading && !currentUser && isProtectedRoute ? (

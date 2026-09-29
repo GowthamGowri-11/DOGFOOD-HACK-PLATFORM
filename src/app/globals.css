@@ -32,6 +32,11 @@ body {
   background: #94a3b8;
 }
 
+html {
+  scroll-behavior: smooth;
+  text-rendering: optimizeLegibility;
+}
+
 /* Micro-animations and utility effects */
 @keyframes pulseSubtle {
   0%, 100% { opacity: 1; transform: scale(1); }
@@ -43,23 +48,84 @@ body {
   100% { transform: translateX(100%); }
 }
 
+/* Ultra-fast GPU-accelerated Modal & Popup Animations */
+@keyframes modalBackdropFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes modalContentPopIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.96) translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes pageFadeIn {
+  from { opacity: 0.9; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-backdrop-enter {
+  animation: modalBackdropFadeIn 0.14s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.modal-content-enter {
+  animation: modalContentPopIn 0.16s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
+
+.page-enter {
+  animation: pageFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: opacity, transform;
+}
+
+/* Fast animation helper fallbacks for smooth popups */
+.animate-in {
+  animation-duration: 0.16s;
+  animation-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+  animation-fill-mode: both;
+}
+
+.fade-in {
+  animation-name: modalBackdropFadeIn;
+}
+
+.zoom-in-95 {
+  animation-name: modalContentPopIn;
+}
+
+.gpu-accelerated {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
 .animate-pulse-subtle {
   animation: pulseSubtle 3s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 .hover-lift {
-  transition: transform 0.25s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.25s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transform: translateZ(0);
 }
 .hover-lift:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 12px 24px -10px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.03);
+  transform: translateY(-2px);
+  box-shadow: 0 10px 20px -8px rgba(0, 0, 0, 0.08), 0 3px 5px -2px rgba(0, 0, 0, 0.03);
 }
 
 .hover-lift-sm {
-  transition: transform 0.2s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+  transition: transform 0.15s cubic-bezier(0.2, 0, 0, 1), box-shadow 0.15s cubic-bezier(0.2, 0, 0, 1);
+  transform: translateZ(0);
 }
 .hover-lift-sm:hover {
-  transform: translateY(-1.5px);
-  box-shadow: 0 8px 16px -6px rgba(0, 0, 0, 0.06);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 12px -4px rgba(0, 0, 0, 0.06);
 }
 

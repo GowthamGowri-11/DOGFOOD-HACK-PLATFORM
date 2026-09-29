@@ -79,20 +79,24 @@ export default async function OrganizerDashboard() {
 
     const hackathonIds = hackathons.map((h) => h.id);
     if (hackathonIds.length > 0) {
-      aiJuryRuns = await prisma.aIJuryRun.count({
-        where: { hackathonId: { in: hackathonIds } },
-      }).catch(() => 0);
+      const [aiRuns, totalAssigns, completedAssigns] = await Promise.all([
+        prisma.aIJuryRun.count({
+          where: { hackathonId: { in: hackathonIds } },
+        }).catch(() => 0),
+        prisma.judgeAssignment.count({
+          where: { project: { hackathonId: { in: hackathonIds } } },
+        }).catch(() => 0),
+        prisma.judgeAssignment.count({
+          where: {
+            project: { hackathonId: { in: hackathonIds } },
+            status: 'COMPLETED',
+          },
+        }).catch(() => 0),
+      ]);
 
-      totalAssignments = await prisma.judgeAssignment.count({
-        where: { project: { hackathonId: { in: hackathonIds } } },
-      });
-
-      completedAssignments = await prisma.judgeAssignment.count({
-        where: {
-          project: { hackathonId: { in: hackathonIds } },
-          status: 'COMPLETED',
-        },
-      });
+      aiJuryRuns = aiRuns;
+      totalAssignments = totalAssigns;
+      completedAssignments = completedAssigns;
     }
   } catch (err) {
     console.error('[OrganizerDashboard] DB query failed:', err);

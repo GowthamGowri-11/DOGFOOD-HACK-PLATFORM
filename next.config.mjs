@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
+  reactStrictMode: false,
+  swcMinify: true,
   images: {
     remotePatterns: [
       {
@@ -12,7 +13,8 @@ const nextConfig = {
   output: 'standalone',
   experimental: {
     instrumentationHook: true,
-    serverComponentsExternalPackages: ['ws', 'bufferutil', 'utf-8-validate'],
+    serverComponentsExternalPackages: ['ws', 'bufferutil', 'utf-8-validate', 'bcryptjs'],
+    optimizePackageImports: ['lucide-react', 'clsx', 'tailwind-merge', 'zod', 'lottie-react'],
   },
 };
 

@@ -81,7 +81,7 @@ const ORGANIZER_NAV: NavItem[] = [
   { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles },
   { label: 'Voting', href: '/organizer/voting', icon: Vote },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
-  { label: 'Certificates', href: '/organizer/certificates', icon: Award },
+  { label: 'Certificate Management', href: '/organizer/certificates', icon: Award, badge: 'Templates' },
   { label: 'Results & Standings', href: '/organizer/results', icon: Trophy },
   { label: 'Audit Logs', href: '/organizer/audit', icon: History },
   { label: 'Exports', href: '/organizer/exports', icon: Download },
@@ -91,7 +91,6 @@ const JUDGE_NAV: NavItem[] = [
   { label: 'Dashboard', href: '/judge/dashboard', icon: LayoutDashboard },
   { label: 'Pending Evaluations', href: '/judge/evaluations', icon: Scale },
   { label: 'Completed Reviews', href: '/judge/completed', icon: CheckCircle2Icon },
-  { label: 'Profile & Expertise', href: '/judge/profile', icon: UserCheck2 },
 ];
 
 function CheckCircle2Icon({ className }: { className?: string }) {
@@ -195,6 +194,7 @@ export function Sidebar({ role, title, subtitle, items }: SidebarProps) {
               <Link
                 key={item.href}
                 href={item.href}
+                prefetch={true}
                 onClick={() => setMobileOpen(false)}
                 className={`flex items-center group px-3 py-2.5 rounded-xl text-xs font-semibold transition-all ${
                   isActive

@@ -25,6 +25,7 @@ import {
   Users,
   ChevronRight,
   ExternalLink,
+  Trophy,
 } from 'lucide-react';
 import { Badge } from '@/components/ui/Badge';
 
@@ -62,10 +63,36 @@ interface Campaign {
   endsAt: string | null;
 }
 
+interface HackathonInfo {
+  id: string;
+  title: string;
+  slug: string;
+  currentRoundNumber: number;
+  status: string;
+  organizationName?: string;
+}
+
+interface RoundInfo {
+  id: string;
+  roundNumber: number;
+  name: string;
+  roundType: string;
+  status: string;
+  startDate?: string;
+  endDate?: string;
+  submissionDeadline?: string;
+  isCurrent?: boolean;
+}
+
 export default function OrganizerQuestionVotingPage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [campaign, setCampaign] = useState<Campaign | null>(null);
+  const [hackathon, setHackathon] = useState<HackathonInfo | null>(null);
+  const [allHackathons, setAllHackathons] = useState<Array<{ id: string; title: string; status: string }>>([]);
+  const [selectedHackathonId, setSelectedHackathonId] = useState<string>('hack_apex_2026');
+  const [rounds, setRounds] = useState<RoundInfo[]>([]);
+  const [selectedRoundNumber, setSelectedRoundNumber] = useState<number>(1);
   const [tracks, setTracks] = useState<Track[]>([]);
   const [problemStatements, setProblemStatements] = useState<ProblemStatement[]>([]);
   const [metrics, setMetrics] = useState({
@@ -86,15 +113,23 @@ export default function OrganizerQuestionVotingPage() {
   const [newDescription, setNewDescription] = useState('');
   const [addingProblem, setAddingProblem] = useState(false);
 
-  const hackathonId = 'hack_apex_2026';
-
-  const loadCampaignData = async () => {
+  const loadCampaignData = async (targetId = selectedHackathonId) => {
     try {
       setLoading(true);
-      const res = await fetch(`/api/v1/hackathons/${hackathonId}/question-voting`);
+      const res = await fetch(`/api/v1/hackathons/${targetId}/question-voting`);
       const json = await res.json();
       if (json.success && json.data) {
         setCampaign(json.data.campaign);
+        if (json.data.hackathon) {
+          setHackathon(json.data.hackathon);
+          setSelectedRoundNumber(json.data.hackathon.currentRoundNumber || 1);
+        }
+        if (json.data.allHackathons) {
+          setAllHackathons(json.data.allHackathons);
+        }
+        if (json.data.rounds) {
+          setRounds(json.data.rounds);
+        }
         setTracks(json.data.tracks || []);
         setProblemStatements(json.data.problemStatements || []);
         if (json.data.metrics) {
@@ -112,14 +147,14 @@ export default function OrganizerQuestionVotingPage() {
   };
 
   useEffect(() => {
-    loadCampaignData();
-  }, []);
+    loadCampaignData(selectedHackathonId);
+  }, [selectedHackathonId]);
 
   const handleUpdateCampaign = async (updates: Partial<Campaign>) => {
     if (!campaign) return;
     try {
       setSaving(true);
-      const res = await fetch(`/api/v1/hackathons/${hackathonId}/question-voting/manage`, {
+      const res = await fetch(`/api/v1/hackathons/${selectedHackathonId}/question-voting/manage`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(updates),
@@ -130,7 +165,7 @@ export default function OrganizerQuestionVotingPage() {
       }
       setCampaign(json.data);
       setToast({ type: 'success', message: 'Voting settings updated successfully!' });
-      loadCampaignData();
+      loadCampaignData(selectedHackathonId);
     } catch (err: any) {
       setToast({ type: 'error', message: err.message || 'Error updating settings' });
     } finally {
@@ -148,7 +183,7 @@ export default function OrganizerQuestionVotingPage() {
     try {
       setAddingProblem(true);
       const res = await fetch(
-        `/api/v1/hackathons/${hackathonId}/question-voting/problem-statements`,
+        `/api/v1/hackathons/${selectedHackathonId}/question-voting/problem-statements`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -170,7 +205,7 @@ export default function OrganizerQuestionVotingPage() {
       setNewCode('');
       setNewTitle('');
       setNewDescription('');
-      loadCampaignData();
+      loadCampaignData(selectedHackathonId);
     } catch (err: any) {
       setToast({ type: 'error', message: err.message || 'Error adding problem statement' });
     } finally {
@@ -179,16 +214,18 @@ export default function OrganizerQuestionVotingPage() {
   };
 
   const handleExportCsv = () => {
-    window.open(`/api/v1/hackathons/${hackathonId}/question-voting/export`, '_blank');
+    window.open(`/api/v1/hackathons/${selectedHackathonId}/question-voting/export`, '_blank');
   };
 
   const filteredProblems = problemStatements.filter(
     (p) => selectedTrackFilter === 'ALL' || p.trackId === selectedTrackFilter
   );
 
+  const currentActiveRound = rounds.find((r) => r.roundNumber === selectedRoundNumber) || rounds[0];
+
   return (
     <div className="min-h-screen bg-[#FAF8F5] dark:bg-[#131417] text-neutral-900 dark:text-neutral-100 p-4 sm:p-8">
-      <div className="max-w-7xl mx-auto space-y-8">
+      <div className="max-w-7xl mx-auto space-y-7">
         {/* Header and Quick Actions */}
         <div className="flex flex-wrap items-center justify-between gap-4 border-b border-neutral-200 dark:border-neutral-800 pb-5">
           <div>
@@ -229,6 +266,69 @@ export default function OrganizerQuestionVotingPage() {
               <Plus className="w-4 h-4" />
               <span>Add Challenge Question</span>
             </button>
+          </div>
+        </div>
+
+        {/* HACKATHON & ROUND CONTEXT SELECTOR BANNER */}
+        <div className="bg-white dark:bg-[#1A1C20] rounded-3xl border border-neutral-200 dark:border-neutral-800 p-5 shadow-sm space-y-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-neutral-100 dark:border-neutral-800 pb-4">
+            <div className="space-y-1">
+              <span className="text-[11px] font-extrabold uppercase tracking-wider text-[#FA541C] flex items-center gap-1">
+                <Trophy className="w-3.5 h-3.5" />
+                Active Hackathon
+              </span>
+              <div className="flex flex-wrap items-center gap-3">
+                <h2 className="text-xl font-black text-neutral-900 dark:text-white">
+                  {hackathon?.title || 'Apex Global AI Challenge 2026'}
+                </h2>
+                {allHackathons.length > 1 && (
+                  <select
+                    value={selectedHackathonId}
+                    onChange={(e) => setSelectedHackathonId(e.target.value)}
+                    className="px-3 py-1.5 rounded-xl text-xs font-bold bg-neutral-100 dark:bg-neutral-800 text-neutral-700 dark:text-neutral-200 border border-neutral-200 dark:border-neutral-700 cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#FA541C]/40"
+                  >
+                    {allHackathons.map((h) => (
+                      <option key={h.id} value={h.id}>
+                        {h.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800">
+                ● Status: {hackathon?.status || 'ACTIVE'}
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-bold text-neutral-400 uppercase tracking-wider mr-1">Rounds:</span>
+              {rounds.map((r) => (
+                <button
+                  key={r.id || r.roundNumber}
+                  onClick={() => setSelectedRoundNumber(r.roundNumber)}
+                  className={`px-3 py-1 rounded-xl font-bold flex items-center gap-1.5 transition-all ${
+                    r.roundNumber === selectedRoundNumber
+                      ? 'bg-neutral-900 text-white dark:bg-white dark:text-neutral-900 shadow-sm'
+                      : 'bg-neutral-100 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-400'
+                  }`}
+                >
+                  <span className="w-3.5 h-3.5 rounded-full bg-[#FA541C] text-white text-[9px] font-black flex items-center justify-center">
+                    {r.roundNumber}
+                  </span>
+                  <span>{r.name.split(':')[0]}</span>
+                </button>
+              ))}
+            </div>
+
+            <div className="text-neutral-500 flex items-center gap-1.5">
+              <Clock className="w-3.5 h-3.5 text-[#FA541C]" />
+              <span>Current: <strong className="text-neutral-900 dark:text-neutral-200">{currentActiveRound?.name || 'Round 1: Problem Selection Poll'}</strong></span>
+            </div>
           </div>
         </div>
 

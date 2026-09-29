@@ -49,9 +49,12 @@ const getCachedRole = (): UserRole => {
 };
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [currentRole, setCurrentRoleState] = useState<UserRole>('PARTICIPANT');
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => getCachedUser());
+  const [currentRole, setCurrentRoleState] = useState<UserRole>(() => getCachedRole());
+  const [authLoading, setAuthLoading] = useState<boolean>(() => {
+    // If we have cached user, don't block the UI
+    return getCachedUser() === null;
+  });
 
   const setCurrentRole = useCallback((role: UserRole) => {
     setCurrentRoleState(role);

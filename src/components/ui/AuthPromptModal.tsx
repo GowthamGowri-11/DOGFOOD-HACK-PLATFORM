@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   Lock,
   Sparkles,
@@ -39,6 +40,7 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
   redirectUrl,
   onSuccessLogin,
 }) => {
+  const router = useRouter();
   const [loggingInRole, setLoggingInRole] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -156,7 +158,9 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
             : '/participant/dashboard';
       }
 
-      window.location.href = targetUrl || '/';
+      const finalUrl = targetUrl || '/';
+      router.push(finalUrl);
+      router.refresh();
     } catch (err: any) {
       setErrorMessage(err?.message || 'Network error during login');
     } finally {
@@ -165,15 +169,15 @@ export const AuthPromptModal: React.FC<AuthPromptModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 select-none animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 select-none modal-backdrop-enter">
       {/* Blurred Backdrop */}
       <div
-        className="fixed inset-0 bg-[#0F172A]/70 backdrop-blur-md transition-opacity"
+        className="fixed inset-0 bg-[#0F172A]/70 backdrop-blur-xs transition-opacity"
         onClick={onClose}
       />
 
       {/* Modal Dialog Card */}
-      <div className="relative bg-[#FFFFFF] border border-[#E5E0D8] rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden z-10 animate-in zoom-in-95 duration-200">
+      <div className="relative bg-[#FFFFFF] border border-[#E5E0D8] rounded-3xl shadow-2xl max-w-lg w-full overflow-hidden z-10 modal-content-enter will-change-transform">
         {/* Ambient Top Glow Banner */}
         <div className="h-28 bg-gradient-to-r from-[#18181B] via-[#23201D] to-[#18181B] p-6 relative overflow-hidden flex items-center justify-between border-b border-[#2A2B30]">
           {/* Subtle Orange Flare */}

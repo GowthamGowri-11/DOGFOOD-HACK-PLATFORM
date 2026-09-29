@@ -87,12 +87,12 @@ export const TeamScorecardModal: React.FC<TeamScorecardModalProps> = ({
   const sc = team.scorecard;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 overflow-y-auto bg-black/60 backdrop-blur-xs modal-backdrop-enter">
       {/* Background click to close */}
       <div className="fixed inset-0" onClick={onClose} />
 
       {/* Modal Dialog Card */}
-      <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col bg-white rounded-[22px] border border-[#E2E8F0] shadow-2xl overflow-hidden z-10 animate-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-3xl max-h-[92vh] flex flex-col bg-white rounded-[22px] border border-[#E2E8F0] shadow-2xl overflow-hidden z-10 modal-content-enter will-change-transform">
         {/* Sticky Header */}
         <div className="p-4 sm:p-5 border-b border-[#E2E8F0] flex items-center justify-between bg-white/90 backdrop-blur-md sticky top-0 z-20">
           <div className="flex items-center space-x-3.5">

@@ -180,14 +180,67 @@ export default function CertificateVerificationPage({
                 </div>
               </div>
 
-              {cert.awardDetail && (
-                <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] space-y-1">
-                  <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
-                    Achievement Details
-                  </span>
-                  <p className="text-xs text-[#334155]">{cert.awardDetail}</p>
-                </div>
-              )}
+              {cert.awardDetail && (() => {
+                let parsedDetail: any = null;
+                try {
+                  if (cert.awardDetail.startsWith('{')) {
+                    parsedDetail = JSON.parse(cert.awardDetail);
+                  }
+                } catch {}
+
+                if (parsedDetail) {
+                  return (
+                    <div className="space-y-3 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        {parsedDetail.teamName && (
+                          <div className="p-3 bg-indigo-50/60 border border-indigo-100 rounded-xl space-y-0.5">
+                            <span className="text-[10px] font-bold text-indigo-700 uppercase tracking-wider block">
+                              Assigned Team
+                            </span>
+                            <div className="text-sm font-bold text-indigo-950">{parsedDetail.teamName}</div>
+                          </div>
+                        )}
+
+                        {parsedDetail.college && (
+                          <div className="p-3 bg-emerald-50/60 border border-emerald-100 rounded-xl space-y-0.5">
+                            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wider block">
+                              Institution / College
+                            </span>
+                            <div className="text-sm font-bold text-emerald-950">{parsedDetail.college}</div>
+                          </div>
+                        )}
+
+                        {parsedDetail.department && (
+                          <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-0.5">
+                            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
+                              Primary Department
+                            </span>
+                            <div className="text-xs font-semibold text-stone-800">{parsedDetail.department}</div>
+                          </div>
+                        )}
+
+                        {parsedDetail.collaborationDept && (
+                          <div className="p-3 bg-stone-50 border border-stone-200 rounded-xl space-y-0.5">
+                            <span className="text-[10px] font-bold text-stone-500 uppercase tracking-wider block">
+                              Collaborating Department
+                            </span>
+                            <div className="text-xs font-semibold text-stone-800">{parsedDetail.collaborationDept}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] space-y-1">
+                    <span className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider block">
+                      Achievement Details
+                    </span>
+                    <p className="text-xs text-[#334155]">{cert.awardDetail}</p>
+                  </div>
+                );
+              })()}
 
               {/* Cryptographic Hash Verification */}
               <div className="p-3.5 bg-[#F8FAFC] border border-[#E2E8F0] rounded-[12px] space-y-1">

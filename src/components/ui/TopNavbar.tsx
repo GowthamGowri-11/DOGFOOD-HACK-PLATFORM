@@ -120,7 +120,8 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
         pathname.startsWith('/judge') ||
         pathname.startsWith('/participant')
       ) {
-        window.location.href = '/';
+        router.push('/');
+        router.refresh();
       } else {
         router.refresh();
       }
@@ -259,7 +260,7 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
 
             {/* Profile Dropdown Menu */}
             {profileDropdownOpen && (
-              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-[#E2E8F0] shadow-xl p-4 z-50 animate-in fade-in duration-100 select-none text-xs">
+              <div className="absolute right-0 mt-2 w-64 bg-white rounded-2xl border border-[#E2E8F0] shadow-xl p-4 z-50 modal-content-enter will-change-transform select-none text-xs">
                 {/* Header: Name and Email */}
                 <div className="pb-3 border-b border-[#F1F5F9]">
                   <h4 className="font-bold text-sm text-[#0F172A] truncate">
@@ -299,21 +300,37 @@ export const TopNavbar: React.FC<TopNavbarProps> = ({
                   </Link>
 
                   <Link
-                    href={currentUser.role?.toUpperCase() === 'JUDGE' ? '/judge/profile' : '/participant/settings'}
+                    href={
+                      currentUser.role?.toUpperCase() === 'ADMIN'
+                        ? '/admin/profile'
+                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
+                        ? '/organizer/profile'
+                        : currentUser.role?.toUpperCase() === 'JUDGE'
+                        ? '/judge/profile'
+                        : '/participant/profile'
+                    }
                     onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#FFF5ED] hover:text-[#FA541C] font-semibold text-xs transition-colors"
                   >
                     <User className="w-4 h-4 text-[#64748B]" />
-                    <span>Profile</span>
+                    <span>My Profile</span>
                   </Link>
 
                   <Link
-                    href="/participant/settings"
+                    href={
+                      currentUser.role?.toUpperCase() === 'ADMIN'
+                        ? '/admin/profile'
+                        : currentUser.role?.toUpperCase() === 'ORGANIZER'
+                        ? '/organizer/profile'
+                        : currentUser.role?.toUpperCase() === 'JUDGE'
+                        ? '/judge/profile'
+                        : '/participant/settings'
+                    }
                     onClick={() => setProfileDropdownOpen(false)}
-                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#F8FAFC] hover:text-[#2563EB] font-semibold text-xs transition-colors"
+                    className="flex items-center space-x-3 px-2 py-2 rounded-lg text-[#0F172A] hover:bg-[#FFF5ED] hover:text-[#FA541C] font-semibold text-xs transition-colors"
                   >
                     <Settings className="w-4 h-4 text-[#64748B]" />
-                    <span>Settings</span>
+                    <span>Profile Settings</span>
                   </Link>
                 </div>
 

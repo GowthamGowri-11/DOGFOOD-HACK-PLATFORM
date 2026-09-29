@@ -34,26 +34,37 @@ export default async function HackathonsPage() {
   }
 
 
-  const formattedHackathons = hackathons.map((h: any) => ({
-    id: h.id,
-    slug: h.slug,
-    title: h.title,
-    tagline: h.tagline,
-    description: h.description,
-    organizationName: h.organizationName,
-    logoUrl: h.logoUrl,
-    bannerUrl: h.bannerUrl,
-    status: h.status,
-    minTeamSize: h.minTeamSize,
-    maxTeamSize: h.maxTeamSize,
-    eventMode: 'Online' as const,
-    eventStartTime: h.eventStartTime,
-    eventEndTime: h.eventEndTime,
-    subEndTime: h.subEndTime,
-    tracks: h.tracks?.map((t: any) => ({ id: t.id, title: t.title, slug: t.slug, colorHex: t.colorHex })),
-    prizes: h.prizes?.map((p: any) => ({ amount: Number(p.amount), currency: p.currency, title: p.title })),
-    registeredCount: h._count?.registrations ?? 0,
-  }));
+  const formattedHackathons = hackathons.map((h: any) => {
+    const text = `${h.title || ''} ${h.tagline || ''} ${h.description || ''}`.toLowerCase();
+    let mode: 'Online' | 'In-Person' | 'Hybrid' = 'Online';
+    if (text.includes('hybrid')) {
+      mode = 'Hybrid';
+    } else if (text.includes('in-person') || text.includes('in person') || text.includes('offline') || text.includes('on-site') || text.includes('onsite')) {
+      mode = 'In-Person';
+    }
+
+    return {
+      id: h.id,
+      slug: h.slug,
+      title: h.title,
+      tagline: h.tagline,
+      description: h.description,
+      organizationName: h.organizationName,
+      logoUrl: h.logoUrl,
+      bannerUrl: h.bannerUrl,
+      status: h.status,
+      minTeamSize: h.minTeamSize,
+      maxTeamSize: h.maxTeamSize,
+      roundsCount: h.rounds?.length || 3,
+      eventMode: mode,
+      eventStartTime: h.eventStartTime,
+      eventEndTime: h.eventEndTime,
+      subEndTime: h.subEndTime,
+      tracks: h.tracks?.map((t: any) => ({ id: t.id, title: t.title, slug: t.slug, colorHex: t.colorHex })),
+      prizes: h.prizes?.map((p: any) => ({ amount: Number(p.amount), currency: p.currency, title: p.title })),
+      registeredCount: h._count?.registrations ?? 0,
+    };
+  });
 
   return (
     <HackathonDiscovery

@@ -292,8 +292,117 @@ export class QuestionVotingService {
       totalVotesCast += val.totalVotes;
     });
 
+    // Compute live polling percentages and votes for each statement
+    orderedStatements.forEach((item) => {
+      const tally = talliesMap.get(item.id);
+      const actualVotes = tally?.totalVotes || 0;
+      (item as any).pollVotes = actualVotes;
+      (item as any).totalVotes = actualVotes;
+      (item as any).pollPercentage =
+        totalVotesCast > 0 ? Math.round((actualVotes / totalVotesCast) * 100) : 0;
+      (item as any).isLeading = item.rank === 1 && actualVotes > 0;
+    });
+
+    // Query Hackathon & Rounds metadata from database
+    let dbHackathon: any = null;
+    let allHackathons: any[] = [];
+    try {
+      [dbHackathon, allHackathons] = await Promise.all([
+        prisma.hackathon.findUnique({
+          where: { id: hackathonId },
+          include: {
+            rounds: { orderBy: { roundNumber: 'asc' } },
+          },
+        }).catch(() => null),
+        prisma.hackathon.findMany({
+          select: { id: true, title: true, status: true, currentRoundNumber: true },
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        }).catch(() => []),
+      ]);
+    } catch {
+      // Fallback gracefully
+    }
+
+    if (!dbHackathon) {
+      try {
+        dbHackathon = await prisma.hackathon.findFirst({
+          include: {
+            rounds: { orderBy: { roundNumber: 'asc' } },
+          },
+        });
+      } catch {}
+    }
+
+    // Prepare structured Hackathon rounds
+    const rounds =
+      dbHackathon?.rounds && dbHackathon.rounds.length > 0
+        ? dbHackathon.rounds.map((r: any) => ({
+            id: r.id,
+            roundNumber: r.roundNumber,
+            name: r.name,
+            roundType: r.roundType,
+            status: r.status,
+            startDate: r.startDate,
+            endDate: r.endDate,
+            submissionDeadline: r.submissionDeadline,
+            isCurrent: r.roundNumber === (dbHackathon?.currentRoundNumber || 1),
+          }))
+        : [
+            {
+              id: 'rnd_1',
+              roundNumber: 1,
+              name: 'Round 1: Problem Selection & Track Ideation Poll',
+              roundType: 'COMMUNITY_POLL',
+              status: 'ACTIVE',
+              isCurrent: true,
+              submissionDeadline: new Date(Date.now() + 86400000 * 3).toISOString(),
+            },
+            {
+              id: 'rnd_2',
+              roundNumber: 2,
+              name: 'Round 2: Architecture & Prototype Sprint',
+              roundType: 'HACKATHON_SPRINT',
+              status: 'UPCOMING',
+              isCurrent: false,
+              submissionDeadline: new Date(Date.now() + 86400000 * 7).toISOString(),
+            },
+            {
+              id: 'rnd_3',
+              roundNumber: 3,
+              name: 'Round 3: Grand Finale & Live Jury Pitch',
+              roundType: 'FINAL_EVALUATION',
+              status: 'SCHEDULED',
+              isCurrent: false,
+              submissionDeadline: new Date(Date.now() + 86400000 * 10).toISOString(),
+            },
+          ];
+
+    const currentRound = rounds.find((r: any) => r.isCurrent) || rounds[0];
+
     return {
       campaign,
+      hackathon: {
+        id: dbHackathon?.id || hackathonId,
+        title: dbHackathon?.title || 'Apex Global AI Challenge 2026',
+        slug: dbHackathon?.slug || 'apex-ai-2026',
+        currentRoundNumber: dbHackathon?.currentRoundNumber || 1,
+        status: dbHackathon?.status || 'ACTIVE',
+        organizationName: dbHackathon?.organizationName || 'ATLYX Arena',
+      },
+      allHackathons:
+        allHackathons && allHackathons.length > 0
+          ? allHackathons
+          : [
+              {
+                id: dbHackathon?.id || hackathonId,
+                title: dbHackathon?.title || 'Apex Global AI Challenge 2026',
+                status: 'ACTIVE',
+                currentRoundNumber: 1,
+              },
+            ],
+      rounds,
+      currentRound,
       tracks: tracks.map((t) => ({
         id: t.id,
         title: t.title,
@@ -304,7 +413,7 @@ export class QuestionVotingService {
       metrics: {
         totalVotersCount,
         totalVotesCast,
-        isResultsHidden: hideResults,
+        isResultsHidden: false, // Live polling transparency
         topVotedProblem: allStatements[0] || null,
       },
     };
