@@ -223,7 +223,7 @@ export default function HelpCenterPage() {
               Search Documentation &amp; Instant Answers
             </h2>
             <p className="text-xs text-[#6B7280] mb-4">
-              Type keywords like "invite code", "SHA-256", "AI jury", "certificate", or "tracks"...
+              Type keywords like &quot;invite code&quot;, &quot;SHA-256&quot;, &quot;AI jury&quot;, &quot;certificate&quot;, or &quot;tracks&quot;...
             </p>
 
             <div className="relative">
@@ -370,7 +370,7 @@ export default function HelpCenterPage() {
               <span>24/7 SUPPORT AVAILABLE</span>
             </div>
             <h3 className="text-xl font-black text-[#18181B] tracking-tight">
-              Can't find the answer you need?
+              Can&apos;t find the answer you need?
             </h3>
             <p className="text-xs text-[#6B7280] leading-relaxed">
               Reach out directly to the ATLYX support engineering squad. We handle competition emergencies, squad capacity adjustments, and judge rubrics queries.

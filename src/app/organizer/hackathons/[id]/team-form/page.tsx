@@ -28,7 +28,7 @@ import {
   TeamMemberFormConfig,
   FormFieldType,
   DEFAULT_FORM_FIELDS,
-} from '@/server/services/team-form.service';
+} from '@/types/team-form';
 
 const FIELD_TYPES: { type: FormFieldType; label: string; description: string }[] = [
   { type: 'TEXT', label: 'Single-line Text', description: 'Standard short text input' },
