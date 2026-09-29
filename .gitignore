@@ -21,7 +21,7 @@ build/
 coverage/
 
 # archives / local artifacts
-Dogfood.zip
+*.zip
 *.log
 
 # OS / IDE
