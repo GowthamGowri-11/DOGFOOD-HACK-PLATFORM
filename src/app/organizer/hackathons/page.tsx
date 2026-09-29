@@ -413,7 +413,7 @@ export default function OrganizerHackathonsPage() {
               Hackathon Management
             </h1>
             <p className="text-xs sm:text-[13px] text-[#6B7280] font-normal mt-1 leading-relaxed">
-              Browse and oversee all assigned college hackathons. View event details and publish results.
+              Browse and oversee all assigned college hackathons. View event details, configure AI Jury, and publish results.
             </p>
           </div>
         </div>

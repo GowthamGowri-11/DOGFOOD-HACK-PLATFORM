@@ -92,6 +92,7 @@ const ORGANIZER_ITEMS: NavItem[] = [
   { label: 'Assignments', href: '/organizer/assignments', icon: Scale },
   { label: 'Rubrics', href: '/organizer/rubrics', icon: Sliders },
   { label: 'Judging', href: '/organizer/judging', icon: Scale },
+  { label: 'AI Jury', href: '/organizer/ai-jury', icon: Sparkles, badge: 'AI' },
   { label: 'Results', href: '/organizer/results', icon: Award },
   { label: 'Attendance', href: '/organizer/attendance', icon: QrCode },
   { label: 'Certificates', href: '/organizer/certificates', icon: ShieldCheck },

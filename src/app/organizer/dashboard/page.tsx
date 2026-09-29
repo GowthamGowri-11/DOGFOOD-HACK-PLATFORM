@@ -148,7 +148,7 @@ export default async function OrganizerDashboard() {
             Event Operations Center
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 max-w-2xl font-normal leading-relaxed">
-            Real-time telemetry, participant registration funnel, and balanced judging workload.
+            Real-time telemetry, participant registration funnel, balanced judging workload, and AI jury calibration.
           </p>
         </div>
 
@@ -423,7 +423,7 @@ export default async function OrganizerDashboard() {
           </div>
         </div>
 
-        {/* RIGHT COLUMN: Quick Actions (4 Cols) */}
+        {/* RIGHT COLUMN: Quick Actions + AI Jury Calibrator (4 Cols) */}
         <div className="lg:col-span-4 space-y-6">
           {/* Card 1: Quick Event Actions */}
           <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-4">
@@ -446,6 +446,16 @@ export default async function OrganizerDashboard() {
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#FF5500] group-hover:translate-x-0.5 transition-transform" />
               </Link>
               <Link
+                href="/organizer/ai-jury"
+                className="group flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 hover:border-[#9333EA] hover:bg-purple-50/40 transition-all text-xs font-semibold text-slate-800"
+              >
+                <div className="flex items-center space-x-3">
+                  <Sparkles className="w-4 h-4 text-[#9333EA]" />
+                  <span>Trigger AI Jury Run</span>
+                </div>
+                <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#9333EA] group-hover:translate-x-0.5 transition-transform" />
+              </Link>
+              <Link
                 href="/organizer/rubrics"
                 className="group flex items-center justify-between p-3.5 rounded-xl border border-slate-200/90 hover:border-[#EA580C] hover:bg-orange-50/40 transition-all text-xs font-semibold text-slate-800"
               >
@@ -465,6 +475,32 @@ export default async function OrganizerDashboard() {
                 </div>
                 <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-[#059669] group-hover:translate-x-0.5 transition-transform" />
               </Link>
+            </div>
+          </div>
+
+          {/* Card 2: AI Jury Calibrator */}
+          <div className="bg-white border border-slate-200/90 rounded-2xl p-6 shadow-xs space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2 text-xs font-extrabold text-slate-600 uppercase tracking-wider">
+                <Sparkles className="w-4 h-4 text-[#2563EB]" />
+                <span>AI JURY CALIBRATOR</span>
+              </div>
+              <span className="px-2.5 py-0.5 rounded-full text-[10px] font-mono font-bold bg-[#EFF6FF] text-[#2563EB] border border-[#BFDBFE]">
+                claude-3-7
+              </span>
+            </div>
+
+            <div className="text-2xl font-extrabold text-slate-900 pt-1">
+              24 Runs Verified
+            </div>
+
+            <p className="text-xs text-slate-500 leading-relaxed font-normal">
+              Autonomous static code inspection, architecture verification, and statistical correlation calibration against certified human evaluations.
+            </p>
+
+            <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-bold">
+              <span className="text-slate-700">MAE: 0.12 pts</span>
+              <span className="text-[#2563EB]">Agreement: 94%</span>
             </div>
           </div>
         </div>
