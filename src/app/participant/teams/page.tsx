@@ -289,9 +289,8 @@ export default function ParticipantTeamsPage() {
 
     // 2. Fetch published hackathon custom form definition in background
     try {
-      const hackathonId = team.hackathon?.id || team.hackathonId;
+      const hackathonId = team.hackathonId || team.hackathon?.id;
       if (!hackathonId) return;
-
       const res = await fetch(`/api/v1/hackathons/${hackathonId}/team-form`);
       const json = await res.json();
       if (res.ok && json.data?.form?.fields?.length > 0) {

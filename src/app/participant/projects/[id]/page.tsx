@@ -142,9 +142,11 @@ export default function ProjectWorkspacePage() {
 
       const json = await res.json();
       if (!res.ok) {
+        const errorDetailStr = json.details?.errors?.map((e: any) => e.message).join(' • ');
+        const displayMsg = errorDetailStr ? `${json.message || 'Submission failed'}: ${errorDetailStr}` : (json.message || json.error?.message || 'Submission failed.');
         setMessage({
           type: 'error',
-          text: json.message || json.error?.message || 'Submission failed.',
+          text: displayMsg,
         });
         return;
       }
@@ -263,13 +265,15 @@ export default function ProjectWorkspacePage() {
         </div>
 
         {/* Submission Countdown Bar */}
-        <SubmissionCountdown
-          hackathonId={project.hackathon.id}
-          subStartTime={project.hackathon.subStartTime}
-          subEndTime={project.hackathon.subEndTime}
-          isLocked={isLocked}
-          onStateChange={(state) => setWindowState(state)}
-        />
+        {project?.hackathon && (
+          <SubmissionCountdown
+            hackathonId={project.hackathon.id}
+            subStartTime={project.hackathon.subStartTime}
+            subEndTime={project.hackathon.subEndTime}
+            isLocked={isLocked}
+            onStateChange={(state) => setWindowState(state)}
+          />
+        )}
 
         {/* Lock Notice */}
         {isLocked && latestSubmission && (

@@ -1339,7 +1339,7 @@ export default function CertificateManagementPage() {
                 <Award className="w-12 h-12 text-stone-300 mx-auto" />
                 <h3 className="text-sm font-bold text-stone-800">No certificates issued yet</h3>
                 <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                  Switch to the "Data Sheet Bulk Issuance" or "Templates" tab to design and award certificates.
+                  Switch to the &quot;Data Sheet Bulk Issuance&quot; or &quot;Templates&quot; tab to design and award certificates.
                 </p>
               </div>
             ) : (

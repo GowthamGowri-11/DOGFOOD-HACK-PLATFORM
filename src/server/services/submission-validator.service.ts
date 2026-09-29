@@ -1,4 +1,5 @@
 import { ArtifactValidator } from '@/server/services/artifact-validator.service';
+import { SubmissionWindowService } from '@/server/services/submission-window.service';
 
 export interface ValidationErrorItem {
   field: string;
@@ -143,9 +144,10 @@ export class SubmissionValidator {
     }
 
     // 5. Submission Window Timing Check
+    const effectiveWindow = SubmissionWindowService.getEffectiveWindow(hackathon, currentTime);
     const now = currentTime.getTime();
-    const subStart = new Date(hackathon.subStartTime).getTime();
-    const subEnd = new Date(hackathon.subEndTime).getTime();
+    const subStart = effectiveWindow.subStartTime.getTime();
+    const subEnd = effectiveWindow.subEndTime.getTime();
 
     if (now < subStart) {
       errors.push({

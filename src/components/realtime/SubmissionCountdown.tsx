@@ -7,13 +7,24 @@ import { RealtimeRoomBuilder } from '@/server/realtime/event-types';
 
 export interface SubmissionCountdownProps {
   hackathonId: string;
-  subStartTime: string | Date;
-  subEndTime: string | Date;
+  subStartTime?: string | Date;
+  subEndTime?: string | Date;
   serverTime?: string | Date;
   isLocked?: boolean;
   onStateChange?: (state: 'UPCOMING' | 'SUBMISSION_OPEN' | 'SUBMISSION_CLOSED') => void;
   showCard?: boolean;
   compact?: boolean;
+}
+
+function safeParseDate(val?: string | Date | null): Date | null {
+  if (!val) return null;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
+function safeIsoString(val?: string | Date | null, fallbackDate?: Date): string {
+  const d = safeParseDate(val) || fallbackDate || new Date();
+  return d.toISOString();
 }
 
 export function SubmissionCountdown({
@@ -26,21 +37,38 @@ export function SubmissionCountdown({
   showCard = true,
   compact = false,
 }: SubmissionCountdownProps) {
-  const [subStartTime, setSubStartTime] = useState<string>(
-    typeof initialSubStartTime === 'string'
-      ? initialSubStartTime
-      : new Date(initialSubStartTime).toISOString()
+  const [subStartTime, setSubStartTime] = useState<string>(() =>
+    safeIsoString(initialSubStartTime, new Date())
   );
-  const [subEndTime, setSubEndTime] = useState<string>(
-    typeof initialSubEndTime === 'string'
-      ? initialSubEndTime
-      : new Date(initialSubEndTime).toISOString()
+  const [subEndTime, setSubEndTime] = useState<string>(() =>
+    safeIsoString(initialSubEndTime, new Date(Date.now() + 86400000))
   );
 
+  // Sync internal state when props update (e.g. after asynchronous project data load)
+  useEffect(() => {
+    if (initialSubStartTime) {
+      const d = safeParseDate(initialSubStartTime);
+      if (d) setSubStartTime(d.toISOString());
+    }
+  }, [initialSubStartTime]);
+
+  useEffect(() => {
+    if (initialSubEndTime) {
+      const d = safeParseDate(initialSubEndTime);
+      if (d) setSubEndTime(d.toISOString());
+    }
+  }, [initialSubEndTime]);
+
   // Server time offset calculation to prevent client clock manipulation
-  const serverOffsetRef = useRef<number>(
-    initialServerTime ? new Date(initialServerTime).getTime() - Date.now() : 0
-  );
+  const serverOffsetRef = useRef<number>(0);
+  useEffect(() => {
+    if (initialServerTime) {
+      const d = safeParseDate(initialServerTime);
+      if (d) {
+        serverOffsetRef.current = d.getTime() - Date.now();
+      }
+    }
+  }, [initialServerTime]);
 
   const getEffectiveServerTime = useCallback(() => {
     return Date.now() + serverOffsetRef.current;
@@ -48,17 +76,22 @@ export function SubmissionCountdown({
 
   const computeStatus = useCallback((): 'UPCOMING' | 'SUBMISSION_OPEN' | 'SUBMISSION_CLOSED' => {
     const now = getEffectiveServerTime();
-    const opensAt = new Date(subStartTime).getTime();
-    const deadline = new Date(subEndTime).getTime();
+    const opensAtDate = safeParseDate(subStartTime);
+    const deadlineDate = safeParseDate(subEndTime);
+
+    if (!opensAtDate || !deadlineDate) {
+      return 'SUBMISSION_OPEN';
+    }
+
+    const opensAt = opensAtDate.getTime();
+    const deadline = deadlineDate.getTime();
 
     if (now < opensAt) return 'UPCOMING';
     if (now >= opensAt && now < deadline) return 'SUBMISSION_OPEN';
     return 'SUBMISSION_CLOSED';
   }, [getEffectiveServerTime, subStartTime, subEndTime]);
 
-  const [status, setStatus] = useState<'UPCOMING' | 'SUBMISSION_OPEN' | 'SUBMISSION_CLOSED'>(
-    computeStatus
-  );
+  const [status, setStatus] = useState<'UPCOMING' | 'SUBMISSION_OPEN' | 'SUBMISSION_CLOSED'>('SUBMISSION_OPEN');
   const [timeLeft, setTimeLeft] = useState<{ hours: number; minutes: number; seconds: number; totalMs: number }>({
     hours: 0,
     minutes: 0,
@@ -67,7 +100,9 @@ export function SubmissionCountdown({
   });
 
   const onStateChangeRef = useRef(onStateChange);
-  onStateChangeRef.current = onStateChange;
+  useEffect(() => {
+    onStateChangeRef.current = onStateChange;
+  }, [onStateChange]);
 
   // Authoritative REST state synchronization
   const syncAuthoritativeStatus = useCallback(async () => {
@@ -78,13 +113,18 @@ export function SubmissionCountdown({
       if (res.ok && json.data) {
         const data = json.data;
         if (data.serverTime) {
-          serverOffsetRef.current = new Date(data.serverTime).getTime() - Date.now();
+          const sTime = safeParseDate(data.serverTime);
+          if (sTime) {
+            serverOffsetRef.current = sTime.getTime() - Date.now();
+          }
         }
         if (data.submissionOpensAt) {
-          setSubStartTime(data.submissionOpensAt);
+          const sDate = safeParseDate(data.submissionOpensAt);
+          if (sDate) setSubStartTime(sDate.toISOString());
         }
         if (data.submissionDeadline) {
-          setSubEndTime(data.submissionDeadline);
+          const eDate = safeParseDate(data.submissionDeadline);
+          if (eDate) setSubEndTime(eDate.toISOString());
         }
         if (data.status) {
           setStatus(data.status);
@@ -110,7 +150,10 @@ export function SubmissionCountdown({
         setStatus('SUBMISSION_CLOSED');
         onStateChangeRef.current?.('SUBMISSION_CLOSED');
         if (event.payload?.serverTime) {
-          serverOffsetRef.current = new Date(event.payload.serverTime).getTime() - Date.now();
+          const sTime = safeParseDate(event.payload.serverTime);
+          if (sTime) {
+            serverOffsetRef.current = sTime.getTime() - Date.now();
+          }
         }
       }
     });
@@ -121,7 +164,10 @@ export function SubmissionCountdown({
         setStatus('SUBMISSION_OPEN');
         onStateChangeRef.current?.('SUBMISSION_OPEN');
         if (event.payload?.serverTime) {
-          serverOffsetRef.current = new Date(event.payload.serverTime).getTime() - Date.now();
+          const sTime = safeParseDate(event.payload.serverTime);
+          if (sTime) {
+            serverOffsetRef.current = sTime.getTime() - Date.now();
+          }
         }
       }
     });
@@ -129,8 +175,14 @@ export function SubmissionCountdown({
     // 3. Listen for SUBMISSION_WINDOW_UPDATED
     const unsubUpdate = realtime.on('SUBMISSION_WINDOW_UPDATED', (event) => {
       if (event.hackathonId === hackathonId && event.payload) {
-        if (event.payload.subStartTime) setSubStartTime(event.payload.subStartTime);
-        if (event.payload.subEndTime) setSubEndTime(event.payload.subEndTime);
+        if (event.payload.subStartTime) {
+          const s = safeParseDate(event.payload.subStartTime);
+          if (s) setSubStartTime(s.toISOString());
+        }
+        if (event.payload.subEndTime) {
+          const e = safeParseDate(event.payload.subEndTime);
+          if (e) setSubEndTime(e.toISOString());
+        }
         syncAuthoritativeStatus();
       }
     });
@@ -153,10 +205,17 @@ export function SubmissionCountdown({
   useEffect(() => {
     const updateCountdown = () => {
       const now = getEffectiveServerTime();
-      const opensAt = new Date(subStartTime).getTime();
-      const deadline = new Date(subEndTime).getTime();
+      const opensAtDate = safeParseDate(subStartTime);
+      const deadlineDate = safeParseDate(subEndTime);
 
-      let currentStatus = status;
+      if (!opensAtDate || !deadlineDate) {
+        return;
+      }
+
+      const opensAt = opensAtDate.getTime();
+      const deadline = deadlineDate.getTime();
+
+      let currentStatus: 'UPCOMING' | 'SUBMISSION_OPEN' | 'SUBMISSION_CLOSED' = status;
       let targetTime = 0;
 
       if (now < opensAt) {
@@ -195,8 +254,8 @@ export function SubmissionCountdown({
   const pad = (n: number) => n.toString().padStart(2, '0');
   const formattedCountdown = `${pad(timeLeft.hours)}:${pad(timeLeft.minutes)}:${pad(timeLeft.seconds)}`;
 
-  const opensAtDate = new Date(subStartTime);
-  const deadlineDate = new Date(subEndTime);
+  const opensAtDate = safeParseDate(subStartTime) || new Date();
+  const deadlineDate = safeParseDate(subEndTime) || new Date();
 
   const formatTime = (d: Date) => {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
